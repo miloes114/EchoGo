@@ -29,6 +29,11 @@ From those inputs, EchoGO produces:
 # 📥 Installation
 
 ```r
+remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE)
+
+library(EchoGO)
+echogo_help()
+
 # Install annotation packages (GO.db + OrgDb)
 EchoGO::echogo_install_orgdb()
 
