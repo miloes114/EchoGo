@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17658715.svg)](https://doi.org/10.5281/zenodo.17658715)
+[![DOI](https://zenodo.org/badge/803971735.svg)](https://doi.org/10.5281/zenodo.17660708)
 
 # 🧬 EchoGO  
 ### Cross-Species Consensus Enrichment for Non-Model Organisms
