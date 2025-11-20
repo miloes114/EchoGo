@@ -1,0 +1,21 @@
+citHeader("To cite EchoGO in publications use:")
+
+bibentry(
+  bibtype = "Article",
+  title   = "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms",
+  author  = c(
+    person("Camilo", "Escobar-Sierra"),
+    person("Felix",  "Langschied"),
+    person("Pedro A.", "Inostroza")
+  ),
+  year    = "2025",
+  journal = "In preparation",
+  doi     = "10.5281/zenodo.xxxxxxx",   # Replace once Zenodo assigns DOI
+  url     = "https://doi.org/10.5281/zenodo.xxxxxxx",
+  textVersion =
+    paste(
+      "Escobar-Sierra C., Langschied F., Inostroza P.A., et al. (2025).",
+      "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms.",
+      "Zenodo. DOI: 10.5281/zenodo.xxxxxxx."
+    )
+)

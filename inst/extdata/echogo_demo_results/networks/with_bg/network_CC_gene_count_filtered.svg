@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='864.00pt' height='720.00pt' viewBox='0 0 864.00 720.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<defs>
+  <clipPath id='cpMC4wMHw4NjQuMDB8MC4wMHw3MjAuMDA='>
+    <rect x='0.00' y='0.00' width='864.00' height='720.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw4NjQuMDB8MC4wMHw3MjAuMDA=)'>
+</g>
+<defs>
+  <clipPath id='cpMC4wMHw3MjkuNTF8MTcuNzB8NzIwLjAw'>
+    <rect x='0.000000000000000000000000000000000000000000000000000' y='17.70' width='729.51' height='702.30' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw3MjkuNTF8MTcuNzB8NzIwLjAw)'>
+<polyline points='696.35,49.62 689.65,56.07 682.95,62.52 676.25,68.97 669.55,75.42 662.85,81.87 656.16,88.32 649.46,94.76 642.76,101.21 636.06,107.66 629.36,114.11 622.66,120.56 615.96,127.01 609.26,133.46 602.56,139.91 595.87,146.36 589.17,152.81 582.47,159.25 575.77,165.70 569.07,172.15 562.37,178.60 555.67,185.05 548.97,191.50 542.27,197.95 535.58,204.40 528.88,210.85 522.18,217.30 515.48,223.75 508.78,230.19 502.08,236.64 495.38,243.09 488.68,249.54 481.98,255.99 475.29,262.44 468.59,268.89 461.89,275.34 455.19,281.79 448.49,288.24 441.79,294.68 435.09,301.13 428.39,307.58 421.69,314.03 415.00,320.48 408.30,326.93 401.60,333.38 394.90,339.83 388.20,346.28 381.50,352.73 374.80,359.18 368.10,365.62 361.40,372.07 354.71,378.52 348.01,384.97 341.31,391.42 334.61,397.87 327.91,404.32 321.21,410.77 314.51,417.22 307.81,423.67 301.11,430.11 294.42,436.56 287.72,443.01 281.02,449.46 274.32,455.91 267.62,462.36 260.92,468.81 254.22,475.26 247.52,481.71 240.82,488.16 234.13,494.61 227.43,501.05 220.73,507.50 214.03,513.95 207.33,520.40 200.63,526.85 193.93,533.30 187.23,539.75 180.53,546.20 173.84,552.65 167.14,559.10 160.44,565.55 153.74,571.99 147.04,578.44 140.34,584.89 133.64,591.34 126.94,597.79 120.25,604.24 113.55,610.69 106.85,617.14 100.15,623.59 93.45,630.04 86.75,636.48 80.05,642.93 73.35,649.38 66.65,655.83 59.96,662.28 53.26,668.73 46.56,675.18 39.86,681.63 33.16,688.08 ' style='stroke-width: 1.07; stroke: #000000; stroke-opacity: 0.20; stroke-linecap: butt;' />
+<circle cx='696.35' cy='49.62' r='8.84' style='stroke-width: 0.71; stroke: #F8766D; stroke-opacity: 0.80; fill: #F8766D; fill-opacity: 0.80;' />
+<circle cx='33.16' cy='688.08' r='8.84' style='stroke-width: 0.71; stroke: #F8766D; stroke-opacity: 0.80; fill: #F8766D; fill-opacity: 0.80;' />
+<polygon points='590.06,57.29 687.78,57.29 687.70,57.29 688.04,57.27 688.39,57.21 688.71,57.08 689.01,56.91 689.28,56.69 689.51,56.43 689.70,56.13 689.83,55.81 689.92,55.48 689.94,55.13 689.94,55.13 689.94,44.11 689.94,44.11 689.92,43.76 689.83,43.42 689.70,43.10 689.51,42.81 689.28,42.55 689.01,42.33 688.71,42.16 688.39,42.03 688.04,41.96 687.78,41.95 590.06,41.95 590.32,41.96 589.97,41.95 589.63,41.99 589.29,42.09 588.98,42.24 588.69,42.43 588.44,42.67 588.24,42.95 588.07,43.26 587.96,43.59 587.91,43.93 587.90,44.11 587.90,55.13 587.91,54.96 587.91,55.30 587.96,55.65 588.07,55.98 588.24,56.28 588.44,56.56 588.69,56.80 588.98,57.00 589.29,57.15 589.63,57.25 589.97,57.29 ' style='stroke-width: 0.53; stroke: #000000; stroke-opacity: 0.70; fill: #FFFFFF; fill-opacity: 0.70;' />
+<text x='638.92' y='53.69' text-anchor='middle' style='font-size: 11.38px;fill: #000000; fill-opacity: 0.70; font-family: "Arial";' textLength='94.84px' lengthAdjust='spacingAndGlyphs'>extracellular space</text>
+<polygon points='41.72,695.75 140.71,695.75 140.62,695.75 140.97,695.73 141.31,695.67 141.64,695.54 141.94,695.37 142.21,695.15 142.44,694.89 142.62,694.59 142.76,694.27 142.84,693.94 142.87,693.59 142.87,693.59 142.87,682.57 142.87,682.57 142.84,682.22 142.76,681.88 142.62,681.56 142.44,681.27 142.21,681.01 141.94,680.79 141.64,680.62 141.31,680.49 140.97,680.42 140.71,680.41 41.72,680.41 41.98,680.42 41.63,680.41 41.29,680.45 40.95,680.55 40.64,680.70 40.35,680.89 40.10,681.13 39.89,681.41 39.73,681.72 39.62,682.05 39.57,682.39 39.56,682.57 39.56,693.59 39.57,693.42 39.57,693.76 39.62,694.11 39.73,694.44 39.89,694.74 40.10,695.02 40.35,695.26 40.64,695.46 40.95,695.61 41.29,695.71 41.63,695.75 ' style='stroke-width: 0.53; stroke: #000000; stroke-opacity: 0.70; fill: #FFFFFF; fill-opacity: 0.70;' />
+<text x='91.21' y='692.15' text-anchor='middle' style='font-size: 11.38px;fill: #000000; fill-opacity: 0.70; font-family: "Arial";' textLength='96.11px' lengthAdjust='spacingAndGlyphs'>extracellular region</text>
+</g>
+<g clip-path='url(#cpMC4wMHw4NjQuMDB8MC4wMHw3MjAuMDA=)'>
+<text x='735.18' y='338.70' style='font-size: 11.00px; font-family: "Arial";' textLength='122.11px' lengthAdjust='spacingAndGlyphs'>Top GO Term per Cluster</text>
+<circle cx='743.82' cy='353.98' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; stroke-opacity: 0.80; fill: #F8766D; fill-opacity: 0.80;' />
+<text x='757.94' y='357.13' style='font-size: 8.80px; font-family: "Arial";' textLength='106.06px' lengthAdjust='spacingAndGlyphs'>Cluster: extracellular space</text>
+<text x='735.18' y='378.86' style='font-size: 11.00px; font-family: "Arial";' textLength='34.28px' lengthAdjust='spacingAndGlyphs'>degree</text>
+<circle cx='746.45' cy='396.76' r='8.84' style='stroke-width: 0.71; stroke: #000000; stroke-opacity: 0.80; fill: #000000; fill-opacity: 0.80;' />
+<text x='763.19' y='399.91' style='font-size: 8.80px; font-family: "Arial";' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>1</text>
+<text x='0.000000000000000000000000000000000000000000000000000' y='14.93' style='font-size: 13.20px; font-family: "Arial";' textLength='273.59px' lengthAdjust='spacingAndGlyphs'>GO CC Network ( with_bg , &gt; 2  shared genes)</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,28 @@
+AnimalModels:
+  - hsapiens
+  - mmusculus
+  - rnorvegicus
+  - drerio
+  - dmelanogaster
+  - celegans
+  - ggallus
+  - xtropicalis
+
+PlantModels:
+  - athaliana
+  - osativa
+  - zmays
+  - slycopersicum
+
+FungalModels:
+  - scerevisiae
+  - spombe
+
+CoreModels:
+  - hsapiens
+  - mmusculus
+  - rnorvegicus
+  - drerio
+  - dmelanogaster
+  - celegans
+  - scerevisiae

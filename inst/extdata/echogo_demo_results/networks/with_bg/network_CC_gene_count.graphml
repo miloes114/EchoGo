@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_label" for="node" attr.name="label" attr.type="string"/>
+  <key id="v_genes_flat" for="node" attr.name="genes_flat" attr.type="string"/>
+  <key id="v_gene_count" for="node" attr.name="gene_count" attr.type="double"/>
+  <key id="v_consensus_score" for="node" attr.name="consensus_score" attr.type="double"/>
+  <key id="v_size_attr" for="node" attr.name="size_attr" attr.type="double"/>
+  <key id="v_degree" for="node" attr.name="degree" attr.type="double"/>
+  <key id="v_community" for="node" attr.name="community" attr.type="double"/>
+  <key id="v_community_label" for="node" attr.name="community_label" attr.type="string"/>
+  <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
+  <graph id="G" edgedefault="undirected">
+    <node id="n0">
+      <data key="v_name">GO:0005615</data>
+      <data key="v_label">extracellular space</data>
+      <data key="v_genes_flat">TAF2, CASP7, NPC1, PGAM2, ARF1, GFPT1, DLDH, GFPT2, CBR4, NFS1, VPS18, AP3B2, NDC1, PLOD3, ENPP3, CRYL1, GNS, PLCD4, SCP2, ALDH2, GSTM2, RTCB, PIM3, FGD6, LRP2, SEC13, AP1S2, PTGR1, CTRB1, LIPH, PUS10, TRUB2, EXO1, ADRM1, PPWD1, KLKB1, ZNFX1, ECH1, MRM3, PRSS8, RIDA, ANXA4, CUL5, IPO5, RS3, AQP4, MGA, STX5, ANLN, CPNE8, ESYT2, BOK</data>
+      <data key="v_gene_count">52</data>
+      <data key="v_consensus_score">2.11355350715857</data>
+      <data key="v_size_attr">52</data>
+      <data key="v_degree">1</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: extracellular space</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">GO:0005576</data>
+      <data key="v_label">extracellular region</data>
+      <data key="v_genes_flat">PSMD7, CALR, PGAM2, GFPT1, SMOX, ACADM, CBR1, ACADS, RDH5, FNTB, SDSL, VPS18, AP3B2, NDC1, MCAT, HPGDS, GSTM2, LIAS, COX11, SEC13, TRUB2, EXO1, IPO5, CRYAA, SON, CLU, RYBP, RWDD1, CNPY2, ELF1, BEST3, CIR1, ARNT, CANB, NDG, PDI, RUMI, MARF, HSP83, PCH2, TOM70, COLD, SALM, TOM20, SELT, MTP, OST48, LOLAL</data>
+      <data key="v_gene_count">48</data>
+      <data key="v_consensus_score">2.0986513982913</data>
+      <data key="v_size_attr">52</data>
+      <data key="v_degree">1</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: extracellular space</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">10</data>
+    </edge>
+  </graph>
+</graphml>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_label" for="node" attr.name="label" attr.type="string"/>
+  <key id="v_genes_flat" for="node" attr.name="genes_flat" attr.type="string"/>
+  <key id="v_gene_count" for="node" attr.name="gene_count" attr.type="double"/>
+  <key id="v_consensus_score" for="node" attr.name="consensus_score" attr.type="double"/>
+  <key id="v_size_attr" for="node" attr.name="size_attr" attr.type="double"/>
+  <key id="v_degree" for="node" attr.name="degree" attr.type="double"/>
+  <key id="v_community" for="node" attr.name="community" attr.type="double"/>
+  <key id="v_community_label" for="node" attr.name="community_label" attr.type="string"/>
+  <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
+  <graph id="G" edgedefault="undirected">
+    <node id="n0">
+      <data key="v_name">GO:0072014</data>
+      <data key="v_label">proximal tubule development</data>
+      <data key="v_genes_flat">PLOD3, FGD6, LRP2, ADRM1, PPWD1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">2.63742992061529</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: proximal tubule development</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">GO:0072237</data>
+      <data key="v_label">metanephric proximal tubule development</data>
+      <data key="v_genes_flat">PLOD3, FGD6, LRP2, ADRM1, PPWD1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">2.63742992061529</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: proximal tubule development</data>
+    </node>
+    <node id="n2">
+      <data key="v_name">GO:0072170</data>
+      <data key="v_label">metanephric tubule development</data>
+      <data key="v_genes_flat">PLOD3, FGD6, LRP2, ADRM1, PPWD1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">2.58496250072116</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: proximal tubule development</data>
+    </node>
+    <node id="n3">
+      <data key="v_name">GO:0072207</data>
+      <data key="v_label">metanephric epithelium development</data>
+      <data key="v_genes_flat">PLOD3, FGD6, LRP2, ADRM1, PPWD1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">2.58496250072116</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: proximal tubule development</data>
+    </node>
+    <node id="n4">
+      <data key="v_name">GO:0072234</data>
+      <data key="v_label">metanephric nephron tubule development</data>
+      <data key="v_genes_flat">PLOD3, FGD6, LRP2, ADRM1, PPWD1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">2.58496250072116</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: proximal tubule development</data>
+    </node>
+    <node id="n5">
+      <data key="v_name">GO:0072243</data>
+      <data key="v_label">metanephric nephron epithelium development</data>
+      <data key="v_genes_flat">PLOD3, FGD6, LRP2, ADRM1, PPWD1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">2.58496250072116</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: proximal tubule development</data>
+    </node>
+    <node id="n6">
+      <data key="v_name">GO:0043171</data>
+      <data key="v_label">peptide catabolic process</data>
+      <data key="v_genes_flat">CASP7, ARF1, PLOD3, ENPP3, GNS, PLCD4, SCP2, PIM3, FGD6, LRP2, PTGR1, CTRB1, PXDN</data>
+      <data key="v_gene_count">13</data>
+      <data key="v_consensus_score">2.22239242133645</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catabolic process</data>
+    </node>
+    <node id="n7">
+      <data key="v_name">GO:0030243</data>
+      <data key="v_label">cellulose metabolic process</data>
+      <data key="v_genes_flat">BEST3, CIR1, CANB</data>
+      <data key="v_gene_count">3</data>
+      <data key="v_consensus_score">2.21076709621682</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">6</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: cellulose metabolic process</data>
+    </node>
+    <node id="n8">
+      <data key="v_name">GO:0030245</data>
+      <data key="v_label">cellulose catabolic process</data>
+      <data key="v_genes_flat">BEST3, CIR1, CANB</data>
+      <data key="v_gene_count">3</data>
+      <data key="v_consensus_score">2.21076709621682</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">6</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: cellulose metabolic process</data>
+    </node>
+    <node id="n9">
+      <data key="v_name">GO:0051275</data>
+      <data key="v_label">beta-glucan catabolic process</data>
+      <data key="v_genes_flat">BEST3, CIR1, CANB</data>
+      <data key="v_gene_count">3</data>
+      <data key="v_consensus_score">2.21076709621682</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">6</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: cellulose metabolic process</data>
+    </node>
+    <node id="n10">
+      <data key="v_name">GO:0051273</data>
+      <data key="v_label">beta-glucan metabolic process</data>
+      <data key="v_genes_flat">BEST3, CIR1, CANB</data>
+      <data key="v_gene_count">3</data>
+      <data key="v_consensus_score">2.20858662181142</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">6</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: cellulose metabolic process</data>
+    </node>
+    <node id="n11">
+      <data key="v_name">GO:0000272</data>
+      <data key="v_label">polysaccharide catabolic process</data>
+      <data key="v_genes_flat">TRUB2, EXO1, CUL5, BOK, BEST3, CIR1, CANB</data>
+      <data key="v_gene_count">7</data>
+      <data key="v_consensus_score">2.14378978659737</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">6</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: cellulose metabolic process</data>
+    </node>
+    <node id="n12">
+      <data key="v_name">GO:0016052</data>
+      <data key="v_label">carbohydrate catabolic process</data>
+      <data key="v_genes_flat">TRUB2, EXO1, PRSS8, RIDA, CUL5, MGA, BOK, BEST3, CIR1, CANB</data>
+      <data key="v_gene_count">10</data>
+      <data key="v_consensus_score">2.12357468511853</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">6</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: cellulose metabolic process</data>
+    </node>
+    <node id="n13">
+      <data key="v_name">GO:0006508</data>
+      <data key="v_label">proteolysis</data>
+      <data key="v_genes_flat">TAF2, CASP7, PSMD7, CALR, NPC1, PGAM2, ARF1, DHX36, GFPT1, SMOX, ACADM, CBR1, ACADS, ATG7, DLDH, GFPT2, CBR4, RDH5, FNTB, SDSL, CHKB, NFS1, PEX16, VPS18, AP3B2, AP1M1, NDC1, MCAT, PLOD3, ENPP3, CRYL1, GNS, PLCD4, SCP2, ALDH2, HPGDS, ACLY, GSTM2, LIAS, COX11, COX17, ECI3, SPG7, ATAD1, MTRR, EPHA4, RTCB, ACSF2, CDK9, PIM3, FGD6, LRP2, SEC13, AP1S2, AIG1, PTGR1, CTRB1, CLPP, CASP1, PXDN, LIPH, PUS10, IPO5</data>
+      <data key="v_gene_count">63</data>
+      <data key="v_consensus_score">2.07781684891101</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">8</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catabolic process</data>
+    </node>
+    <node id="n14">
+      <data key="v_name">GO:0009056</data>
+      <data key="v_label">catabolic process</data>
+      <data key="v_genes_flat">CASP7, NPC1, ARF1, RDH5, PLOD3, ENPP3, GNS, PLCD4, SCP2, COX17, SPG7, MTRR, EPHA4, PIM3, FGD6, LRP2, PTGR1, CTRB1, PXDN, TRUB2, EXO1, KLKB1, ZNFX1, PRSS8, RIDA, CUL5, MGA, ANLN, CPNE8, BOK, CNPY2, BEST3, CIR1, ARNT, CANB, NDG, PDI, MTP</data>
+      <data key="v_gene_count">38</data>
+      <data key="v_consensus_score">2.07539744860922</data>
+      <data key="v_size_attr">5</data>
+      <data key="v_degree">14</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catabolic process</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n0" target="n2">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n1" target="n2">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n0" target="n3">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n1" target="n3">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n2" target="n3">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n0" target="n4">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n1" target="n4">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n2" target="n4">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n0" target="n5">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n1" target="n5">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n4" target="n5">
+      <data key="e_weight">5</data>
+    </edge>
+    <edge source="n0" target="n6">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n1" target="n6">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n2" target="n6">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n3" target="n6">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n4" target="n6">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n8" target="n9">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n9" target="n11">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n10" target="n11">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n8" target="n12">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n11" target="n12">
+      <data key="e_weight">7</data>
+    </edge>
+    <edge source="n0" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n1" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n3" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n4" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n0" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n1" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n2" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n3" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n4" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n6" target="n14">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n8" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n9" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n10" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n11" target="n14">
+      <data key="e_weight">7</data>
+    </edge>
+    <edge source="n12" target="n14">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n13" target="n14">
+      <data key="e_weight">19</data>
+    </edge>
+  </graph>
+</graphml>

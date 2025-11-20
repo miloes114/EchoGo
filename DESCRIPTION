@@ -1,0 +1,82 @@
+Package: EchoGO
+Type: Package
+Title: EchoGO: Cross-Species Consensus Enrichment for Non-Model Organisms
+Version: 0.0.0.9000
+Date: 2025-08-12
+Authors@R: c(
+    person("Camilo", "Escobar-Sierra",
+           email = "camilo.escobar-sierra@rwth-aachen.de",
+           role = c("aut", "cre"),
+           comment = c(
+             affiliation = "Institute for Environmental Research, RWTH Aachen University, Aachen, Germany; Institute of Zoology, University of Cologne, Cologne, Germany"
+           )),
+    person("Felix", "Langschied",
+           email = "langschied@bio.uni-frankfurt.de",
+           role = "aut",
+           comment = c(
+             affiliation = "Institute of Cell Biology and Neuroscience, Applied Bioinformatics Group, Goethe University Frankfurt, Frankfurt am Main, Germany"
+           )),
+    person("Pedro A.", "Inostroza",
+           email = "pedro.inostroza@rwth-aachen.de",
+           role = "aut",
+           comment = c(
+             affiliation = "Institute for Environmental Research, RWTH Aachen University, Aachen, Germany; Department of Biological and Environmental Science, University of Gothenburg, Gothenburg, Sweden"
+           ))
+  )
+Description: EchoGO is a modular framework for functional enrichment analysis 
+    in non-model organisms. It integrates bias-aware GOseq enrichment with 
+    orthology-based g:Profiler enrichment across multiple species, builds 
+    consensus scores, performs semantic similarity reduction with RRvGO, and 
+    generates curated visual outputs including lollipop plots, rarefaction 
+    curves, enrichment networks, and HTML reports. It is especially suited 
+    for transcriptomic studies with de novo assemblies or sparse annotations.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Depends: 
+    R (>= 4.1)
+Imports:
+    dplyr,
+    stringr,
+    readr,
+    openxlsx,
+    gprofiler2,
+    ontologyIndex,
+    AnnotationDbi,
+    utils,
+    stats,
+    methods,
+    tibble,
+    rlang,
+    rappdirs,
+    xml2,
+    rvest,
+    httr (>= 1.4.7),
+    jsonlite,
+    Matrix,
+    igraph,
+    ggraph,
+    tidyr,
+    purrr,
+    ggplot2,
+    ggvenn,
+    patchwork
+Suggests:
+    readxl,
+    rmarkdown,
+    knitr,
+    GO.db,
+    DT,
+    htmlwidgets,
+    yaml,
+    usethis,
+    rprojroot,
+    testthat (>= 3.0.0),
+    ggrepel,
+    visNetwork,
+    svglite
+VignetteBuilder: knitr,rmarkdown
+URL: https://github.com/your-org/EchoGO
+BugReports: https://github.com/your-org/EchoGO/issues
+RoxygenNote: 7.3.2
+Config/testthat/edition: 3

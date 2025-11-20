@@ -1,0 +1,821 @@
+---
+title: "&gt;&lt;(((º&gt;  🧬 EchoGO — Cross-Species Consensus Enrichment Report 🧬  &lt;º)))&gt;&lt;"
+
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_depth: 2
+    df_print: paged
+params:
+  dirs: NULL
+  top_n: 25
+  sections: ["overview","goseq","gprofiler","consensus","rrvgo","networks","evaluation"]
+  species_label_nobg: "human"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, fig.align="center")
+
+suppressPackageStartupMessages({
+  library(dplyr); library(readr); library(stringr)
+  library(tidyr); library(ggplot2); library(tibble)
+})
+
+`%||%` <- function(a,b) if (!is.null(a)) a else b
+npath  <- function(x) if (is.null(x)) NULL else normalizePath(x, winslash="/", mustWork = FALSE)
+
+# ---- Read a COPY of params, plus env overrides (never mutate 'params') ----
+p <- tryCatch(as.list(get("params", inherits = TRUE)), error = function(e) list())
+
+# OUTDIR override (from renderer)
+forced_out <- Sys.getenv("ECHOGO_OUTDIR", unset = NA)
+forced_out <- if (is.na(forced_out) || !nzchar(forced_out)) NULL else forced_out
+
+# Sections override (comma-separated env)
+sections_env <- Sys.getenv("ECHOGO_SECTIONS", unset = NA)
+sections_ovr <- if (!is.na(sections_env) && nzchar(sections_env)) trimws(strsplit(sections_env, ",")[[1]]) else NULL
+
+# ---- Resolve dirs ----
+dirs        <- p$dirs %||% list()
+knit_outdir <- knitr::opts_knit$get("output.dir")
+report_dir  <- npath(forced_out %||% dirs$report %||% knit_outdir %||% dirs$base %||% getwd())
+base_dir    <- npath(forced_out %||% dirs$base   %||% report_dir)
+
+# effective sections (vector of strings)
+sections <- sections_ovr %||% (p$sections %||% c("overview","goseq","gprofiler","consensus","rrvgo","networks","evaluation"))
+sections <- unique(tolower(sections))
+top_n    <- p$top_n %||% 25
+
+# ---- Read the prebuilt index; DO NOT create here ----
+idx <- tryCatch({
+  if (requireNamespace("EchoGO", quietly = TRUE) &&
+      "echogo_read_index" %in% getNamespaceExports("EchoGO")) {
+    EchoGO::echogo_read_index(base_dir, create_if_missing = FALSE)
+  } else {
+    readr::read_csv(file.path(base_dir, "__file_index.csv"), show_col_types = FALSE)
+  }
+}, error = function(e) tibble(rel_path = character(), full_path = character()))
+
+idx <- idx %>%
+  mutate(rel_path = gsub("\\\\","/", .data$rel_path),
+         full_path = gsub("\\\\","/", .data$full_path))
+
+# ---- Index resolvers (robust: build absolute from rel_path) ----
+search_index_get_one <- function(patterns, must_exist = TRUE) {
+  if (!nrow(idx)) return(NA_character_)
+  pat  <- paste0("(", paste(patterns, collapse=")|("), ")")
+  rows <- idx[grepl(pat, idx$rel_path, ignore.case = TRUE), , drop = FALSE]
+  if (!nrow(rows)) return(NA_character_)
+  rel  <- rows$rel_path[1]
+  abs  <- file.path(base_dir, rel)
+  if (isTRUE(must_exist) && !file.exists(abs)) return(NA_character_)
+  abs
+}
+get_one  <- function(...) search_index_get_one(unlist(list(...)))
+
+# ---- Embed helpers (exported from EchoGO) ----
+embed_pdf_toggle  <- function(title, path, height = "650px") {
+  EchoGO::echogo_embed_pdf_toggle(title, path, report_dir = report_dir, base_dir = base_dir, height = height)
+}
+embed_html_toggle <- function(title, path, height = "650px") {
+  EchoGO::echogo_embed_html_toggle(title, path, report_dir = report_dir, base_dir = base_dir, height = height)
+}
+
+# ---- Safe iframe embed (avoids Pandoc ingest & checks existence) ----
+embed_html_toggle_external_plus <- function(title, path_abs, height = "650px") {
+  cat(EchoGO::embed_html_toggle_external_plus(
+    title, path_abs,
+    report_dir = report_dir,
+    base_dir   = base_dir,
+    height     = height
+  ))
+}
+
+
+```
+
+
+```{r echogo-safety-helpers, include=FALSE}
+# Safe file check that tolerates NA / NULL / non‑character inputs
+exists_file <- function(x){
+  if (is.null(x)) return(FALSE)
+  x <- tryCatch(as.character(x), error=function(e) NA_character_)
+  x[is.na(x)] <- ""
+  nz <- nzchar(x)
+  out <- logical(length(x)); out[] <- FALSE
+  if (any(nz)) out[nz] <- file.exists(x[nz])
+  out
+}
+
+# Tiny wrapper to embed PDFs only if they exist
+safe_embed_pdf <- function(title, path){
+  p <- tryCatch(as.character(path)[1], error=function(e) NA_character_)
+  if (!is.na(p) && nzchar(p) && file.exists(p)) {
+    cat(embed_pdf_toggle(title, p))
+  }
+}
+
+```
+
+
+```{r}
+esc_html <- function(x){
+  x <- gsub("&","&amp;", x, fixed=TRUE)
+  x <- gsub("<","&lt;",  x, fixed=TRUE)
+  x <- gsub(">","&gt;",  x, fixed=TRUE)
+  x
+}
+
+.echogo_tree_lines <- function(rel_paths) {
+  rel_paths <- rel_paths[nzchar(rel_paths)]
+  if (!length(rel_paths)) return("  (empty)\n")
+  segs <- strsplit(rel_paths, "/", fixed = TRUE)
+  dirs <- unique(unlist(lapply(segs, function(s) {
+    if (!length(s)) return(character(0))
+    if (length(s)==1) return(character(0))
+    vapply(1:(length(s)-1), function(k) paste(s[seq_len(k)], collapse="/"), character(1))
+  })))
+  items <- unique(c(paste0(dirs, "/"), rel_paths))
+  items <- items[order(nchar(items), items)]
+  lines <- vapply(items, function(x) {
+    depth <- max(0, length(strsplit(gsub("/$", "", x), "/", fixed=TRUE)[[1]]) - 1)
+    is_dir <- grepl("/$", x)
+    name   <- sub(".*/", "", gsub("/$", "", x))
+    indent <- paste(rep("&nbsp;&nbsp;", depth), collapse = "")
+    icon   <- if (is_dir) "📁" else "📄"
+    sprintf("%s%s&nbsp;%s", indent, icon, esc_html(name))
+  }, character(1))
+  paste(lines, collapse = "\n")
+}
+
+.echogo_tree_for_root <- function(root_subdir, max_entries = 800) {
+  root_subdir <- gsub("\\\\","/", root_subdir)
+  root_abs    <- file.path(base_dir, root_subdir)
+  if (!dir.exists(root_abs)) {
+    return(sprintf("<pre><code>%s/</code>\n  (not generated)</pre>", esc_html(root_subdir)))
+  }
+  if (nrow(idx)) {
+    rels <- idx$rel_path[grepl(paste0("^", gsub("([\\W])","\\\\\\1", root_subdir), "(/|$)"), idx$rel_path, ignore.case=TRUE)]
+  } else {
+    rels <- list.files(root_abs, recursive = TRUE, all.files = FALSE, no.. = TRUE)
+    rels <- file.path(root_subdir, gsub("\\\\","/", rels))
+  }
+  rels <- sort(unique(sub(paste0("^", root_subdir, "/?"), "", gsub("\\\\","/", rels))))
+  truncated <- FALSE
+  if (length(rels) > max_entries) { rels <- rels[seq_len(max_entries)]; truncated <- TRUE }
+  tree <- .echogo_tree_lines(rels)
+  header <- sprintf("<code>%s/</code>", esc_html(root_subdir))
+  extra  <- if (truncated) "\n… (truncated)" else ""
+  sprintf("<pre>%s\n%s%s</pre>", header, tree, extra)
+}
+
+section_dir_tree <- function(title, roots, notes = list(), max_entries = 800) {
+  roots <- Filter(nzchar, gsub("\\\\","/", roots))
+  # 1) case-insensitive de-dup of the names passed
+  roots <- roots[!duplicated(tolower(roots))]
+
+  # 2) de-dup if different casings resolve to the same absolute dir
+  norm_abs <- function(r) {
+    normalizePath(file.path(base_dir, r), winslash = "/", mustWork = FALSE)
+  }
+  keys <- tolower(vapply(roots, norm_abs, character(1)))
+  roots <- roots[!duplicated(keys)]
+
+  if (!length(roots)) {
+    return(cat(EchoGO:::.echogo_html_details(paste0("📁 ", title, " — files & folders"),
+                                             "<em>No roots specified.</em>")))
+  }
+  trees <- vapply(roots, function(r) .echogo_tree_for_root(r, max_entries), character(1))
+  notes_html <- ""
+  if (length(notes)) {
+    li <- vapply(names(notes), function(k) {
+      sprintf("<li><code>%s</code> — %s</li>", esc_html(k), notes[[k]])
+    }, character(1))
+    notes_html <- sprintf("<div style='margin-top:6px'><strong>What you’ll find:</strong><ul>%s</ul></div>", paste(li, collapse=""))
+  }
+  inner <- paste(c(trees, notes_html), collapse = "\n")
+  cat(EchoGO:::.echogo_html_details(paste0("📁 ", title, " — files & folders"), inner))
+}
+
+# ---- Debug panel (collapsible) ----
+html_details <- function(summary, inner_html) {
+  EchoGO:::.echogo_html_details(summary, inner_html)
+}
+debug_df <- tibble(
+  base_dir = base_dir,
+  report_dir = report_dir,
+  index_path = file.path(base_dir, "__file_index.csv"),
+  index_exists = file.exists(file.path(base_dir, "__file_index.csv")),
+  index_rows = nrow(idx)
+)
+debug_first <- paste(utils::head(idx$rel_path, 10), collapse = "<br/>")
+
+if (isTRUE(p$debug)) {
+  cat(html_details("🔧 Debug — directories & index", knitr::kable(debug_df)))
+  cat(html_details("🔧 Debug — first 10 index rows", debug_first))
+}
+
+```
+
+---
+
+## Overview
+
+This report summarizes EchoGO outputs generated under:
+
+- **Base directory:** `r base_dir %||% "(unknown)"`
+- **Sections included:** `r paste(params$sections, collapse = ", ")`
+
+If a plot/table is missing, the section still renders and marks the missing file. This template avoids loading large media by default; click ▶ to toggle any figure embed.
+
+---
+
+
+```{r species_used_all, results='asis'}
+# --- Locate and read the authoritative species list ---
+base_dir_rmd <- if (exists("base_dir")) base_dir else tryCatch(params$dirs$base, error=function(e) NULL)
+sp_file <- if (!is.null(base_dir_rmd)) file.path(base_dir_rmd, "__species_used.txt") else NA_character_
+
+read_species_txt <- function(path) {
+  if (is.na(path) || !file.exists(path)) return(character(0))
+  v <- readLines(path, warn = FALSE, encoding = "UTF-8")
+  v <- trimws(v)
+  v <- v[!grepl("^\\s*#", v)]      # drop comments
+  v <- v[nzchar(v)]                # drop blank lines
+  unique(v)
+}
+
+species <- read_species_txt(sp_file)
+
+if (!length(species)) {
+  cat("<em>No __species_used.txt found or it contained no species.</em>\n\n")
+} else {
+  # --- Optional enrichment: names + NCBI (if available) ---
+  sp_tbl <- tryCatch(EchoGO::echogo_gprofiler_species(refresh = FALSE), error = function(e) NULL)
+  if (!is.null(sp_tbl) && nrow(sp_tbl)) {
+    df <- tibble::tibble(organism = species) |>
+      dplyr::left_join(sp_tbl[, c("organism","name","ncbi")], by = "organism")
+  } else {
+    df <- tibble::tibble(organism = species, name = NA_character_, ncbi = NA_character_)
+  }
+
+  # --- Summary line ---
+  cat(sprintf("**Species included in this run (%d):** %s\n\n",
+              nrow(df), paste(df$organism, collapse = ", ")))
+
+  # --- Details list (show names/NCBI when known) ---
+  items <- apply(df, 1, function(r) {
+    label_name <- if (!is.na(r[["name"]]) && nzchar(r[["name"]])) paste0(" — <em>", r[["name"]], "</em>") else ""
+    label_ncbi <- if (!is.na(r[["ncbi"]]) && nzchar(r[["ncbi"]])) paste0(" (NCBI: ", r[["ncbi"]], ")") else ""
+    sprintf("<li><code>%s</code>%s%s</li>", r[["organism"]], label_name, label_ncbi)
+  })
+  cat("**Species details:**\n<ul>", paste(items, collapse = "\n"), "</ul>\n\n")
+
+  # --- Save CSV next to the report ---
+  if (!is.null(base_dir_rmd)) {
+    out_csv <- file.path(base_dir_rmd, "__species_used_with_names.csv")
+    try(utils::write.csv(df, out_csv, row.names = FALSE, na = ""), silent = TRUE)
+    rel <- {
+      norm <- function(x) gsub("\\\\","/", x)
+      sub(paste0("^", norm(base_dir_rmd), "/?"), "", norm(out_csv))
+    }
+    cat(sprintf("<div style='color:#555'>Saved mapping: <a href='%s' target='_blank'>__species_used_with_names.csv</a></div>\n\n", rel))
+  }
+
+  # --- Table (DT if available, else kable) ---
+  if (requireNamespace("DT", quietly = TRUE)) {
+    DT::datatable(df, options = list(pageLength = 10, dom = "ftp"), rownames = FALSE)
+  } else {
+    print(knitr::kable(df, format="html", table.attr="class='table table-sm table-striped'",
+                       caption = "Species used in this run"))
+  }
+}
+
+```
+
+```{r, results='asis'}
+if ("goseq" %in% sections) cat("## 1) GOseq — Bias-aware enrichment (summary)\n\n")
+
+```
+
+```{r, results='asis', eval = "goseq" %in% params$sections}
+cat("**How to read these panels:** GOseq corrects RNA-seq length bias using your organism’s annotations; the lollipop PDFs show top enriched GO terms per ontology and depth. Prioritize terms with low FDR and strong fold enrichment—this is your species-specific baseline against which cross-species results are compared.\n\n")
+
+sup_csv <- get_one("^(orthology_based_enrichment_support|goseq)/.+supplementary.+\\.csv$")
+pdf_bp  <- get_one("^(orthology_based_enrichment_support|goseq)/.+lollipop.+BP.*\\.pdf$")
+pdf_cc  <- get_one("^(orthology_based_enrichment_support|goseq)/.+lollipop.+CC.*\\.pdf$")
+pdf_mf  <- get_one("^(orthology_based_enrichment_support|goseq)/.+lollipop.+MF.*\\.pdf$")
+
+stats_tbl <- data.frame()
+if (!is.na(sup_csv)) {
+  x <- suppressMessages(readr::read_csv(sup_csv, show_col_types = FALSE))
+  if (nrow(x)) {
+    stats_tbl <- x %>%
+      mutate(ontology = factor(.data$ontology, levels = c("BP","MF","CC"))) %>%
+      group_by(.data$ontology) %>%
+      summarise(
+        terms_signif = n(),
+        median_FE    = median(.data$foldEnrichment, na.rm = TRUE),
+        median_FDR   = median(.data$over_represented_FDR, na.rm = TRUE),
+        .groups = "drop"
+      )
+  }
+}
+if (nrow(stats_tbl)) {
+  cat("### Summary statistics\n\n")
+  print(knitr::kable(stats_tbl, format="html", table.attr="class='table table-sm table-striped'",
+                     caption = "GOseq significant terms — per ontology (FDR ≤ 0.05)"))
+}
+
+cat(embed_pdf_toggle("Top 50 Enriched GO Terms — Biological Process (GOseq, all depths)", pdf_bp))
+cat(embed_pdf_toggle("Top 50 Enriched GO Terms — Cellular Component (GOseq, all depths)", pdf_cc))
+cat(embed_pdf_toggle("Top 50 Enriched GO Terms — Molecular Function (GOseq, all depths)", pdf_mf))
+
+
+```
+
+```{r, results='asis'}
+# NEW: Files & folders for GOseq
+section_dir_tree(
+  title = "GOseq outputs",
+  roots = c("orthology_based_enrichment_support","goseq"),
+  notes = list(
+    "…lollipop…BP/CC/MF….pdf" = "Top enriched GO terms per ontology (all depths).",
+    "…supplementary….csv"     = "Per-term stats (IDs, FDR, FE, counts) for downstream filtering."
+  )
+)
+```
+
+
+```{r, results='asis'}
+if ("gprofiler" %in% sections) cat("## 2) g:Profiler — Cross-species enrichment\n\n")
+
+```
+
+```{r, results='asis', eval = "gprofiler" %in% params$sections}
+cat("**How to read these panels:** g:Profiler performs orthology-based enrichment across model species. Panels with a custom background are bias-controlled and robust; the no-background panels are genome-wide, exploratory screens. The previews below automatically select the species with the most significant terms in no-background mode (when available).\n\n")
+
+# ---- Summary table (unchanged) ----
+sum_csv <- get_one("^(cross_species_gprofiler|gprofiler)/.+enrichment_summary\\.csv$")
+if (!is.na(sum_csv)) {
+  gp_sum <- suppressMessages(readr::read_csv(sum_csv, show_col_types = FALSE))
+  print(knitr::kable(
+    gp_sum,
+    format       = "html",
+    table.attr   = "class='table table-sm table-striped'",
+    caption      = "g:Profiler enrichment summary (all species / modes)"
+  ))
+}
+
+# ---- Robust species pickers: per-mode (with_bg vs nobg) ----
+pick_top_species <- function(csv_path, mode_keys) {
+  if (is.na(csv_path) || !file.exists(csv_path)) return(NA_character_)
+  x <- suppressMessages(readr::read_csv(csv_path, show_col_types = FALSE))
+  if (!nrow(x)) return(NA_character_)
+  names(x) <- tolower(names(x))
+
+  # normalize the species column name
+  sp_col <- intersect(names(x), c("species","species_code","species_label"))
+  if (!length(sp_col)) return(NA_character_)
+  sp_col <- sp_col[1]
+
+  # normalize n_sig column (coerce to numeric)
+  if (!"n_sig" %in% names(x)) return(NA_character_)
+  x$n_sig <- suppressWarnings(as.numeric(x$n_sig))
+
+  # normalize mode values
+  mode_map <- c("with_bg","withbg","bg","custom_bg","with-background","with background",
+                "nobg","no_bg","no-bg","nobackground","no background","genome-wide")
+  keep_rows <- x$mode %in% mode_keys | x$mode %in% mode_map[mode_map %in% mode_keys]
+  x <- x[keep_rows, , drop = FALSE]
+  if (!nrow(x)) return(NA_character_)
+
+  x %>%
+    dplyr::group_by(.data[[sp_col]]) %>%
+    dplyr::summarise(n_tot = sum(.data$n_sig, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::arrange(dplyr::desc(.data$n_tot), .data[[sp_col]]) %>%
+    dplyr::pull(.data[[sp_col]]) %>%
+    .[1]
+}
+
+chosen_species_bg <- pick_top_species(sum_csv, mode_keys = c("with_bg","withbg","bg","custom_bg"))
+chosen_species_nb <- pick_top_species(sum_csv, mode_keys = c("nobg","no_bg","genome-wide"))
+
+# ---- File resolver (unchanged API) ----
+gp_pdf <- function(spec, mode_key = c("with_bg","nobg"), ont = c("BP","CC","MF")){
+  mode_key <- match.arg(mode_key); ont <- match.arg(ont)
+  esc <- function(s) paste0("\\Q", s, "\\E")
+  mode_dir <- if (mode_key == "with_bg") "with_custom_background" else "no_background_genome[-_]wide"
+  base <- sprintf("(cross_species_gprofiler|gprofiler)/(.*/)?%s/", mode_dir)
+  spec_pat <- if (!is.na(spec) && nzchar(spec)) esc(spec) else NULL
+  file_pat <- if (mode_key == "with_bg") {
+    if (!is.null(spec_pat)) sprintf("gprofiler_%s_with_bg_GO_%s_lollipop\\.pdf$", spec_pat, ont)
+    else                    sprintf("gprofiler_.*_with_bg_GO_%s_lollipop\\.pdf$",      ont)
+  } else {
+    if (!is.null(spec_pat)) sprintf("gprofiler_%s_nobg_GO_%s_lollipop\\.pdf$",  spec_pat, ont)
+    else                    sprintf("gprofiler_.*_nobg_GO_%s_lollipop\\.pdf$",        ont)
+  }
+  pats <- c(
+    if (!is.null(spec_pat)) paste0(base, file_pat),
+    paste0(base, if (mode_key == "with_bg")
+                  sprintf("gprofiler_.*_with_bg_GO_%s_lollipop\\.pdf$", ont)
+                else
+                  sprintf("gprofiler_.*_nobg_GO_%s_lollipop\\.pdf$", ont))
+  )
+  for (pat in pats) {
+    p <- get_one(pat)
+    if (!is.na(p)) return(p)
+  }
+  NA_character_
+}
+
+# ---- Embed previews (species hidden from titles) ----
+cat("### With custom background (robust)\n\n")
+bp_bg <- gp_pdf(chosen_species_bg, "with_bg", "BP")
+cc_bg <- gp_pdf(chosen_species_bg, "with_bg", "CC")
+mf_bg <- gp_pdf(chosen_species_bg, "with_bg", "MF")
+cat(embed_pdf_toggle("g:Profiler — Top GO:BP terms with background", bp_bg))
+cat(embed_pdf_toggle("g:Profiler — Top GO:CC terms with background", cc_bg))
+cat(embed_pdf_toggle("g:Profiler — Top GO:MF terms with background", mf_bg))
+
+cat("### Exploratory (genome-wide, no background)\n\n")
+bp_nb <- gp_pdf(chosen_species_nb, "nobg", "BP")
+cc_nb <- gp_pdf(chosen_species_nb, "nobg", "CC")
+mf_nb <- gp_pdf(chosen_species_nb, "nobg", "MF")
+cat(embed_pdf_toggle("g:Profiler — Top GO:BP terms without background", bp_nb))
+cat(embed_pdf_toggle("g:Profiler — Top GO:CC terms without background", cc_nb))
+cat(embed_pdf_toggle("g:Profiler — Top GO:MF terms without background", mf_nb))
+
+# (Optional) tiny footnote about auto-selection (no species name shown)
+cat("<p class='text-muted'><em>Species auto-selected per mode by highest number of significant terms (n_sig) in the g:Profiler summary.</em></p>\n\n")
+
+```
+
+```{r, results='asis'}
+# NEW: Files & folders for g:Profiler
+section_dir_tree(
+  title = "g:Profiler outputs",
+  roots = c("cross_species_gprofiler","gprofiler"),
+  notes = list(
+    "with_custom_background/"               = "Bias-controlled enrichment with custom background (robust).",
+    "no_background_genome_wide/ (or -wide)" = "Genome-wide exploratory mode (no background).",
+    "…_with_bg_GO_{BP,CC,MF}_lollipop.pdf"  = "Top terms per ontology (robust).",
+    "…_nobg_GO_{BP,CC,MF}_lollipop.pdf"     = "Exploratory top terms per ontology."
+  )
+)
+
+```
+
+
+```{r, results='asis'}
+if ("consensus" %in% sections) cat("## 3) EchoGO Consensus — True vs Exploratory\n\n")
+
+```
+
+```{r, results='asis', eval = "consensus" %in% params$sections}
+cat("**How to read these panels:** EchoGO integrates GOseq with background-corrected g:Profiler to rank terms by a composite consensus score that rewards multi-tool and multi-species agreement plus effect size and significance. True Consensus plots show high-confidence terms; Exploratory plots include all significant terms for hypothesis generation.\n\n")
+
+cons_xlsx <- get_one("^(consensus_enrichment|consensus)/.*(exploration|with_and_without_bg).*\\.xlsx$")
+cons_df <- {
+  if (!is.na(cons_xlsx) && file.exists(cons_xlsx)) {
+    if (!requireNamespace("openxlsx", quietly = TRUE)) stop("openxlsx is required to read Excel files")
+    openxlsx::read.xlsx(cons_xlsx)
+  } else data.frame()
+}
+if (nrow(cons_df)) {
+  cons_stats <- cons_df %>%
+    mutate(ontology = factor(.data$ontology, levels = c("BP","MF","CC","KEGG"))) %>%
+    group_by(.data$ontology) %>%
+    summarise(
+      terms_signif = n(),
+      median_consensus_score      = median(.data$consensus_score, na.rm = TRUE),
+      median_consensus_score_all  = median(.data$consensus_score_all, na.rm = TRUE),
+      n_goseq    = sum(!is.na(.data$min_pval_goseq)       & .data$min_pval_goseq       <= 0.05, na.rm = TRUE),
+      n_gprof_bg = sum(!is.na(.data$min_pval_gprof_bg)    & .data$min_pval_gprof_bg    <= 0.05, na.rm = TRUE),
+      n_gprof_nbg= sum(!is.na(.data$min_pval_gprof_nobg)  & .data$min_pval_gprof_nobg  <= 0.05, na.rm = TRUE),
+      .groups = "drop"
+    )
+  cat("### Summary statistics\n\n")
+  print(knitr::kable(cons_stats, format="html", table.attr="class='table table-sm table-striped'",
+                     caption = "Consensus table overview by ontology"))
+}
+
+tc_bp   <- get_one("(consensus_plots_strict_true_consensus|consensus_plots_strict_true[_-]consensus|consensus/plots_true[_-]consensus)/.+BP.*\\.pdf$")
+tc_cc   <- get_one("(consensus_plots_strict_true_consensus|consensus_plots_strict_true[_-]consensus|consensus/plots_true[_-]consensus)/.+CC.*\\.pdf$")
+tc_mf   <- get_one("(consensus_plots_strict_true_consensus|consensus_plots_strict_true[_-]consensus|consensus/plots_true[_-]consensus)/.+MF.*\\.pdf$")
+tc_kegg <- get_one("(consensus_plots_strict_true_consensus|consensus_plots_strict_true[_-]consensus|consensus/plots_true[_-]consensus)/.+KEGG.*\\.pdf$")
+cat(embed_pdf_toggle("True Consensus — Top 50 GO:BP (all depths)", tc_bp))
+cat(embed_pdf_toggle("True Consensus — Top 50 GO:CC (all depths)", tc_cc))
+cat(embed_pdf_toggle("True Consensus — Top 50 GO:MF (all depths)", tc_mf))
+cat(embed_pdf_toggle("True Consensus — Top 50 KEGG pathways (all depths)", tc_kegg))
+
+ex_bp   <- get_one("(consensus_plots_all_exploratory|consensus/plots_exploratory)/.+BP.*\\.pdf$")
+ex_cc   <- get_one("(consensus_plots_all_exploratory|consensus/plots_exploratory)/.+CC.*\\.pdf$")
+ex_mf   <- get_one("(consensus_plots_all_exploratory|consensus/plots_exploratory)/.+MF.*\\.pdf$")
+ex_kegg <- get_one("(consensus_plots_all_exploratory|consensus/plots_exploratory)/.+KEGG.*\\.pdf$")
+cat(embed_pdf_toggle("Exploratory — Top 50 GO:BP (all depths)", ex_bp))
+cat(embed_pdf_toggle("Exploratory — Top 50 GO:CC (all depths)", ex_cc))
+cat(embed_pdf_toggle("Exploratory — Top 50 GO:MF (all depths)", ex_mf))
+cat(embed_pdf_toggle("Exploratory — Top 50 KEGG pathways (all depths)", ex_kegg))
+
+
+```
+
+```{r, results='asis'}
+# NEW: Files & folders for Consensus
+section_dir_tree(
+  title = "Consensus outputs",
+  roots = c(
+  "consensus_enrichment","consensus",
+  "consensus_plots_strict_true_consensus",
+  "consensus_plots_strict_true-consensus",
+  "consensus_plots_all_exploratory",
+  "consensus/plots_true_consensus",
+  "consensus/plots_exploratory"
+),
+  notes = list(
+    "…with_and_without_bg…xlsx / …exploration….xlsx" = "Merged consensus tables with per-term scores and p-values.",
+    "consensus_plots_strict_true_consensus/"         = "High-confidence True Consensus top-50 plots.",
+    "consensus_plots_all_exploratory/"               = "Exploratory top-50 plots across ontologies.",
+    "…KEGG….pdf"                                     = "KEGG pathway summaries (if generated)."
+  )
+)
+
+
+```
+
+
+```{r rrvgo-header, results='asis', eval = "rrvgo" %in% params$sections}
+cat("## 4) RRvGO — Semantic similarity / redundancy reduction\n\n")
+cat("**How to read these panels:** RRvGO clusters semantically similar GO terms to reduce redundancy. In the treemap, larger tiles represent more representative or higher-scoring terms. These views condense long lists into coherent functional themes in both True Consensus and Exploratory modes.\n\n")
+
+stopifnot(exists("idx"))
+
+# ---- Safe fallbacks (used only if your helpers aren't attached) ----
+if (!exists("exists_file")) {
+  exists_file <- function(x) {
+    x2 <- ifelse(is.na(x) | !nzchar(x), NA_character_, x)
+    file.exists(suppressWarnings(normalizePath(x2, winslash = "/", mustWork = FALSE)))
+  }
+}
+if (!exists("embed_pdf_toggle")) {
+  embed_pdf_toggle <- function(title, path) {
+    sprintf(
+      "<details open><summary>%s</summary><object data=\"%s\" type=\"application/pdf\" width=\"100%%\" height=\"800px\"></object></details>\n",
+      htmltools::htmlEscape(title), path
+    )
+  }
+}
+
+# ---- Helper: pick treemaps from the index (supports OrgDb subdirs) ----
+# Matches e.g.:
+#   Similarity_based_consensus/rrvgo_true_consensus_with_bg/OrgDb=org.Mm.eg.db/rrvgo_BP_treemap.pdf
+#   Similarity_based_consensus/rrvgo_exploratory_all_significant/OrgDb=org.Dr.eg.db/rrvgo_CC_treemap.pdf
+pick_rrvgo_rows <- function(mode_rx, ont) {
+  rx <- sprintf(
+  "(^|/)((Similarity|similarity)_based_consensus|rrvgo)/(rrvgo_)?%s/OrgDb=[^/]+/(rrvgo_)?%s_treemap\\.pdf$",
+  mode_rx, ont
+)
+  w <- grepl(rx, idx$rel_path, ignore.case = TRUE)
+  if (!any(w)) return(tibble::tibble())
+  rel <- idx$rel_path[w]
+  tibble::tibble(
+    OrgDb     = sub("^.*OrgDb=([^/]+).*$", "\\1", rel),
+    mode      = mode_rx,
+    ontology  = ont,
+    rel_path  = rel,
+    full_path = idx$full_path[w]
+  )
+}
+
+# Modes & ontologies
+onts  <- c("BP","CC","MF")
+modes_named <- c("true_consensus_with_bg" = "True Consensus",
+                 "exploratory_all_significant" = "Exploratory")
+
+# Gather rows
+rows <- list()
+for (ont in onts) {
+  r1 <- pick_rrvgo_rows("true_consensus_with_bg", ont)
+  if (nrow(r1)) r1$mode <- modes_named[["true_consensus_with_bg"]]
+  r2 <- pick_rrvgo_rows("exploratory_all_significant", ont)
+  if (nrow(r2)) r2$mode <- modes_named[["exploratory_all_significant"]]
+  rows <- c(rows, list(r1, r2))
+}
+rr_tbl <- dplyr::bind_rows(rows)
+
+if (!nrow(rr_tbl)) {
+  cat("<div style='color:#a33'><em>No RRvGO treemaps were matched from the index. Check that files look like <code>Similarity_based_consensus/rrvgo_&lt;mode&gt;/OrgDb=&lt;pkg&gt;/rrvgo_&lt;ONT&gt;_treemap.pdf</code>.</em></div>\n")
+} else {
+  # Deduplicate and confirm existence via ABS path; embed using ABS path (like get_one)
+  rr_tbl <- rr_tbl |>
+    dplyr::distinct(OrgDb, mode, ontology, rel_path, full_path, .keep_all = TRUE) |>
+    dplyr::arrange(OrgDb,
+                   factor(mode, levels = c("True Consensus","Exploratory")),
+                   factor(ontology, levels = onts)) |>
+    dplyr::mutate(exists = exists_file(.data$full_path))
+
+  # Compact availability table
+  print(knitr::kable(
+    rr_tbl[, c("OrgDb","mode","ontology","rel_path","exists")],
+    col.names = c("OrgDb","Mode","Ontology","treemap (relative)","exists"),
+    format = "html", table.attr = "class='table table-sm table-striped'",
+    caption = "RRvGO treemap availability by OrgDb / mode / ontology"
+  ))
+
+  # ---- Embed by OrgDb × Mode × Ontology (ABS path) ----
+  for (odb in unique(rr_tbl$OrgDb)) {
+    cat(sprintf("\n### %s\n\n", odb))
+    for (m in c("True Consensus","Exploratory")) {
+      cat(sprintf("#### %s\n\n", m))
+      for (ont in onts) {
+        sub <- rr_tbl[rr_tbl$OrgDb == odb & rr_tbl$mode == m & rr_tbl$ontology == ont & rr_tbl$exists, ]
+        if (nrow(sub)) {
+          cat(embed_pdf_toggle(sprintf("RRvGO Treemap — %s — %s", ont, m), sub$full_path[1]))
+        }
+      }
+    }
+  }
+}
+
+```
+
+```{r, results='asis', eval = "rrvgo" %in% params$sections}
+section_dir_tree(
+  title = "RRvGO outputs",
+  roots = { rts <- c("similarity_based_consensus","Similarity_based_consensus","rrvgo"); rts[!duplicated(tolower(rts))] },
+  notes = list(
+    "rrvgo_true_consensus_with_bg/OrgDb=<pkg>/"        = "True Consensus RRvGO outputs per OrgDb.",
+    "rrvgo_exploratory_all_significant/OrgDb=<pkg>/"   = "Exploratory RRvGO outputs per OrgDb.",
+    "…/rrvgo_<ONT>_treemap.pdf"                        = "Redundancy-reduced treemaps (ONT ∈ {BP, CC, MF}).",
+    "…/rrvgo_<ONT>_scatterplot.pdf"                    = "Semantic scatterplots.",
+    "…/rrvgo_<ONT>_heatmap.pdf"                        = "Term similarity heatmaps.",
+    "…/rrvgo_<ONT>_bubbleplot.pdf"                     = "Representative term bubbleplots.",
+    "…/rrvgo_<ONT>_wordcloud.pdf"                      = "Wordclouds of representative terms.",
+    "…/rrvgo_<ONT>_clusters.csv"                       = "Reduced clusters table (cluster reps & members)."
+  )
+)
+
+```
+
+```{r, results='asis'}
+if ("networks" %in% sections) cat("## 5) Enrichment Networks — summary & interactive views\n\n")
+```
+
+
+```{r, results='asis', eval = "networks" %in% params$sections}
+cat("**How to read these panels:** Nodes are enriched GO terms; edges join terms with semantic or GO-graph similarity. With-background networks give a conservative backbone; with-background-and-noBG networks expand the landscape with exploratory terms. Inspect hubs and dense modules for coherent biology; use the interactive views to explore neighborhoods and term origins.\n\n")
+
+stopifnot(exists("idx"))
+
+# Summary CSVs (unchanged logic, now via idx)
+sum_bg <- get_one("^(Network_analysis|network_analysis|networks)/(summary_with_bg\\.csv|with_bg/network_summary_.+\\.csv)$")
+sum_ex <- get_one("^(Network_analysis|network_analysis|networks)/(summary_with_bg_and_nobg\\.csv|with_bg_and_nobg/network_summary_.+\\.csv)$")
+
+if (!is.na(sum_bg)) print(
+  knitr::kable(
+    readr::read_csv(sum_bg, show_col_types = FALSE) %>% dplyr::mutate(mode = "With background"),
+    format = "html", table.attr = "class='table table-sm table-striped'",
+    caption = "Network summary — with background"
+  )
+)
+if (!is.na(sum_ex)) print(
+  knitr::kable(
+    readr::read_csv(sum_ex, show_col_types = FALSE) %>% dplyr::mutate(mode = "Exploratory"),
+    format = "html", table.attr = "class='table table-sm table-striped'",
+    caption = "Network summary — exploratory (with+noBG)"
+  )
+)
+
+# Interactive widgets from the index (absolute paths via idx$full_path)
+grab_net <- function(mode_dir, ont) {
+  rx <- sprintf("(^|/)(Network_analysis|network_analysis|networks)/%s/.+%s.+filtered\\.html$", mode_dir, ont)
+  hit <- idx$full_path[grepl(rx, idx$rel_path, ignore.case = TRUE)]
+  if (length(hit)) hit[1] else NA_character_
+}
+
+wb_bp <- grab_net("with_bg", "BP")
+wb_cc <- grab_net("with_bg", "CC")
+wb_mf <- grab_net("with_bg", "MF")
+
+we_bp <- grab_net("with_bg_and_nobg", "BP")
+we_cc <- grab_net("with_bg_and_nobg", "CC")
+we_mf <- grab_net("with_bg_and_nobg", "MF")
+
+# External iframe embed (safe; avoids Pandoc ingest)
+embed_html_toggle_external_plus("Interactive Network — BP (with background)", wb_bp)
+embed_html_toggle_external_plus("Interactive Network — CC (with background)", wb_cc)
+embed_html_toggle_external_plus("Interactive Network — MF (with background)", wb_mf)
+embed_html_toggle_external_plus("Interactive Network — BP (exploratory)",     we_bp)
+embed_html_toggle_external_plus("Interactive Network — CC (exploratory)",     we_cc)
+embed_html_toggle_external_plus("Interactive Network — MF (exploratory)",     we_mf)
+
+```
+
+
+```{r, results='asis'}
+section_dir_tree(
+  title = "Network analysis outputs",
+  roots = { rts <- c("Network_analysis","network_analysis","networks"); rts[!duplicated(tolower(rts))] },
+  notes = list(
+    "with_bg/"                                       = "Interactive networks from bias-controlled sets (robust).",
+    "with_bg_and_nobg/"                              = "Interactive networks combining robust + exploratory terms.",
+    "network_{BP,CC,MF}_…_filtered.html"            = "Interactive graph widgets embedded above.",
+    "summary_with_bg*.csv / …with_bg_and_nobg*.csv"  = "Per-network summaries (nodes, edges, degree)."
+  )
+)
+
+
+```
+
+```{r, results='asis'}
+if ("evaluation" %in% sections) cat("## 6) Consensus Evaluation — EQI, rarefaction & network complexity\n\n")
+
+```
+
+```{r echogo-evaluation, results='asis', eval = "evaluation" %in% sections}
+
+cat("**How to read these panels:** EQI and fold-enrichment distributions summarize overall term quality and effect sizes; cumulative and rarefaction curves track how many unique terms appear as tools or species are added. A plateau in True Consensus with continued growth in Exploratory indicates robust, non-redundant signal; the network-complexity table quantifies structural differences between modes.\n\n")
+
+# --- Tiny guard (defined here in case it's not already available) ---
+if (!exists("safe_embed_pdf")) {
+  safe_embed_pdf <- function(title, path){
+    p <- tryCatch(as.character(path)[1], error=function(e) NA_character_)
+    if (!is.na(p) && nzchar(p) && file.exists(p)) cat(embed_pdf_toggle(title, p))
+  }
+}
+
+# Table (single CSV at parent level) — works for canonical *and* legacy
+ncc_csv <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/network_complexity_comparison\\.csv$")
+if (!is.na(ncc_csv)) {
+  tbl <- tryCatch(readr::read_csv(ncc_csv, show_col_types = FALSE), error = function(e) NULL)
+  if (!is.null(tbl)) {
+    print(knitr::kable(
+      tbl,
+      format = "html",
+      table.attr = "class='table table-sm table-striped'",
+      caption  = "Network complexity comparison (with BG vs exploratory)"
+    ))
+  }
+}
+
+
+# --- EXACT filenames present in your index ---
+eval_cum_tc <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/cumulative_curve_combined_true_consensus\\.pdf$")
+eval_cum_ex <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/cumulative_curve_combined_exploratory\\.pdf$")
+
+eqi_tc <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/EQI_distribution_by_ontology\\.pdf$")
+eqi_ex <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/exploratory_no_bg/EQI_distribution_by_ontology\\.pdf$")
+
+fe_tc  <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/FoldEnrichment_distribution_by_ontology\\.pdf$")
+fe_ex  <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/exploratory_no_bg/FoldEnrichment_distribution_by_ontology\\.pdf$")
+
+eval_rare_tc <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/rarefaction_curve_by_origin_true_consensus\\.pdf$")
+eval_rare_ex <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/rarefaction_curve_by_origin_exploratory\\.pdf$")
+
+
+# --- Safe embeds (no chunk-killing on missing files) ---
+safe_embed_pdf("Cumulative GO Terms — True Consensus",                eval_cum_tc)
+safe_embed_pdf("Cumulative GO Terms — Exploratory",                    eval_cum_ex)
+
+safe_embed_pdf("EQI Distribution by Ontology — True Consensus",        eqi_tc)
+safe_embed_pdf("EQI Distribution by Ontology — Exploratory",           eqi_ex)
+
+safe_embed_pdf("Fold Enrichment by Ontology — True Consensus",         fe_tc)
+safe_embed_pdf("Fold Enrichment by Ontology — Exploratory",            fe_ex)
+
+safe_embed_pdf("Rarefaction (1000 perms) — True Consensus",            eval_rare_tc)
+safe_embed_pdf("Rarefaction (1000 perms) — Exploratory",               eval_rare_ex)
+
+
+```
+
+```{r echogo-evaluation-tree, results='asis', eval = "evaluation" %in% sections}
+section_dir_tree(
+  title = "Consensus evaluation outputs",
+ roots = c(
+  "evaluation","evaluation/exploratory_no_bg",
+  "consensus_enrichment/comparison_to_goseq",
+  "consensus_enrichment/comparison_to_goseq/exploratory_no_bg"
+)
+,
+  notes = list(
+    "cumulative_curve_combined_{true_consensus,exploratory}.pdf"     = "Cumulative unique-terms vs. tools/species.",
+    "rarefaction_curve_by_origin_{true_consensus,exploratory}.pdf"   = "Rarefaction (1000 perms) by origin.",
+    "EQI_distribution_by_ontology.pdf"                               = "Quality index distribution by ontology.",
+    "FoldEnrichment_distribution_by_ontology.pdf"                    = "Effect size distribution by ontology.",
+    "network_complexity_comparison.csv"                              = "Structural metrics for robust vs exploratory.",
+    "venn_*.pdf (in exploratory_no_bg/)"                             = "Exploratory overlap diagnostics.",
+    "*.xlsx"                                                         = "Tabular summaries for downstream analysis."
+  )
+)
+
+```
+
+---
+
+### Reproducibility
+
+Rendered on `r format(Sys.time(), '%Y-%m-%d %H:%M')`. Paths are resolved relative to `params$dirs`. Missing artefacts are reported inline without stopping the render.
+
