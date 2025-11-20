@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use EchoGO, please cite it as follows."
+title: "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms"
+version: "1.0.0"
+authors:
+  - family-names: "Escobar-Sierra"
+    given-names: "Camilo"
+    email: "camilo.escobar-sierra@rwth-aachen.de"
+    affiliation: >
+      Institute for Environmental Research, RWTH Aachen University, Aachen, Germany;
+  - family-names: "Langschied"
+    given-names: "Felix"
+    email: "langschied@bio.uni-frankfurt.de"
+    affiliation: >
+      Institute of Cell Biology and Neuroscience, Applied Bioinformatics Group,
+      Goethe University Frankfurt, Frankfurt am Main, Germany
+  - family-names: "Inostroza"
+    given-names: "Pedro A."
+    email: "pedro.inostroza@rwth-aachen.de"
+    affiliation: >
+      Institute for Environmental Research, RWTH Aachen University, Aachen, Germany;
+      Department of Biological and Environmental Science, University of Gothenburg,
+      Gothenburg, Sweden
+date-released: "2025-08-12"
+doi: "10.5281/zenodo.17658715"
+repository-code: "https://github.com/miloes114/EchoGO"
+preferred-citation:
+  type: article
+  title: "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms"
+  authors:
+    - family-names: "Escobar-Sierra"
+      given-names: "Camilo"
+    - family-names: "Langschied"
+      given-names: "Felix"
+    - family-names: "Inostroza"
+      given-names: "Pedro A."
+  year: "2025"
+  journal: "In preparation"
+  doi: "10.5281/zenodo.17658715"
+  url: "https://doi.org/10.5281/zenodo.17658715"
