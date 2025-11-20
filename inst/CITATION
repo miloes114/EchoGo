@@ -4,18 +4,18 @@ bibentry(
   bibtype = "Article",
   title   = "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms",
   author  = c(
-    person("Camilo", "Escobar-Sierra"),
-    person("Felix",  "Langschied"),
+    person("Camilo",  "Escobar-Sierra"),
+    person("Felix",   "Langschied"),
     person("Pedro A.", "Inostroza")
   ),
   year    = "2025",
   journal = "In preparation",
-  doi     = "10.5281/zenodo.xxxxxxx",   # Replace once Zenodo assigns DOI
-  url     = "https://doi.org/10.5281/zenodo.xxxxxxx",
+  doi     = "10.5281/zenodo.17658715",
+  url     = "https://doi.org/10.5281/zenodo.17658715",
   textVersion =
     paste(
       "Escobar-Sierra C., Langschied F., Inostroza P.A., et al. (2025).",
       "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms.",
-      "Zenodo. DOI: 10.5281/zenodo.xxxxxxx."
+      "Zenodo. DOI: 10.5281/zenodo.17658715"
     )
 )

@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17658715.svg)](https://doi.org/10.5281/zenodo.17658715)
+
 # 🧬 EchoGO  
 ### Cross-Species Consensus Enrichment for Non-Model Organisms
 
@@ -251,9 +253,9 @@ echogo_run("my_project/input", "my_project/results")
 
 If you use EchoGO in publications, please cite:
 
-> Escobar-Sierra C., Langschied F., Inostroza P.A., *et al.* (2025).  
+> Escobar-Sierra C., Langschied F., Inostroza P.A. (2025).  
 > **EchoGO: Cross-Species Consensus Functional Enrichment Analysis.**  
-> Zenodo. DOI: *to be added after first GitHub release*.
+> Zenodo. DOI: "https://doi.org/10.5281/zenodo.17658715"
 
 Full citation entry is included in `inst/CITATION`.
 
@@ -262,7 +264,7 @@ Full citation entry is included in `inst/CITATION`.
 # 🐛 Issues & Contact
 
 Please report bugs, suggestions, or feature requests at:  
-**https://github.com/your-org/EchoGO/issues**
+**https://github.com/miloes114/EchoGo/issues**
 
 For general questions, contact the maintainers.
 
