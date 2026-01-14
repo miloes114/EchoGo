@@ -50,6 +50,7 @@ To install with vignettes:
 ``` r
 remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE)
 ```
+**Windows note**: If installation warns about curl.dll “Permission denied”, close all R/RStudio sessions and delete the 00LOCK folder in your user library, then reinstall curl and EchoGO.
 
 ### 4) Install annotation packages (GO.db + OrgDb)
 
@@ -86,7 +87,8 @@ install.packages(c(
 ### 7) Test your installation
 
 ``` r
-echogo_quickstart(run_demo = TRUE)
+library(EchoGO)
+EchoGO::echogo_quickstart(run_demo = TRUE)
 ```
 
 This confirms that consensus scoring, RRvGO, networks, and the HTML report all run successfully.
