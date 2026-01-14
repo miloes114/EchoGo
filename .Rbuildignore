@@ -3,8 +3,6 @@
 ^data-raw$
 ^_pkgdown\.yml$
 ^pkgdown$
-^docs$
 ^README\.Rmd$
 
-^doc$
 ^Meta$

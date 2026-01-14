@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>EchoGO Workflow: from inputs to consensus</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">EchoGO Workflow: from inputs to
+consensus</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#before-you-start-what-goes-into-input" id="toc-before-you-start-what-goes-into-input"><span class="toc-section-number">1</span> Before you start: what goes into
+<code>input/</code></a>
+<ul>
+<li><a href="#classic-de-novo-transcriptome-layout-trinity-trinotate-goseq" id="toc-classic-de-novo-transcriptome-layout-trinity-trinotate-goseq"><span class="toc-section-number">1.1</span> 1) Classic / de novo transcriptome
+layout (Trinity + Trinotate + GOseq)</a></li>
+<li><a href="#reference-based-rna-seq-layout-deseq2-goseq-precomputed" id="toc-reference-based-rna-seq-layout-deseq2-goseq-precomputed"><span class="toc-section-number">1.2</span> 2) Reference-based RNA-seq layout
+(DESeq2 + GOseq precomputed)</a></li>
+</ul></li>
+<li><a href="#welcome-to-echogo" id="toc-welcome-to-echogo"><span class="toc-section-number">2</span> Welcome to EchoGO</a></li>
+<li><a href="#quick-orientation" id="toc-quick-orientation"><span class="toc-section-number">3</span> Quick orientation</a>
+<ul>
+<li><a href="#load-echogo-and-check-your-setup" id="toc-load-echogo-and-check-your-setup"><span class="toc-section-number">3.1</span> Load EchoGO and check your
+setup</a></li>
+<li><a href="#access-demo-data-and-results" id="toc-access-demo-data-and-results"><span class="toc-section-number">3.2</span> Access demo data and
+results</a></li>
+</ul></li>
+<li><a href="#configuring-echogo" id="toc-configuring-echogo"><span class="toc-section-number">4</span> Configuring EchoGO</a>
+<ul>
+<li><a href="#default-orgdb-and-species" id="toc-default-orgdb-and-species"><span class="toc-section-number">4.1</span> Default OrgDb and species</a></li>
+</ul></li>
+<li><a href="#choosing-species" id="toc-choosing-species"><span class="toc-section-number">5</span> Choosing species</a>
+<ul>
+<li><a href="#interactive-species-picker" id="toc-interactive-species-picker"><span class="toc-section-number">5.1</span> Interactive species
+picker</a></li>
+<li><a href="#validating-species-codes" id="toc-validating-species-codes"><span class="toc-section-number">5.2</span> Validating species codes</a></li>
+<li><a href="#common-organism-codes" id="toc-common-organism-codes"><span class="toc-section-number">5.3</span> Common organism codes</a></li>
+</ul></li>
+<li><a href="#running-the-pipeline" id="toc-running-the-pipeline"><span class="toc-section-number">6</span> Running the pipeline</a>
+<ul>
+<li><a href="#option-1-quick-start-with-demo-data" id="toc-option-1-quick-start-with-demo-data"><span class="toc-section-number">6.1</span> Option 1: Quick start with demo
+data</a></li>
+<li><a href="#option-2-create-a-project-scaffold" id="toc-option-2-create-a-project-scaffold"><span class="toc-section-number">6.2</span> Option 2: Create a project
+scaffold</a></li>
+<li><a href="#option-3a-run-the-scaffolded-workflow-with-echogo_run" id="toc-option-3a-run-the-scaffolded-workflow-with-echogo_run"><span class="toc-section-number">6.3</span> Option 3a: Run the scaffolded
+workflow with <code>echogo_run()</code></a></li>
+<li><a href="#option-3b-run-the-full-workflow-explicitly" id="toc-option-3b-run-the-full-workflow-explicitly"><span class="toc-section-number">6.4</span> Option 3b: Run the full workflow
+explicitly</a></li>
+<li><a href="#option-3c-reference-based-rna-seq-run-deseq2-goseq-precomputed" id="toc-option-3c-reference-based-rna-seq-run-deseq2-goseq-precomputed"><span class="toc-section-number">6.5</span> Option 3c: Reference-based RNA-seq
+run (DESeq2 + GOseq precomputed)</a></li>
+</ul></li>
+<li><a href="#understanding-the-output-structure" id="toc-understanding-the-output-structure"><span class="toc-section-number">7</span> Understanding the output
+structure</a>
+<ul>
+<li><a href="#directory-guide" id="toc-directory-guide"><span class="toc-section-number">7.1</span> Directory guide</a></li>
+</ul></li>
+<li><a href="#peeking-at-results" id="toc-peeking-at-results"><span class="toc-section-number">8</span> Peeking at results</a>
+<ul>
+<li><a href="#load-the-main-consensus-table" id="toc-load-the-main-consensus-table"><span class="toc-section-number">8.1</span> Load the main consensus
+table</a></li>
+<li><a href="#peek-at-goseq-results" id="toc-peek-at-goseq-results"><span class="toc-section-number">8.2</span> Peek at GOseq results</a></li>
+<li><a href="#peek-at-gprofiler-results" id="toc-peek-at-gprofiler-results"><span class="toc-section-number">8.3</span> Peek at g:Profiler
+results</a></li>
+</ul></li>
+<li><a href="#working-example-exploring-demo-results" id="toc-working-example-exploring-demo-results"><span class="toc-section-number">9</span> Working example: exploring demo
+results</a>
+<ul>
+<li><a href="#load-and-filter-consensus-results" id="toc-load-and-filter-consensus-results"><span class="toc-section-number">9.1</span> Load and filter consensus
+results</a></li>
+<li><a href="#quick-visualization" id="toc-quick-visualization"><span class="toc-section-number">9.2</span> Quick visualization</a></li>
+</ul></li>
+<li><a href="#workflow-checklist" id="toc-workflow-checklist"><span class="toc-section-number">10</span> Workflow checklist</a></li>
+<li><a href="#detailed-parameter-reference" id="toc-detailed-parameter-reference"><span class="toc-section-number">11</span> Detailed parameter reference</a>
+<ul>
+<li><a href="#run_full_echogo-parameters" id="toc-run_full_echogo-parameters"><span class="toc-section-number">11.1</span> <code>run_full_echogo()</code>
+parameters</a></li>
+<li><a href="#echogo_preflight_species-parameters" id="toc-echogo_preflight_species-parameters"><span class="toc-section-number">11.2</span>
+<code>echogo_preflight_species()</code> parameters</a></li>
+</ul></li>
+<li><a href="#troubleshooting" id="toc-troubleshooting"><span class="toc-section-number">12</span> Troubleshooting</a>
+<ul>
+<li><a href="#orgdb-not-found" id="toc-orgdb-not-found"><span class="toc-section-number">12.1</span> OrgDb not found</a></li>
+<li><a href="#species-code-not-recognized" id="toc-species-code-not-recognized"><span class="toc-section-number">12.2</span> Species code not
+recognized</a></li>
+<li><a href="#gprofiler-timeout" id="toc-gprofiler-timeout"><span class="toc-section-number">12.3</span> g:Profiler timeout</a></li>
+</ul></li>
+<li><a href="#next-steps" id="toc-next-steps"><span class="toc-section-number">13</span> Next steps</a></li>
+<li><a href="#citation" id="toc-citation"><span class="toc-section-number">14</span> Citation</a></li>
+<li><a href="#r-session" id="toc-r-session"><span class="toc-section-number">15</span> R session</a></li>
+</ul>
+</div>
+
+<div id="before-you-start-what-goes-into-input" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Before you start: what
+goes into <code>input/</code></h1>
+<p>EchoGO supports <strong>two input layouts</strong>:</p>
+<div id="classic-de-novo-transcriptome-layout-trinity-trinotate-goseq" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> 1) Classic / de novo
+transcriptome layout (Trinity + Trinotate + GOseq)</h2>
+<p>This is the original EchoGO workflow. It assumes you have already run
+a <strong>Trinity → Trinotate → GOseq</strong> pipeline (or an
+equivalent RNA-seq workflow) and that you have:</p>
+<ul>
+<li>a <strong>count matrix</strong> (e.g. Trinity/edgeR/DESeq2
+output),</li>
+<li>one or more <strong>differential expression (DE) tables</strong>,
+and</li>
+<li>a <strong>Trinotate report</strong> with functional annotation and
+GO terms.</li>
+</ul>
+<p>A typical Trinity/Trinotate/GOseq pipeline is documented at:</p>
+<p><a href="https://github.com/trinityrnaseq/trinityrnaseq/wiki" class="uri">https://github.com/trinityrnaseq/trinityrnaseq/wiki</a></p>
+<p>EchoGO does <strong>not</strong> run Trinity or Trinotate for you.
+Instead, it takes their outputs (plus GOseq results if you generated
+them) and performs:</p>
+<ul>
+<li>cross-species enrichment via g:Profiler,</li>
+<li>strict and exploratory consensus scoring,</li>
+<li>semantic reduction with RRvGO, and</li>
+<li>GO term network analysis.</li>
+</ul>
+</div>
+<div id="reference-based-rna-seq-layout-deseq2-goseq-precomputed" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> 2) Reference-based
+RNA-seq layout (DESeq2 + GOseq precomputed)</h2>
+<p>EchoGO can also run from a <strong>reference-based experiment
+folder</strong> where GOseq has already been computed. A typical
+contrast input directory contains:</p>
+<ul>
+<li><code>allcounts_table.txt</code> (count matrix; required by the
+current input resolver)</li>
+<li><code>dge_&lt;CONTRAST&gt;.csv</code> (DESeq2 results; required by
+the current input resolver)</li>
+<li><code>&lt;CONTRAST&gt;.GOseq.enriched.tsv</code> (GOseq enriched
+categories)</li>
+<li><code>Trinotate_for_EchoGO.tsv</code> <em>or</em>
+<code>Trout_eggNOG_for_EchoGO.tsv</code> (Trinotate-like/EggNOG
+annotations)</li>
+</ul>
+<p>In this mode, GOseq <code>gene_ids</code> may already be gene
+symbols/names rather than transcript IDs. If GOseq <code>gene_ids</code>
+do not match the annotation <code>transcript_id</code>, EchoGO treats
+them as already-usable names (intended behavior for reference-based
+pipelines).</p>
+<p>When you use <code>echogo_scaffold(&quot;my_project&quot;)</code>, the
+<code>input/_README.txt</code> explains both layouts and the expected
+filenames.</p>
+<hr />
+</div>
+</div>
+<div id="welcome-to-echogo" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Welcome to EchoGO</h1>
+<pre><code>        &gt;&lt;(((º&gt;  🧬   E   c   h   o   G   O   🧬  &lt;º)))&gt;&lt;
+
+🐙 🦋 🐸 🐟 Cross-Species Consensus Enrichment 🦐 🐍 🦉 🦇</code></pre>
+<p>EchoGO is your all-in-one toolkit for robust, multi-species
+functional enrichment analysis. Whether you’re working with
+transcriptomes, proteomes, or ranked gene lists from model organisms or
+de novo assemblies, EchoGO integrates bias-corrected enrichment (GOseq),
+cross-species orthology (g:Profiler), semantic reduction (RRvGO), and
+network analysis into a single, reproducible workflow.</p>
+<p><strong>This vignette covers:</strong></p>
+<ul>
+<li>Installing and configuring EchoGO<br />
+</li>
+<li>Setting up your data and choosing species<br />
+</li>
+<li>Running the full end-to-end pipeline<br />
+</li>
+<li>Understanding the output structure<br />
+</li>
+<li>Exploring results with minimal working examples</li>
+</ul>
+<p>For detailed interpretation of outputs, consensus scores, RRvGO, and
+networks, see <code>vignette(&quot;EchoGO_interpretation&quot;)</code>.</p>
+<hr />
+</div>
+<div id="quick-orientation" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Quick orientation</h1>
+<div id="load-echogo-and-check-your-setup" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Load EchoGO and check
+your setup</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># See the welcome message with defaults and helper functions</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">echogo_help</span>()</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; EchoGO — Quickstart</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; Run the built-in demo (fast: 3 species + mouse OrgDb):</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;   echogo_quickstart(run_demo = TRUE)</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; Use your own data:</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;   echogo_scaffold(&#39;my_project&#39;)</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   # Put files into my_project/input (see _README.txt there)</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;   echogo_run(input_dir = &#39;my_project/input&#39;, outdir = &#39;my_project/results&#39;)</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; Reference-based RNA-seq (DESeq2 + GOseq precomputed):</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt;   If your contrast input folder already contains:</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;     - allcounts_table.txt</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt;     - dge_&lt;CONTRAST&gt;.csv</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt;     - &lt;CONTRAST&gt;.GOseq.enriched.tsv</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt;     - Trinotate_for_EchoGO.tsv (or Trout_eggNOG_for_EchoGO.tsv)</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt;   you can run:</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt;     input_dir &lt;- &#39;.../dge_RRf_BBf/input&#39;</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt;     outdir    &lt;- &#39;.../dge_RRf_BBf/results&#39;</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt;     species   &lt;- c(&#39;drerio&#39;,&#39;strutta&#39;,&#39;gaculeatus&#39;,&#39;olatipes&#39;,&#39;trubripes&#39;,&#39;amexicanus&#39;,</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;                    &#39;oniloticus&#39;,&#39;ssalar&#39;,&#39;omykiss&#39;,&#39;okisutch&#39;,&#39;otshawytscha&#39;)</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt;     run_full_echogo(input_dir = input_dir,</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;                     outdir = outdir,</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt;                     species = species,</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt;                     orgdb = &#39;org.Dr.eg.db&#39;,</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;                     use_trinotate_universe = TRUE,</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;                     strict_only = FALSE,</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;                     run_evaluation = TRUE,</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt;                     make_report = TRUE,</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;                     verbose = TRUE)</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; # use_trinotate_universe = TRUE uses Trinotate/EggNOG primary names as the background universe (when available)</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; Choosing species codes (for g:Profiler):</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt;   EchoGO uses g:Profiler organism IDs such as:</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt;     hsapiens, mmusculus, drerio, dmelanogaster, celegans, rnorvegicus...</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt;   Full organism list (external):</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt;     https://biit.cs.ut.ee/gprofiler/page/organism-list</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt;   EchoGO helpers:</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt;     echogo_pick_species()                 # interactive table to browse/filter and copy IDs</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt;     echogo_preflight_species(c(&#39;hsapiens&#39;,&#39;mmusculus&#39;))</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt;                                           # validate/suggest species IDs before run_full_echogo()</span></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt; Checking / installing OrgDb &amp; GO.db:</span></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a><span class="co">#&gt;   - echogo_list_orgdb()                 # see which OrgDb packages are installed</span></span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co">#&gt;   - echogo_install_orgdb_instructions() # print BiocManager::install() commands</span></span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="co">#&gt;   - echogo_install_orgdb()              # automatically install into user library</span></span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="co">#&gt;   - echogo_require_orgdb()              # ensure OrgDb is available before running</span></span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt; Demo data:</span></span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt;   EchoGO ships with example inputs and frozen results.</span></span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt;   Use:</span></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co">#&gt;     echogo_open_demo()  # opens demo input/results folders and lists files</span></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="co">#&gt; Run the full workflow:</span></span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a><span class="co">#&gt;   run_full_echogo(input_dir,</span></span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a><span class="co">#&gt;                   species = getOption(&#39;EchoGO.default_species&#39;, c(&#39;hsapiens&#39;,&#39;mmusculus&#39;,&#39;drerio&#39;)),</span></span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a><span class="co">#&gt;                   orgdb   = getOption(&#39;EchoGO.default_orgdb&#39;, &#39;org.Mm.eg.db&#39;),</span></span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a><span class="co">#&gt;                   outdir  = &#39;echogo_out&#39;,</span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a><span class="co">#&gt;                   make_report = TRUE)</span></span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a><span class="co">#&gt; See also:</span></span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a><span class="co">#&gt;   ?echogo_pick_species</span></span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a><span class="co">#&gt;   ?echogo_preflight_species</span></span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a><span class="co">#&gt;   ?echogo_list_orgdb</span></span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a><span class="co">#&gt;   ?echogo_install_orgdb</span></span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a><span class="co">#&gt;   ?echogo_require_orgdb</span></span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a><span class="co">#&gt;   ?echogo_open_demo</span></span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a><span class="co">#&gt;   ?echogo_resolve_reference_inputs</span></span></code></pre></div>
+<p>This prints helpful information about default OrgDb, species, and key
+functions. You can silence the startup message with:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(EchoGO))</span></code></pre></div>
+</div>
+<div id="access-demo-data-and-results" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Access demo data and
+results</h2>
+<p>EchoGO ships with frozen demo inputs and outputs so you can explore
+without re-running the full pipeline:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>demo_in  <span class="ot">&lt;-</span> <span class="fu">echogo_demo_path</span>()          <span class="co"># Location of demo inputs</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>demo_out <span class="ot">&lt;-</span> <span class="fu">echogo_demo_results_path</span>()  <span class="co"># Location of frozen demo results</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Demo input path:</span><span class="sc">\n</span><span class="st">&quot;</span>, demo_in, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Demo input path:</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;  C:/Users/camilo/AppData/Local/Temp/RtmpIPGDve/temp_libpath6ff844ff259d/EchoGO/extdata/echogo_demo</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Demo output path:</span><span class="sc">\n</span><span class="st">&quot;</span>, demo_out, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Demo output path:</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;  C:/Users/camilo/AppData/Local/Temp/RtmpIPGDve/temp_libpath6ff844ff259d/EchoGO/extdata/echogo_demo_results</span></span></code></pre></div>
+<p>Open these in your file manager:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">echogo_open_demo</span>()  <span class="co"># Opens demo input/results and lists key files</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="configuring-echogo" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Configuring EchoGO</h1>
+<div id="default-orgdb-and-species" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> Default OrgDb and
+species</h2>
+<p>EchoGO uses global options to set defaults:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Check current defaults</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>default_orgdb <span class="ot">&lt;-</span> <span class="fu">getOption</span>(<span class="st">&quot;EchoGO.default_orgdb&quot;</span>, <span class="st">&quot;org.Mm.eg.db&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>default_species <span class="ot">&lt;-</span> <span class="fu">getOption</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="st">&quot;EchoGO.default_species&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;hsapiens&quot;</span>, <span class="st">&quot;mmusculus&quot;</span>, <span class="st">&quot;drerio&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="st">&quot;btaurus&quot;</span>, <span class="st">&quot;rnorvegicus&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="st">&quot;dmelanogaster&quot;</span>, <span class="st">&quot;ggallus&quot;</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Default OrgDb:&quot;</span>, default_orgdb, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; Default OrgDb: org.Mm.eg.db</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Default species:&quot;</span>, <span class="fu">paste</span>(default_species, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; Default species: hsapiens, mmusculus, drerio, btaurus, rnorvegicus, dmelanogaster, ggallus</span></span></code></pre></div>
+<div id="changing-defaults" class="section level3" number="4.1.1">
+<h3><span class="header-section-number">4.1.1</span> Changing
+defaults</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Use human genome + fewer species for a quick run</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">options</span>(<span class="at">EchoGO.default_orgdb   =</span> <span class="st">&quot;org.Hs.eg.db&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">options</span>(<span class="at">EchoGO.default_species =</span> <span class="fu">c</span>(<span class="st">&quot;hsapiens&quot;</span>, <span class="st">&quot;mmusculus&quot;</span>, <span class="st">&quot;drerio&quot;</span>))</span></code></pre></div>
+</div>
+<div id="listing-available-orgdb-packages" class="section level3" number="4.1.2">
+<h3><span class="header-section-number">4.1.2</span> Listing available
+OrgDb packages</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Check which OrgDb packages are installed</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">echogo_list_orgdb</span>()</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;        package installed loadable</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1 org.Hs.eg.db      TRUE     TRUE</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2 org.Mm.eg.db      TRUE     TRUE</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3 org.Dr.eg.db      TRUE     TRUE</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 4 org.Dm.eg.db      TRUE     TRUE</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 5 org.Rn.eg.db      TRUE     TRUE</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; 6 org.Ce.eg.db      TRUE     TRUE</span></span></code></pre></div>
+<p>If you need to install an OrgDb package:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Get installation instructions (BiocManager::install commands)</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">echogo_install_orgdb_instructions</span>()</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># Or let EchoGO install it automatically</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">echogo_install_orgdb</span>(<span class="at">orgdb =</span> <span class="st">&quot;org.Hs.eg.db&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Ensure OrgDb is available before running</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="fu">echogo_require_orgdb</span>(<span class="at">orgdb =</span> <span class="st">&quot;org.Mm.eg.db&quot;</span>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+</div>
+<div id="choosing-species" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Choosing species</h1>
+<div id="interactive-species-picker" class="section level2" number="5.1">
+<h2><span class="header-section-number">5.1</span> Interactive species
+picker</h2>
+<p>The easiest way to choose species is the interactive picker:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">echogo_pick_species</span>()</span></code></pre></div>
+<p>This opens an interactive table where you can:</p>
+<ul>
+<li>Browse the full g:Profiler organism list<br />
+</li>
+<li>Filter by taxonomy (e.g., “Mammals”, “Fish”, “Invertebrates”)<br />
+</li>
+<li>Select and copy organism IDs<br />
+</li>
+<li>Validate your choices</li>
+</ul>
+</div>
+<div id="validating-species-codes" class="section level2" number="5.2">
+<h2><span class="header-section-number">5.2</span> Validating species
+codes</h2>
+<p>Before running the full pipeline, validate your species choices:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>my_species <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;hsapiens&quot;</span>, <span class="st">&quot;mmusculus&quot;</span>, <span class="st">&quot;drerio&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co"># Check if all species are recognized by g:Profiler</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="fu">echogo_preflight_species</span>(my_species)</span></code></pre></div>
+<p>If any species codes are invalid, you’ll get suggestions for similar
+names.</p>
+</div>
+<div id="common-organism-codes" class="section level2" number="5.3">
+<h2><span class="header-section-number">5.3</span> Common organism
+codes</h2>
+<pre><code>Vertebrates:
+  hsapiens       - Human
+  mmusculus      - Mouse
+  drerio         - Zebrafish
+  ggallus        - Chicken
+  btaurus        - Cattle
+  rnorvegicus    - Rat
+
+Invertebrates:
+  dmelanogaster  - Fruit fly
+  celegans       - C. elegans
+
+For the full list, visit:
+https://biit.cs.ut.ee/gprofiler/page/organism-list</code></pre>
+<hr />
+</div>
+</div>
+<div id="running-the-pipeline" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Running the
+pipeline</h1>
+<p>You have three main ways to run EchoGO:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Quick demo</strong> with built-in data
+(<code>echogo_quickstart()</code>)<br />
+</li>
+<li><strong>Scaffold-based run</strong> using
+<code>echogo_scaffold()</code> + <code>echogo_run()</code><br />
+</li>
+<li><strong>Low-level control</strong> with
+<code>run_full_echogo()</code></li>
+</ol>
+<div id="option-1-quick-start-with-demo-data" class="section level2" number="6.1">
+<h2><span class="header-section-number">6.1</span> Option 1: Quick start
+with demo data</h2>
+<p>The fastest way to see how EchoGO works is the demo:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Run the built-in demo (small subset, 3 species + default OrgDb)</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">echogo_quickstart</span>(<span class="at">run_demo =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>This runs on a small subset using the default configuration and
+produces a complete set of outputs in the demo results directory.</p>
+</div>
+<div id="option-2-create-a-project-scaffold" class="section level2" number="6.2">
+<h2><span class="header-section-number">6.2</span> Option 2: Create a
+project scaffold</h2>
+<p>For your own data:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Create a new project directory with input/output structure</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">echogo_scaffold</span>(<span class="st">&quot;my_project&quot;</span>)</span></code></pre></div>
+<p>This creates:</p>
+<pre><code>my_project/
+  ├── input/
+  │   ├── _README.txt          (Instructions for input files)
+  │   └── ...                  (GOseq, DE, annotation files, counts matrix)
+  └── results/                 (Will be created after run)</code></pre>
+<p>The exact expected inputs are described in
+<code>input/_README.txt</code>. In the
+<strong>Trinity/Trinotate/GOseq</strong> mode, the core files are:</p>
+<ul>
+<li><code>gene.counts.matrix.tsv</code> – gene-level count matrix (ID +
+sample columns)<br />
+</li>
+<li><code>DE_*.tsv</code> – one or more DE result tables with at least
+<code>id</code>, <code>log2FC</code>, <code>pvalue</code>,
+<code>padj</code><br />
+</li>
+<li><code>Trinotate.xls</code> – standard Trinotate report with GO terms
+and KEGG IDs</li>
+</ul>
+<p>EchoGO reads these files, matches IDs across them, and uses Trinotate
+GO/KEGG annotations as the basis for GOseq and cross-species
+enrichment.</p>
+</div>
+<div id="option-3a-run-the-scaffolded-workflow-with-echogo_run" class="section level2" number="6.3">
+<h2><span class="header-section-number">6.3</span> Option 3a: Run the
+scaffolded workflow with <code>echogo_run()</code></h2>
+<p>Once your input is ready:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">echogo_run</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">input_dir =</span> <span class="st">&quot;my_project/input&quot;</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">outdir    =</span> <span class="st">&quot;my_project/results&quot;</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>echogo_run()</code> is a convenience wrapper that:</p>
+<ul>
+<li>Respects your <code>EchoGO.default_species</code> and
+<code>EchoGO.default_orgdb</code> options<br />
+</li>
+<li>Infers which inputs are present (GOseq, DE, annotations,
+counts)<br />
+</li>
+<li>Calls <code>run_full_echogo()</code> with reasonable defaults</li>
+</ul>
+</div>
+<div id="option-3b-run-the-full-workflow-explicitly" class="section level2" number="6.4">
+<h2><span class="header-section-number">6.4</span> Option 3b: Run the
+full workflow explicitly</h2>
+<p>If you want full control, call <code>run_full_echogo()</code>
+directly:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">run_full_echogo</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="at">input_dir   =</span> <span class="st">&quot;my_project/input&quot;</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">species     =</span> <span class="fu">c</span>(<span class="st">&quot;hsapiens&quot;</span>, <span class="st">&quot;mmusculus&quot;</span>, <span class="st">&quot;drerio&quot;</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">orgdb       =</span> <span class="st">&quot;org.Hs.eg.db&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">outdir      =</span> <span class="st">&quot;my_project/results&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="at">make_report =</span> <span class="cn">TRUE</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="option-3c-reference-based-rna-seq-run-deseq2-goseq-precomputed" class="section level2" number="6.5">
+<h2><span class="header-section-number">6.5</span> Option 3c:
+Reference-based RNA-seq run (DESeq2 + GOseq precomputed)</h2>
+<p>If your input directory already contains a precomputed GOseq
+enrichment table and Trinotate-like/EggNOG annotations (reference-based
+workflow), you can run EchoGO directly from that folder:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>input_dir <span class="ot">&lt;-</span> <span class="st">&quot;E:/.../dge_RRf_BBf/input&quot;</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>outdir    <span class="ot">&lt;-</span> <span class="st">&quot;E:/.../dge_RRf_BBf/results&quot;</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>fish_species <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>  <span class="st">&quot;drerio&quot;</span>, <span class="st">&quot;strutta&quot;</span>, <span class="st">&quot;gaculeatus&quot;</span>, <span class="st">&quot;olatipes&quot;</span>, <span class="st">&quot;trubripes&quot;</span>, <span class="st">&quot;amexicanus&quot;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>  <span class="st">&quot;oniloticus&quot;</span>, <span class="st">&quot;ssalar&quot;</span>, <span class="st">&quot;omykiss&quot;</span>, <span class="st">&quot;okisutch&quot;</span>, <span class="st">&quot;otshawytscha&quot;</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">run_full_echogo</span>(</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="at">input_dir              =</span> input_dir,</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>  <span class="at">species                =</span> fish_species,</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>  <span class="at">orgdb                  =</span> <span class="st">&quot;org.Dr.eg.db&quot;</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>  <span class="at">outdir                 =</span> outdir,</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>  <span class="at">strict_only            =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>  <span class="at">run_evaluation         =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>  <span class="at">use_trinotate_universe =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>  <span class="at">make_report            =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>  <span class="at">verbose                =</span> <span class="cn">TRUE</span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a>)</span></code></pre></div>
+<div id="key-parameters" class="section level3" number="6.5.1">
+<h3><span class="header-section-number">6.5.1</span> Key parameters</h3>
+<ul>
+<li><strong><code>input_dir</code></strong> – path containing your input
+files (see <code>_README.txt</code> in the scaffold).<br />
+</li>
+<li><strong><code>species</code></strong> – character vector of
+g:Profiler organism codes.<br />
+</li>
+<li><strong><code>orgdb</code></strong> – OrgDb package used for GO
+structure and semantic similarity
+(e.g. <code>&quot;org.Mm.eg.db&quot;</code>).<br />
+</li>
+<li><strong><code>outdir</code></strong> – where to save all
+results.<br />
+</li>
+<li><strong><code>make_report</code></strong> – if <code>TRUE</code>,
+generates an interactive HTML report (Rmarkdown).</li>
+</ul>
+</div>
+<div id="under-the-hood" class="section level3" number="6.5.2">
+<h3><span class="header-section-number">6.5.2</span> Under the hood</h3>
+<p><code>run_full_echogo()</code> orchestrates:</p>
+<ol style="list-style-type: decimal">
+<li><strong>GOseq enrichment</strong> (bias-corrected via gene length)
+if requested and inputs are available<br />
+</li>
+<li><strong>g:Profiler with custom background</strong> (robust
+cross-species enrichment)<br />
+</li>
+<li><strong>g:Profiler genome-wide</strong> (exploratory, no
+background)<br />
+</li>
+<li><strong>Consensus scoring</strong> (via
+<code>score_consensus_terms()</code>)<br />
+</li>
+<li><strong>RRvGO reduction</strong> (clusters semantically similar
+terms)<br />
+</li>
+<li><strong>Network analysis</strong> (gene-overlap GO term
+networks)<br />
+</li>
+<li><strong>Report generation</strong> (if
+<code>make_report = TRUE</code>)</li>
+</ol>
+<hr />
+</div>
+</div>
+</div>
+<div id="understanding-the-output-structure" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> Understanding the
+output structure</h1>
+<p>After running, your <code>outdir</code> contains a set of subfolders.
+For the demo snapshot:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># See what&#39;s in the frozen demo results</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">list.files</span>(demo_out, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">max.depth =</span> <span class="dv">2</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co">#&gt; Error in list.files(demo_out, recursive = TRUE, max.depth = 2): unused argument (max.depth = 2)</span></span></code></pre></div>
+<div id="directory-guide" class="section level2" number="7.1">
+<h2><span class="header-section-number">7.1</span> Directory guide</h2>
+<div id="consensus" class="section level3" number="7.1.1">
+<h3><span class="header-section-number">7.1.1</span>
+<code>consensus/</code></h3>
+<p><strong>Start here.</strong> Contains annotated consensus tables and
+curated plots.</p>
+<ul>
+<li><code>consensus_enrichment_results_with_and_without_bg.xlsx</code> –
+main results table<br />
+</li>
+<li><code>plots_strict/</code> – visualizations using strict consensus
+(<code>consensus_score</code>)<br />
+</li>
+<li><code>plots_exploratory/</code> – visualizations using exploratory
+consensus (<code>consensus_score_all</code>)</li>
+</ul>
+</div>
+<div id="diagnostics-evaluation" class="section level3" number="7.1.2">
+<h3><span class="header-section-number">7.1.2</span>
+<code>diagnostics/</code> &amp; <code>evaluation/</code></h3>
+<p>Quality control and diagnostic plots:</p>
+<ul>
+<li><code>EQI_distribution_by_ontology.png</code> – term agreement
+quality<br />
+</li>
+<li><code>FoldEnrichment_distribution_by_ontology.png</code> –
+enrichment magnitude<br />
+</li>
+<li><code>rarefaction_curve_by_origin_*.png</code> – saturation curves
+(methods/species)</li>
+</ul>
+</div>
+<div id="goseq" class="section level3" number="7.1.3">
+<h3><span class="header-section-number">7.1.3</span>
+<code>goseq/</code></h3>
+<p>Bias-aware GOseq enrichment results:</p>
+<ul>
+<li><code>GOseq_enrichment_full_annotated.csv</code> – full GOseq output
+with annotations</li>
+</ul>
+</div>
+<div id="gprofiler" class="section level3" number="7.1.4">
+<h3><span class="header-section-number">7.1.4</span>
+<code>gprofiler/</code></h3>
+<p>Raw g:Profiler results (one folder per species or background
+mode):</p>
+<ul>
+<li><code>with_custom_background/</code> – conservative,
+background-corrected results<br />
+</li>
+<li><code>no_background_genome_wide/</code> – exploratory, genome-wide
+results</li>
+</ul>
+</div>
+<div id="rrvgo" class="section level3" number="7.1.5">
+<h3><span class="header-section-number">7.1.5</span>
+<code>rrvgo/</code></h3>
+<p>Semantic similarity reduction (per ontology BP/MF/CC):</p>
+<ul>
+<li><code>rrvgo_true_consensus_with_bg/</code> – strict consensus
+clusters<br />
+</li>
+<li><code>rrvgo_exploratory_all_significant/</code> – all significant
+terms clustered</li>
+</ul>
+<p>These folders typically contain:</p>
+<ul>
+<li>Treemaps, bubble plots, heatmaps, wordclouds<br />
+</li>
+<li>Cluster summary tables<br />
+</li>
+<li>Representative term lists per cluster</li>
+</ul>
+</div>
+<div id="networks" class="section level3" number="7.1.6">
+<h3><span class="header-section-number">7.1.6</span>
+<code>networks/</code></h3>
+<p>GO term overlap networks:</p>
+<ul>
+<li><code>with_bg/</code> – strict consensus networks<br />
+</li>
+<li><code>with_bg_and_nobg/</code> – exploratory networks</li>
+</ul>
+<p>Each contains networks for BP, MF, and CC (static PDF/SVG +
+interactive HTML).</p>
+</div>
+<div id="report" class="section level3" number="7.1.7">
+<h3><span class="header-section-number">7.1.7</span>
+<code>report/</code></h3>
+<p>Interactive HTML report (if <code>make_report = TRUE</code>):</p>
+<ul>
+<li><code>EchoGO_report.html</code> or <code>index.html</code> –
+browse-friendly summary of all results</li>
+</ul>
+<p>For a <strong>deep dive</strong> into what each file means and how
+the consensus scores are built, see
+<code>vignette(&quot;EchoGO_interpretation&quot;)</code>.</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="peeking-at-results" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Peeking at results</h1>
+<div id="load-the-main-consensus-table" class="section level2" number="8.1">
+<h2><span class="header-section-number">8.1</span> Load the main
+consensus table</h2>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>consensus_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  demo_out, <span class="st">&quot;consensus&quot;</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="st">&quot;consensus_enrichment_results_with_and_without_bg.xlsx&quot;</span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>)</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">file.exists</span>(consensus_file))</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>cons <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(consensus_file)</span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a><span class="co"># View key columns</span></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="fu">head</span>(cons[, <span class="fu">c</span>(</span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  <span class="st">&quot;term_id&quot;</span>, <span class="st">&quot;term_name&quot;</span>, <span class="st">&quot;ontology&quot;</span>,</span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  <span class="st">&quot;consensus_score&quot;</span>, <span class="st">&quot;consensus_score_all&quot;</span>,</span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>  <span class="st">&quot;source_origin&quot;</span>, <span class="st">&quot;significant_in_any&quot;</span></span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>)])</span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 7</span></span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a><span class="co">#&gt;   term_id   term_name ontology consensus_score consensus_score_all source_origin</span></span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt;              &lt;dbl&gt;               &lt;dbl&gt; &lt;chr&gt;        </span></span>
+<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a><span class="co">#&gt; 1 GO:00036… molecula… MF                 0.933               0.817 GOseq+g:Prof…</span></span>
+<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a><span class="co">#&gt; 2 GO:00038… catalyti… MF                 0.459               0.949 GOseq+g:Prof…</span></span>
+<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a><span class="co">#&gt; 3 GO:00054… binding   MF                 0.576               0.945 GOseq+g:Prof…</span></span>
+<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a><span class="co">#&gt; 4 GO:00055… cellular… CC                 0.857               0.817 GOseq+g:Prof…</span></span>
+<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a><span class="co">#&gt; 5 GO:00056… intracel… CC                 0.582               0.997 g:Profiler_B…</span></span>
+<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a><span class="co">#&gt; 6 GO:00057… cytoplasm CC                 0.608               1.08  GOseq+g:Prof…</span></span>
+<span id="cb20-25"><a href="#cb20-25" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: significant_in_any &lt;lgl&gt;</span></span></code></pre></div>
+<div id="what-these-columns-mean-briefly" class="section level3" number="8.1.1">
+<h3><span class="header-section-number">8.1.1</span> What these columns
+mean (briefly)</h3>
+<ul>
+<li><strong><code>term_id</code></strong> – GO or KEGG identifier (e.g.,
+<code>&quot;GO:0006355&quot;</code>)<br />
+</li>
+<li><strong><code>term_name</code></strong> – human-readable name<br />
+</li>
+<li><strong><code>ontology</code></strong> – BP (Biological Process), MF
+(Molecular Function), or CC (Cellular Component)<br />
+</li>
+<li><strong><code>consensus_score</code></strong> – strict consensus
+score (conservative)<br />
+</li>
+<li><strong><code>consensus_score_all</code></strong> – exploratory
+score (includes genome-wide g:Profiler)<br />
+</li>
+<li><strong><code>source_origin</code></strong> – combination of sources
+(GOseq, g:Profiler with/without background)<br />
+</li>
+<li><strong><code>significant_in_any</code></strong> – <code>TRUE</code>
+if any method supports the term</li>
+</ul>
+<p>For full details and biological interpretation, see
+<code>vignette(&quot;EchoGO_interpretation&quot;)</code>.</p>
+</div>
+</div>
+<div id="peek-at-goseq-results" class="section level2" number="8.2">
+<h2><span class="header-section-number">8.2</span> Peek at GOseq
+results</h2>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>goseq_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(demo_out, <span class="st">&quot;goseq&quot;</span>, <span class="st">&quot;GOseq_enrichment_full_annotated.csv&quot;</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(goseq_file)) {</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  goseq <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(goseq_file)</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="fu">head</span>(goseq[, <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;category&quot;</span>,<span class="st">&quot;term&quot;</span>,<span class="st">&quot;ontology&quot;</span>,<span class="st">&quot;numDEInCat&quot;</span>,<span class="st">&quot;numInCat&quot;</span>,<span class="st">&quot;foldEnrichment&quot;</span>,<span class="st">&quot;over_represented_FDR&quot;</span>), <span class="fu">names</span>(goseq))])</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>}</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a><span class="co">#&gt;     category                                term ontology numDEInCat numInCat</span></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co">#&gt; 1 GO:0003674                  molecular_function       MF       3686    15479</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co">#&gt; 2 GO:0005488                             binding       MF       2970    12213</span></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a><span class="co">#&gt; 3 GO:0005575                  cellular_component       CC       3658    15354</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a><span class="co">#&gt; 4 GO:0006807 nitrogen compound metabolic process       BP       1926     7311</span></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a><span class="co">#&gt; 5 GO:0008150                  biological_process       BP       3585    14552</span></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a><span class="co">#&gt; 6 GO:0008152                   metabolic process       BP       2327     9247</span></span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a><span class="co">#&gt;   foldEnrichment over_represented_FDR</span></span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a><span class="co">#&gt; 1      0.1488307                    0</span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a><span class="co">#&gt; 2      0.1519897                    0</span></span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a><span class="co">#&gt; 3      0.1489026                    0</span></span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a><span class="co">#&gt; 4      0.1646492                    0</span></span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a><span class="co">#&gt; 5      0.1539737                    0</span></span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a><span class="co">#&gt; 6      0.1572807                    0</span></span></code></pre></div>
+<p><em>(Column names in your GOseq file may vary slightly; adjust as
+needed.)</em></p>
+</div>
+<div id="peek-at-gprofiler-results" class="section level2" number="8.3">
+<h2><span class="header-section-number">8.3</span> Peek at g:Profiler
+results</h2>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Results are stored per species and background mode</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>gprofiler_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(demo_out, <span class="st">&quot;gprofiler&quot;</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="fu">list.files</span>(gprofiler_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="co">#&gt;  [1] &quot;gprofiler_enrichment_summary.csv&quot;                                     </span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="co">#&gt;  [2] &quot;no_background_genome_wide/gprofiler_drerio_nobg.csv&quot;                  </span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="co">#&gt;  [3] &quot;no_background_genome_wide/gprofiler_drerio_nobg.xlsx&quot;                 </span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="co">#&gt;  [4] &quot;no_background_genome_wide/gprofiler_drerio_nobg_GO_BP_lollipop.pdf&quot;   </span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="co">#&gt;  [5] &quot;no_background_genome_wide/gprofiler_drerio_nobg_GO_CC_lollipop.pdf&quot;   </span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a><span class="co">#&gt;  [6] &quot;no_background_genome_wide/gprofiler_drerio_nobg_GO_MF_lollipop.pdf&quot;   </span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="co">#&gt;  [7] &quot;no_background_genome_wide/gprofiler_hsapiens_nobg.csv&quot;                </span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="co">#&gt;  [8] &quot;no_background_genome_wide/gprofiler_hsapiens_nobg.xlsx&quot;               </span></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="co">#&gt;  [9] &quot;no_background_genome_wide/gprofiler_hsapiens_nobg_GO_BP_lollipop.pdf&quot; </span></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a><span class="co">#&gt; [10] &quot;no_background_genome_wide/gprofiler_hsapiens_nobg_GO_CC_lollipop.pdf&quot; </span></span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="co">#&gt; [11] &quot;no_background_genome_wide/gprofiler_hsapiens_nobg_GO_MF_lollipop.pdf&quot; </span></span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a><span class="co">#&gt; [12] &quot;no_background_genome_wide/gprofiler_mmusculus_nobg.csv&quot;               </span></span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a><span class="co">#&gt; [13] &quot;no_background_genome_wide/gprofiler_mmusculus_nobg.xlsx&quot;              </span></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co">#&gt; [14] &quot;no_background_genome_wide/gprofiler_mmusculus_nobg_GO_BP_lollipop.pdf&quot;</span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a><span class="co">#&gt; [15] &quot;no_background_genome_wide/gprofiler_mmusculus_nobg_GO_CC_lollipop.pdf&quot;</span></span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="co">#&gt; [16] &quot;no_background_genome_wide/gprofiler_mmusculus_nobg_GO_MF_lollipop.pdf&quot;</span></span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="co">#&gt; [17] &quot;with_custom_background/gprofiler_drerio_with_bg.csv&quot;                  </span></span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a><span class="co">#&gt; [18] &quot;with_custom_background/gprofiler_drerio_with_bg.xlsx&quot;                 </span></span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a><span class="co">#&gt; [19] &quot;with_custom_background/gprofiler_drerio_with_bg_GO_BP_lollipop.pdf&quot;   </span></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt; [20] &quot;with_custom_background/gprofiler_drerio_with_bg_GO_CC_lollipop.pdf&quot;   </span></span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt; [21] &quot;with_custom_background/gprofiler_drerio_with_bg_GO_MF_lollipop.pdf&quot;   </span></span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="co">#&gt; [22] &quot;with_custom_background/gprofiler_hsapiens_with_bg.csv&quot;                </span></span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a><span class="co">#&gt; [23] &quot;with_custom_background/gprofiler_hsapiens_with_bg.xlsx&quot;               </span></span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a><span class="co">#&gt; [24] &quot;with_custom_background/gprofiler_hsapiens_with_bg_GO_BP_lollipop.pdf&quot; </span></span>
+<span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a><span class="co">#&gt; [25] &quot;with_custom_background/gprofiler_hsapiens_with_bg_GO_CC_lollipop.pdf&quot; </span></span>
+<span id="cb22-29"><a href="#cb22-29" tabindex="-1"></a><span class="co">#&gt; [26] &quot;with_custom_background/gprofiler_hsapiens_with_bg_GO_MF_lollipop.pdf&quot; </span></span>
+<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a><span class="co">#&gt; [27] &quot;with_custom_background/gprofiler_mmusculus_NO_SIGNIFICANT_RESULTS.txt&quot;</span></span>
+<span id="cb22-31"><a href="#cb22-31" tabindex="-1"></a><span class="co">#&gt; [28] &quot;with_custom_background/gprofiler_mmusculus_with_bg.csv&quot;               </span></span>
+<span id="cb22-32"><a href="#cb22-32" tabindex="-1"></a><span class="co">#&gt; [29] &quot;with_custom_background/gprofiler_mmusculus_with_bg.xlsx&quot;</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="working-example-exploring-demo-results" class="section level1" number="9">
+<h1><span class="header-section-number">9</span> Working example:
+exploring demo results</h1>
+<div id="load-and-filter-consensus-results" class="section level2" number="9.1">
+<h2><span class="header-section-number">9.1</span> Load and filter
+consensus results</h2>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>consensus_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  demo_out, <span class="st">&quot;consensus&quot;</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="st">&quot;consensus_enrichment_results_with_and_without_bg.xlsx&quot;</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>)</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>cons <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(consensus_file)</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>top_terms <span class="ot">&lt;-</span> cons <span class="sc">%&gt;%</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(significant_in_any) <span class="sc">%&gt;%</span></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(dplyr<span class="sc">::</span><span class="fu">desc</span>(consensus_score_all)) <span class="sc">%&gt;%</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a><span class="co"># Show key columns</span></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a>top_terms <span class="sc">%&gt;%</span></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(</span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a>    term_name, ontology,</span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a>    consensus_score, consensus_score_all,</span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1"></a>    source_origin</span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">10</span>)</span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 5</span></span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1"></a><span class="co">#&gt;    term_name          ontology consensus_score consensus_score_all source_origin</span></span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;              &lt;chr&gt;              &lt;dbl&gt;               &lt;dbl&gt; &lt;chr&gt;        </span></span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1"></a><span class="co">#&gt;  1 Spliceosome        KEGG               0.797                1.89 g:Profiler_B…</span></span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1"></a><span class="co">#&gt;  2 proteasome complex CC                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1"></a><span class="co">#&gt;  3 cytoplasmic trans… BP                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1"></a><span class="co">#&gt;  4 cytoplasmic trans… BP                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1"></a><span class="co">#&gt;  5 replication fork   CC                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-28"><a href="#cb23-28" tabindex="-1"></a><span class="co">#&gt;  6 spliceosomal comp… CC                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-29"><a href="#cb23-29" tabindex="-1"></a><span class="co">#&gt;  7 U2-type spliceoso… CC                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-30"><a href="#cb23-30" tabindex="-1"></a><span class="co">#&gt;  8 U12-type spliceos… CC                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-31"><a href="#cb23-31" tabindex="-1"></a><span class="co">#&gt;  9 eukaryotic transl… CC                 0                    1.44 g:Profiler_n…</span></span>
+<span id="cb23-32"><a href="#cb23-32" tabindex="-1"></a><span class="co">#&gt; 10 DNA-templated tra… BP                 0                    1.44 g:Profiler_n…</span></span></code></pre></div>
+</div>
+<div id="quick-visualization" class="section level2" number="9.2">
+<h2><span class="header-section-number">9.2</span> Quick
+visualization</h2>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>plot_df <span class="ot">&lt;-</span> cons <span class="sc">%&gt;%</span></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(significant_in_any, <span class="sc">!</span><span class="fu">is.na</span>(consensus_score_all)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">slice_max</span>(consensus_score_all, <span class="at">n =</span> <span class="dv">15</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(consensus_score_all) <span class="sc">%&gt;%</span></span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>    <span class="at">term_label =</span> stringr<span class="sc">::</span><span class="fu">str_trunc</span>(</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>      <span class="fu">paste0</span>(term_name, <span class="st">&quot; (&quot;</span>, term_id, <span class="st">&quot;)&quot;</span>),</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>      <span class="dv">45</span></span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a>    ),</span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a>    <span class="at">term_label =</span> <span class="fu">factor</span>(term_label, <span class="at">levels =</span> term_label)</span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a>  )</span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a></span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a><span class="fu">ggplot</span>(plot_df, <span class="fu">aes</span>(</span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a>  <span class="at">y     =</span> term_label,</span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a>  <span class="at">x     =</span> consensus_score_all,</span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a>  <span class="at">color =</span> ontology</span>
+<span id="cb24-20"><a href="#cb24-20" tabindex="-1"></a>)) <span class="sc">+</span></span>
+<span id="cb24-21"><a href="#cb24-21" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(</span>
+<span id="cb24-22"><a href="#cb24-22" tabindex="-1"></a>    <span class="at">yend =</span> term_label,</span>
+<span id="cb24-23"><a href="#cb24-23" tabindex="-1"></a>    <span class="at">xend =</span> <span class="dv">0</span></span>
+<span id="cb24-24"><a href="#cb24-24" tabindex="-1"></a>  ),</span>
+<span id="cb24-25"><a href="#cb24-25" tabindex="-1"></a>  <span class="at">linewidth =</span> <span class="fl">0.6</span>,</span>
+<span id="cb24-26"><a href="#cb24-26" tabindex="-1"></a>  <span class="at">color     =</span> <span class="st">&quot;grey70&quot;</span></span>
+<span id="cb24-27"><a href="#cb24-27" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-28"><a href="#cb24-28" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb24-29"><a href="#cb24-29" tabindex="-1"></a>  <span class="fu">scale_color_brewer</span>(<span class="at">palette =</span> <span class="st">&quot;Dark2&quot;</span>, <span class="at">name =</span> <span class="st">&quot;Ontology&quot;</span>) <span class="sc">+</span></span>
+<span id="cb24-30"><a href="#cb24-30" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb24-31"><a href="#cb24-31" tabindex="-1"></a>    <span class="at">x     =</span> <span class="st">&quot;Exploratory consensus score&quot;</span>,</span>
+<span id="cb24-32"><a href="#cb24-32" tabindex="-1"></a>    <span class="at">y     =</span> <span class="cn">NULL</span>,</span>
+<span id="cb24-33"><a href="#cb24-33" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Top 15 EchoGO terms by exploratory consensus&quot;</span></span>
+<span id="cb24-34"><a href="#cb24-34" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-35"><a href="#cb24-35" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
+<span id="cb24-36"><a href="#cb24-36" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb24-37"><a href="#cb24-37" tabindex="-1"></a>    <span class="at">axis.text.y     =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">9</span>),</span>
+<span id="cb24-38"><a href="#cb24-38" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb24-39"><a href="#cb24-39" tabindex="-1"></a>    <span class="at">plot.title      =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">12</span>)</span>
+<span id="cb24-40"><a href="#cb24-40" tabindex="-1"></a>  )</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<hr />
+</div>
+</div>
+<div id="workflow-checklist" class="section level1" number="10">
+<h1><span class="header-section-number">10</span> Workflow
+checklist</h1>
+<p>Before running your analysis:</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Install required OrgDb package:
+<code>echogo_install_orgdb()</code><br />
+</label></li>
+<li><label><input type="checkbox"></input>Choose species:
+<code>echogo_pick_species()</code> or check the g:Profiler organism
+list<br />
+</label></li>
+<li><label><input type="checkbox"></input>Validate species codes:
+<code>echogo_preflight_species()</code><br />
+</label></li>
+<li><label><input type="checkbox"></input>Create a project scaffold:
+<code>echogo_scaffold(&quot;my_project&quot;)</code><br />
+</label></li>
+<li><label><input type="checkbox"></input>Prepare inputs in
+<code>my_project/input</code> (see <code>_README.txt</code>)<br />
+</label></li>
+<li><label><input type="checkbox"></input>Set defaults if needed:
+<code>options(EchoGO.default_orgdb = ...)</code></label></li>
+</ul>
+<p>Run:</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Run the pipeline:
+<code>echogo_run()</code> or
+<code>run_full_echogo(...)</code></label></li>
+</ul>
+<p>After running:</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Check
+<code>consensus_enrichment_results_with_and_without_bg.xlsx</code><br />
+</label></li>
+<li><label><input type="checkbox"></input>Inspect diagnostics
+(<code>diagnostics/</code>, <code>evaluation/</code>)<br />
+</label></li>
+<li><label><input type="checkbox"></input>Explore RRvGO clusters
+(<code>rrvgo/</code>)<br />
+</label></li>
+<li><label><input type="checkbox"></input>View networks
+(<code>networks/</code>)<br />
+</label></li>
+<li><label><input type="checkbox"></input>Open HTML report
+(<code>report/</code>) if generated</label></li>
+</ul>
+<hr />
+</div>
+<div id="detailed-parameter-reference" class="section level1" number="11">
+<h1><span class="header-section-number">11</span> Detailed parameter
+reference</h1>
+<div id="run_full_echogo-parameters" class="section level2" number="11.1">
+<h2><span class="header-section-number">11.1</span>
+<code>run_full_echogo()</code> parameters</h2>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">run_full_echogo</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>  <span class="at">input_dir =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>  <span class="at">goseq_file =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>  <span class="at">trinotate_file =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>  <span class="at">de_file =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>  <span class="at">count_matrix_file =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>  <span class="at">species =</span> <span class="fu">getOption</span>(<span class="st">&quot;EchoGO.default_species&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;hsapiens&quot;</span>,<span class="st">&quot;mmusculus&quot;</span>,<span class="st">&quot;drerio&quot;</span>)),</span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>  <span class="at">species_expr =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>  <span class="at">orgdb   =</span> <span class="fu">getOption</span>(<span class="st">&quot;EchoGO.default_orgdb&quot;</span>, <span class="st">&quot;org.Dr.eg.db&quot;</span>),</span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>  <span class="at">outdir  =</span> <span class="st">&quot;echogo_out&quot;</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a>  <span class="at">make_report =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a>  <span class="at">report_sections =</span> <span class="fu">c</span>(<span class="st">&quot;overview&quot;</span>,<span class="st">&quot;goseq&quot;</span>,<span class="st">&quot;gprofiler&quot;</span>,<span class="st">&quot;consensus&quot;</span>,<span class="st">&quot;rrvgo&quot;</span>,<span class="st">&quot;networks&quot;</span>),</span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1"></a>  <span class="at">report_top_n =</span> <span class="dv">25</span>,</span>
+<span id="cb25-14"><a href="#cb25-14" tabindex="-1"></a>  <span class="at">report_theme =</span> <span class="st">&quot;flatly&quot;</span>,</span>
+<span id="cb25-15"><a href="#cb25-15" tabindex="-1"></a>  <span class="at">report_template =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-16"><a href="#cb25-16" tabindex="-1"></a>  <span class="at">strict_only =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb25-17"><a href="#cb25-17" tabindex="-1"></a>  <span class="at">run_evaluation =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb25-18"><a href="#cb25-18" tabindex="-1"></a>  <span class="at">use_trinotate_universe =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb25-19"><a href="#cb25-19" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">TRUE</span></span>
+<span id="cb25-20"><a href="#cb25-20" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="echogo_preflight_species-parameters" class="section level2" number="11.2">
+<h2><span class="header-section-number">11.2</span>
+<code>echogo_preflight_species()</code> parameters</h2>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">echogo_preflight_species</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>  <span class="at">species =</span> <span class="cn">NULL</span>,               <span class="co"># Character vector of organism codes</span></span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="at">suggest =</span> <span class="cn">TRUE</span>                <span class="co"># Suggest corrections for invalid codes?</span></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="troubleshooting" class="section level1" number="12">
+<h1><span class="header-section-number">12</span> Troubleshooting</h1>
+<div id="orgdb-not-found" class="section level2" number="12.1">
+<h2><span class="header-section-number">12.1</span> OrgDb not found</h2>
+<pre class="text"><code>Error: OrgDb &#39;org.Mm.eg.db&#39; not installed</code></pre>
+<p><strong>Solution:</strong></p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">echogo_install_orgdb</span>(<span class="st">&quot;org.Mm.eg.db&quot;</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="fu">echogo_require_orgdb</span>(<span class="st">&quot;org.Mm.eg.db&quot;</span>)</span></code></pre></div>
+</div>
+<div id="species-code-not-recognized" class="section level2" number="12.2">
+<h2><span class="header-section-number">12.2</span> Species code not
+recognized</h2>
+<pre class="text"><code>Warning: Species &#39;human&#39; not recognized</code></pre>
+<p><strong>Solution:</strong> Use the interactive picker or check the
+full list at<br />
+<a href="https://biit.cs.ut.ee/gprofiler/page/organism-list" class="uri">https://biit.cs.ut.ee/gprofiler/page/organism-list</a></p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">echogo_preflight_species</span>(<span class="st">&quot;hsapiens&quot;</span>)  <span class="co"># Use proper code, not common name</span></span></code></pre></div>
+</div>
+<div id="gprofiler-timeout" class="section level2" number="12.3">
+<h2><span class="header-section-number">12.3</span> g:Profiler
+timeout</h2>
+<p>If you have a very large species list or gene set, g:Profiler may
+time out. Try:</p>
+<ul>
+<li>Reducing the number of species<br />
+</li>
+<li>Splitting your gene list into smaller subsets<br />
+</li>
+<li>Increasing timeout, e.g.:</li>
+</ul>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">options</span>(<span class="at">EchoGO.gprofiler_timeout =</span> <span class="dv">120</span>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="next-steps" class="section level1" number="13">
+<h1><span class="header-section-number">13</span> Next steps</h1>
+<ol style="list-style-type: decimal">
+<li><p><strong>Explore the demo:</strong><br />
+Run <code>echogo_quickstart(run_demo = TRUE)</code> and browse the
+outputs under <code>echogo_demo_results_path()</code>.</p></li>
+<li><p><strong>Prepare your data:</strong><br />
+Create a project with <code>echogo_scaffold(&quot;my_project&quot;)</code> and
+follow the <code>_README.txt</code> instructions.</p></li>
+<li><p><strong>Run your analysis:</strong><br />
+Use <code>echogo_run()</code> or <code>run_full_echogo(...)</code> with
+your own inputs.</p></li>
+<li><p><strong>Interpret results:</strong><br />
+See <code>vignette(&quot;EchoGO_interpretation&quot;)</code> for detailed guidance
+on reading outputs, understanding consensus scores, RRvGO clusters, and
+building networks into mechanistic stories.</p></li>
+</ol>
+<hr />
+</div>
+<div id="citation" class="section level1" number="14">
+<h1><span class="header-section-number">14</span> Citation</h1>
+<p>If you use EchoGO in your research, please cite:</p>
+<blockquote>
+<p>Escobar-Sierra C., Inostroza P.A., <em>et al.</em> (2025). EchoGO:
+Cross-species functional enrichment analysis. <em>Journal</em>, Volume,
+Pages.</p>
+</blockquote>
+<hr />
+</div>
+<div id="r-session" class="section level1" number="15">
+<h1><span class="header-section-number">15</span> R session</h1>
+<pre><code>#&gt; R version 4.4.3 (2025-02-28 ucrt)
+#&gt; Platform: x86_64-w64-mingw32/x64
+#&gt; Running under: Windows 11 x64 (build 26200)
+#&gt; 
+#&gt; Matrix products: default
+#&gt; 
+#&gt; 
+#&gt; locale:
+#&gt; [1] LC_COLLATE=English_United States.utf8 
+#&gt; [2] LC_CTYPE=English_United States.utf8   
+#&gt; [3] LC_MONETARY=English_United States.utf8
+#&gt; [4] LC_NUMERIC=C                          
+#&gt; [5] LC_TIME=English_United States.utf8    
+#&gt; 
+#&gt; time zone: Europe/Berlin
+#&gt; tzcode source: internal
+#&gt; 
+#&gt; attached base packages:
+#&gt; [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+#&gt; [8] base     
+#&gt; 
+#&gt; other attached packages:
+#&gt;  [1] org.Ce.eg.db_3.20.0  org.Rn.eg.db_3.20.0  org.Dm.eg.db_3.20.0 
+#&gt;  [4] org.Dr.eg.db_3.20.0  org.Mm.eg.db_3.20.0  org.Hs.eg.db_3.20.0 
+#&gt;  [7] AnnotationDbi_1.68.0 IRanges_2.40.1       S4Vectors_0.44.0    
+#&gt; [10] Biobase_2.66.0       BiocGenerics_0.52.0  ggplot2_4.0.1       
+#&gt; [13] tibble_3.3.0         stringr_1.6.0        tidyr_1.3.1         
+#&gt; [16] dplyr_1.1.4          readxl_1.4.5         EchoGO_0.0.0.9000   
+#&gt; 
+#&gt; loaded via a namespace (and not attached):
+#&gt;  [1] KEGGREST_1.46.0         gtable_0.3.6            xfun_0.52              
+#&gt;  [4] bslib_0.9.0             tzdb_0.5.0              vctrs_0.6.5            
+#&gt;  [7] tools_4.4.3             generics_0.1.4          RSQLite_2.4.5          
+#&gt; [10] blob_1.2.4              pkgconfig_2.0.3         RColorBrewer_1.1-3     
+#&gt; [13] S7_0.2.1                GenomeInfoDbData_1.2.13 lifecycle_1.0.4        
+#&gt; [16] compiler_4.4.3          farver_2.1.2            Biostrings_2.74.1      
+#&gt; [19] GenomeInfoDb_1.42.3     ggvenn_0.1.19           htmltools_0.5.8.1      
+#&gt; [22] sass_0.4.10             yaml_2.3.10             crayon_1.5.3           
+#&gt; [25] pillar_1.11.1           jquerylib_0.1.4         cachem_1.1.0           
+#&gt; [28] tidyselect_1.2.1        rvest_1.0.5             zip_2.3.3              
+#&gt; [31] digest_0.6.37           stringi_1.8.7           purrr_1.2.0            
+#&gt; [34] labeling_0.4.3          fastmap_1.2.0           grid_4.4.3             
+#&gt; [37] cli_3.6.5               magrittr_2.0.4          patchwork_1.3.2        
+#&gt; [40] utf8_1.2.6              readr_2.1.6             withr_3.0.2            
+#&gt; [43] UCSC.utils_1.2.0        scales_1.4.0            rappdirs_0.3.3         
+#&gt; [46] bit64_4.6.0-1           XVector_0.46.0          rmarkdown_2.30         
+#&gt; [49] httr_1.4.7              igraph_2.2.1            bit_4.6.0              
+#&gt; [52] cellranger_1.1.0        png_0.1-8               hms_1.1.4              
+#&gt; [55] openxlsx_4.2.8.1        memoise_2.0.1           evaluate_1.0.5         
+#&gt; [58] knitr_1.50              rlang_1.1.6             Rcpp_1.1.0             
+#&gt; [61] glue_1.8.0              DBI_1.2.3               xml2_1.5.1             
+#&gt; [64] rstudioapi_0.17.1       jsonlite_2.0.0          R6_2.6.1               
+#&gt; [67] zlibbioc_1.52.0</code></pre>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
