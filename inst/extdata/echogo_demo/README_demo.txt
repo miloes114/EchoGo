@@ -1,5 +1,8 @@
-EchoGO demo dataset (distilled from a completed full run)
----------------------------------------------------------
+EchoGO demo dataset (distilled from HOL03_test full run)
+--------------------------------------------------------
+Source results: E:/Gigascience submission/EchoGo_Gigascience_submission/EchoGO/HOL03_test/results
+Source input:   E:/Gigascience submission/EchoGo_Gigascience_submission/EchoGO/HOL03_test/input
+
 Files:
  - GOseq_enrichment_demo.csv : GOseq subset with gene_ids RESTRICTED to mapped transcripts
  - Trinotate_demo.tsv        : TRINITY -> SYMBOL mapping (synthetic, Metazoa-tagged)

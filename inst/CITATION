@@ -1,21 +1,34 @@
 citHeader("To cite EchoGO in publications use:")
 
+## 1) Manuscript (in preparation)
 bibentry(
   bibtype = "Article",
   title   = "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms",
   author  = c(
-    person("Camilo",  "Escobar-Sierra"),
-    person("Felix",   "Langschied"),
+    person("Camilo", "Escobar-Sierra"),
+    person("Felix", "Langschied"),
     person("Pedro A.", "Inostroza")
   ),
   year    = "2025",
   journal = "In preparation",
-  doi     = "10.5281/zenodo.17658715",
-  url     = "https://doi.org/10.5281/zenodo.17658715",
   textVersion =
-    paste(
-      "Escobar-Sierra C., Langschied F., Inostroza P.A., et al. (2025).",
-      "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms.",
-      "Zenodo. DOI: 10.5281/zenodo.17658715"
-    )
+    "Escobar-Sierra, C., Langschied, F., & Inostroza, P. A. (2025). EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms. In preparation."
+)
+
+## 2) Software release (Zenodo)
+bibentry(
+  bibtype = "Misc",
+  title   = "EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms",
+  author  = c(
+    person("Camilo", "Escobar-Sierra"),
+    person("Felix", "Langschied"),
+    person("Pedro A.", "Inostroza")
+  ),
+  year    = "2026",
+  note    = "Version 0.1.2",
+  publisher = "Zenodo",
+  doi     = "10.5281/zenodo.17660708",
+  url     = "https://doi.org/10.5281/zenodo.17660708",
+  textVersion =
+    "Escobar-Sierra, C., Langschied, F., & Inostroza, P. A. (2026). EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.17660708"
 )

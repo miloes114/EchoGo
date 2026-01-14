@@ -17,6 +17,8 @@
 #' @importFrom readr read_csv
 #' @importFrom dplyr mutate filter arrange slice_head across case_when coalesce select distinct
 #' @importFrom ggplot2 ggplot aes geom_segment geom_point coord_flip labs theme_minimal ggsave scale_color_gradient expand_limits
+#' @importFrom grid grid.newpage grid.text gpar
+
 NULL
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
@@ -149,20 +151,27 @@ NULL
   return( (has_any_score & (has_gs | has_bg)) )
 }
 
-# ------------------------------------------------------------------------------
-#  A) GOseq lollipops (BP/CC/MF)
-# ------------------------------------------------------------------------------
+# Helper: write a simple "no significant terms" PDF
+.echogo_write_empty_pdf <- function(outfile, title, subtitle = NULL) {
+  grDevices::pdf(outfile, width = 10, height = 6)
+  on.exit(grDevices::dev.off(), add = TRUE)
+
+  grid::grid.newpage()
+  grid::grid.text(title, y = 0.60, gp = grid::gpar(fontsize = 16, fontface = "bold"))
+  if (!is.null(subtitle)) {
+    grid::grid.text(subtitle, y = 0.48, gp = grid::gpar(fontsize = 12))
+  }
+}
 
 #' @rdname echogo_plot_generators
 #' @keywords internal
 #' @noRd
-#' @param goseq_csv Path to the annotated GOseq CSV (e.g., GOseq_enrichment_full_annotated.csv).
-#' @param outdir_goseq Output directory (usually <base>/goseq).
-goseq_make_lollipops <- function(goseq_csv, outdir_goseq) {
+goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
   if (!file.exists(goseq_csv)) {
     warning("goseq_make_lollipops(): missing ", goseq_csv)
     return(invisible(NULL))
   }
+
   df <- suppressMessages(readr::read_csv(goseq_csv, show_col_types = FALSE))
   req_any <- c("foldEnrichment","term","ontology","over_represented_FDR")
   if (!all(req_any %in% names(df))) {
@@ -171,37 +180,71 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq) {
     return(invisible(NULL))
   }
 
-  outdir <- .make_dir(outdir_goseq)  # typically <base>/goseq
+  outdir <- .make_dir(outdir_goseq)
 
+  # normalize + compute stats
   df <- dplyr::mutate(
     df,
-    term_name   = .data$term,
-    negLogFDR   = -log10(pmax(.data$over_represented_FDR, .Machine$double.xmin)),
-    ontology    = dplyr::case_when(
+    term_name = .data$term,
+    over_represented_FDR = suppressWarnings(as.numeric(.data$over_represented_FDR)),
+    foldEnrichment = suppressWarnings(as.numeric(.data$foldEnrichment)),
+    negLogFDR = -log10(pmax(.data$over_represented_FDR, .Machine$double.xmin)),
+    ontology = dplyr::case_when(
       .data$ontology %in% c("BP","GO:BP") ~ "BP",
       .data$ontology %in% c("MF","GO:MF") ~ "MF",
       .data$ontology %in% c("CC","GO:CC") ~ "CC",
       TRUE ~ as.character(.data$ontology)
-    )
+    ),
+    goseq_signif = !is.na(.data$over_represented_FDR) & .data$over_represented_FDR <= fdr_thr
   )
+
+  # STRICT: keep only significant GOseq terms for plotting
+  df_sig <- dplyr::filter(df, .data$goseq_signif)
 
   ontos <- c("BP","CC","MF")
 
-  # ---- Per-depth top 50 (only if depth present)
-  if ("depth" %in% names(df)) {
-    depths <- sort(unique(stats::na.omit(df$depth)))
+  # If none significant overall: write 1 obvious PDF and exit
+  if (!nrow(df_sig)) {
+    .echogo_write_empty_pdf(
+      outfile  = file.path(outdir, "GO_lollipops_NONE_significant.pdf"),
+      title    = sprintf("GOseq: No terms with FDR ≤ %.2g", fdr_thr),
+      subtitle = "Nothing to plot (this is expected when GOseq FDRs are ~1)."
+    )
+    return(invisible(NULL))
+  }
+
+  # Optional: also write a tiny text flag file for the report/pipeline
+  cat(
+    sprintf("GOseq significant terms (FDR ≤ %.2g): %d\n", fdr_thr, nrow(df_sig)),
+    file = file.path(outdir, "GOseq_significance_summary.txt")
+  )
+
+  # ---- Per-depth top 50 (SIGNIFICANT ONLY)
+  if ("depth" %in% names(df_sig)) {
+    depths <- sort(unique(stats::na.omit(df_sig$depth)))
     for (depth_val in depths) {
       for (ont in ontos) {
-        d <- df |>
+        d <- df_sig |>
           dplyr::filter(.data$depth == depth_val, .data$ontology == ont, !is.na(.data$foldEnrichment)) |>
           dplyr::arrange(dplyr::desc(.data$foldEnrichment)) |>
           dplyr::slice_head(n = 50)
-        if (!nrow(d)) next
+
+        outfile <- file.path(outdir, sprintf("GO_lollipop_depth%s_%s.pdf", depth_val, ont))
+
+        if (!nrow(d)) {
+          .echogo_write_empty_pdf(
+            outfile,
+            title    = sprintf("GOseq (%s): No terms with FDR ≤ %.2g at depth %s", ont, fdr_thr, depth_val),
+            subtitle = "Empty by design (strict GOseq filter)."
+          )
+          next
+        }
+
         .plot_lollipop_core(
           df = d,
           y_col = "foldEnrichment",
-          title = sprintf("Top Enriched GO Terms — Depth %s — %s", depth_val, ont),
-          outfile = file.path(outdir, sprintf("GO_lollipop_depth%s_%s.pdf", depth_val, ont)),
+          title = sprintf("GOseq significant terms (FDR ≤ %.2g) — Depth %s — %s", fdr_thr, depth_val, ont),
+          outfile = outfile,
           x_lab = "GO Term",
           y_lab = "Fold Enrichment",
           colour_col = "negLogFDR",
@@ -213,18 +256,29 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq) {
     }
   }
 
-  # ---- All depths top 50 per ontology
+  # ---- All depths top 50 per ontology (SIGNIFICANT ONLY)
   for (ont in ontos) {
-    d <- df |>
+    d <- df_sig |>
       dplyr::filter(.data$ontology == ont, !is.na(.data$foldEnrichment)) |>
       dplyr::arrange(dplyr::desc(.data$foldEnrichment)) |>
       dplyr::slice_head(n = 50)
-    if (!nrow(d)) next
+
+    outfile <- file.path(outdir, sprintf("GO_lollipop_allDepths_top50_%s.pdf", ont))
+
+    if (!nrow(d)) {
+      .echogo_write_empty_pdf(
+        outfile,
+        title    = sprintf("GOseq (%s): No terms with FDR ≤ %.2g", ont, fdr_thr),
+        subtitle = "Empty by design (strict GOseq filter)."
+      )
+      next
+    }
+
     .plot_lollipop_core(
       df = d,
       y_col = "foldEnrichment",
-      title = sprintf("Top GO Terms (All Depths) — %s", ont),
-      outfile = file.path(outdir, sprintf("GO_lollipop_allDepths_top50_%s.pdf", ont)),
+      title = sprintf("GOseq significant terms (FDR ≤ %.2g) — All depths — %s", fdr_thr, ont),
+      outfile = outfile,
       x_lab = "GO Term",
       y_lab = "Fold Enrichment",
       colour_col = "negLogFDR",
@@ -233,8 +287,10 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq) {
       label_width = 35
     )
   }
+
   invisible(NULL)
 }
+
 
 # ------------------------------------------------------------------------------
 #  B) g:Profiler lollipops (per species; with background & no background)

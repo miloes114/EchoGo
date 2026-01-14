@@ -14,6 +14,7 @@ run_echogo_pipeline(
   outdir = "echogo_out",
   strict_only = FALSE,
   run_evaluation = TRUE,
+  use_trinotate_universe = FALSE,
   verbose = TRUE
 )
 }
@@ -37,6 +38,8 @@ to the codes themselves.}
 \item{strict_only}{If TRUE, skip g:Profiler no-background runs and strict plots only}
 
 \item{run_evaluation}{Whether to run enrichment evaluation (default: TRUE)}
+
+\item{use_trinotate_universe}{Logical; if TRUE, use EggNOG/Trinotate-derived}
 
 \item{verbose}{Print progress}
 }

@@ -155,14 +155,12 @@ params:
     unlink(stable_rmd, force = TRUE)
   }
 
-  # Move index + log
+  # Copy index into report/ but KEEP the authoritative index in base_dir
   root_index <- file.path(base_dir, "__file_index.csv")
   if (file.exists(root_index)) {
-    if (!file.rename(root_index, file.path(report_dir, "__file_index.csv"))) {
-      file.copy(root_index, file.path(report_dir, "__file_index.csv"), overwrite = TRUE)
-      unlink(root_index, force = TRUE)
-    }
+    file.copy(root_index, file.path(report_dir, "__file_index.csv"), overwrite = TRUE)
   }
+
   if (file.exists(log_file)) {
     if (!file.rename(log_file, file.path(report_dir, "__report_render.log"))) {
       file.copy(log_file, file.path(report_dir, "__report_render.log"), overwrite = TRUE)

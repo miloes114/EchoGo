@@ -21,9 +21,13 @@ load_and_annotate_goseq(
 \code{transcript_id}, and ideally \code{sprot_Top_BLASTX_hit}, \code{EggNM.Preferred_name},
 \code{EggNM.max_annot_lvl}).}
 
-\item{de_file}{Path to the DE results file (filtered DE list used by GOseq).}
+\item{de_file}{Path to the DE results file (filtered DE list used by GOseq).
+In reference-based mode this is optional (used mainly for totals / logging);
+if provided, it should correspond to the same contrast as \code{goseq_file}.}
 
-\item{count_matrix_file}{Path to the full count matrix (rows = background size).}
+\item{count_matrix_file}{Path to the full count matrix (rows = background size).
+Optional; used to estimate background size for fold enrichment. If missing, EchoGO
+may approximate fold enrichment from GOseq columns or leave it as-is depending on inputs.}
 
 \item{output_dir}{Output folder to save results (default: \code{"goseq"}).
 If \code{options(EchoGO.legacy_aliases)=TRUE}, a legacy mirror is also written to
@@ -31,8 +35,14 @@ If \code{options(EchoGO.legacy_aliases)=TRUE}, a legacy mirror is also written t
 }
 \value{
 A data.frame of enriched GO terms with annotations and depth.
+#' The returned data.frame also carries an attribute \code{echogo_bg_universe} when it can be
+derived from Trinotate/EggNOG primary names (used downstream as a background universe).
 }
 \description{
 Loads GOseq results, maps gene names using Trinotate annotations (Metazoa-biased heuristic),
 computes fold enrichment and GO term depth, and exports cleaned results.
+#' In reference-based RNA-seq workflows, GOseq outputs may already contain gene identifiers
+that are gene symbols/names (not transcript IDs). If the identifiers in \code{gene_ids}
+do not match the annotation \code{transcript_id} column, EchoGO will treat \code{gene_ids}
+as already-usable names and use them directly.
 }

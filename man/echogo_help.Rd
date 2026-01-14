@@ -7,6 +7,5 @@
 echogo_help()
 }
 \description{
-Print a short overview of the main EchoGO entry points, vignettes,
-and helper functions.
+EchoGO — Quickstart help
 }

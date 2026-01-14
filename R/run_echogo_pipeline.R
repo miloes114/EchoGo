@@ -15,6 +15,7 @@
 #' @param strict_only If TRUE, skip g:Profiler no-background runs and strict plots only
 #' @param run_evaluation Whether to run enrichment evaluation (default: TRUE)
 #' @param verbose Print progress
+#' @param use_trinotate_universe Logical; if TRUE, use EggNOG/Trinotate-derived
 #' @return Named list with inputs, dirs, objects, files
 #' @export
 #' @importFrom dplyr %>% filter pull
@@ -29,6 +30,7 @@ run_echogo_pipeline <- function(
     outdir  = "echogo_out",
     strict_only = FALSE,
     run_evaluation = TRUE,
+    use_trinotate_universe = FALSE,  # <-- NEW
     verbose = TRUE
 ) {
   `%||%` <- function(a,b) if (!is.null(a)) a else b
@@ -132,8 +134,27 @@ run_echogo_pipeline <- function(
     y <- y[!grepl("^TRINITY", y, ignore.case = TRUE)]    # remove transcript-like IDs
     unique(y)
   }
+
+  # DE set = union of gene_names seen in GOseq (same as before)
   de_eggnog_filtered <- .sym_from_goseq(goseq_df$gene_names)
-  bg_eggnog_filtered <- de_eggnog_filtered
+
+  # Try to use EggNOG / Trinotate universe (Mode A)
+  bg_universe <- attr(goseq_df, "echogo_bg_universe")
+  if (!is.null(bg_universe) && length(bg_universe)) {
+    bg_eggnog_filtered <- bg_universe[!grepl("^TRINITY", bg_universe, ignore.case = TRUE)]
+    if (verbose) {
+      message("   · Using Trinotate/EggNOG universe for g:Profiler background: ",
+              length(bg_eggnog_filtered), " genes.")
+    }
+  } else {
+    # Fallback to old behaviour (Mode B) to avoid breaking older inputs
+    bg_eggnog_filtered <- de_eggnog_filtered
+    if (verbose) {
+      message("   · No Trinotate/EggNOG universe detected; ",
+              "using GOseq-derived symbols as both DE and background (legacy mode).")
+    }
+  }
+
 
   if (verbose) {
     message("🔬 Running g:Profiler across species: ", paste(names(species_map), collapse = ", "))

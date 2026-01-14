@@ -16,134 +16,726 @@
   <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
   <graph id="G" edgedefault="undirected">
     <node id="n0">
-      <data key="v_name">GO:0016162</data>
-      <data key="v_label">cellulose 1,4-beta-cellobiosidase activity</data>
-      <data key="v_genes_flat">BEST3, CIR1, CANB</data>
-      <data key="v_gene_count">3</data>
-      <data key="v_consensus_score">2.33120590847537</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">3</data>
+      <data key="v_name">GO:0003674</data>
+      <data key="v_label">molecular_function</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, U2AF2, SF3B1, DDX46, SF3A2, DDX42, PUF60, SF3B3, SNIP1, SLU7, SRPK3, SF3A1, SF3A3, PHF5A, DDX23, RBMX2, NCBP1, DDX1, SF3B4, SF3B2, SF3B5, SRSF7, PTBP1, LSM7, RBM19, TIA1, RBM25, RBM42, DCPS, LSM8, CWC22, DHX8, LSM6, SDE2, RBM47, RBM22, RBM10, PRP4K, ZMAT2, AQR, SMU1, DBR1, RBM39, LARP7, PPIE, RBM11, SNW1, LSM5, NCBP2, TRA2B, NUP98, CDC5L, LSM4, WBP4, SRRM2, LSM3, PRPF3, MFAP1, SYF2, NOVA1, LSM2, SART3, SNRPA, PQBP1, RBM8A, SRRM1, NHP2, RBM3, SENP7, U2AF1, ZCRB1, DDX17, SRSF3, PLRG1, PPIL1, DDX41, UBL5, BUD31, YJU2, DHX15, CWC27, MTREX, TGS1, ESS2, MBNL1, GLOD4, PSMD1, ADRM1, PSMD2, PSMD4, PSMD7, PSMD3, PSMD6, PSMD9, PSMD8, PSME3, UBE3C, UCHL5, SEM1, NDE1, TTK, CKAP5, PLK1, SIN3A, KAT8, CBX5, PINX1, KAT5, DCTN1, ORC2, CDC20, LRWD1, CENPE, BUB3, XPO1, CHMP3, CHMP5, DCTN2, ZW10, CBX3, APEX1, WDR82, NAT10, MCM5, TEP1, XRCC1, FEN1, CBX1, SUN1, PARP1, SMC5, H2AX, RBBP4, RPA2, HAT1, MCM6, CHD4, RPA1, MCM4, SMC6, THOC2, THOC1, MSH2, PCNA, CDC73, MCM2, ORC1, ERCC1, GAR1, KDM1A, CDK1, DHX36, THOC6, THOC7, BAZ1B, CREB1, UBR5, UBR2, NEDD4, ENY2, HIRA, SMAD3, NOP53, PHC1, RRP8, EGR1, SMAD4, SSRP1, RSF1, SGF29, TOP2B, VPS72, NSD2, HDAC1, BMI1, CPSF6, CBX2, ING5, KAT6A, UBA1, NASP, TONSL, SPHK2, MTA1, DDX21, SET, JADE3, SRF, SPRTN, MSH6, CTR9, BNC2, UBE2A, RCC1, TAF6, ERCC6, HPF1, KAT7, TIPIN, DMAP1, JADE1, DVL3, WDR5, E2F4, SUZ12, VRK1, IST1, TAF7, RAN, RBF, PHF10, LOXL2, NONO, DEAF1, WDR33, NOP58, EIF3L, CDK7, DKC1, NOLC1, TOP1, NOP56, PAF1, IMP4, SESN1, HERC4, LEO1, RAE1, EIF3K, EIF3B, EIF3A, EIF3C, EIF3H, EIF3E, EIF3J, EIF3I, EIF3M, EIF3D, EIF3G, EIF3F, DRG1, DENR, DRG2, NEMF, MCTS1, CPEB3, ALG6, PGM2, SRP19, PASK, DMD, KSR2, OLA1, TCEA1, FNTA, STT3B, DDX6, CARM1, TRIP4, CATL, CPVL, FRMD5, ARL1, FYNB, DUS2, STIP1, NFU1, UTP23, NOG2, MKRN2, ACE, SNX6, PUS1, UBE2H, SAR1B, CHFR, GGH, EDEM3, SHC1, CDK12, GPD1L, ABCB7, CSK, VPS28, NMD3, KCMF1, ACSF2, COX1, CZIB, PAK1, GFPT1, NFX1, ACSL5, ZYX, SMAP1, LMNA, PDCD6, SRPRA, PGAM5, DPP3, DERL2, CDK10, RTF2, UNKL, TDH, COASY, EHD3, IDI1, CCNY, CTU1, ASPG, ZMYM2, ISCA1, HCFC2, EPN2, QSOX2, QSOX1, ERO1A, GALT, ZFPL1, TMX1, PPME1, UBB, MGAT2, CSTF3, CNDP2, MON1A, RRAGD, SQOR, RTCA, ATG3, AP1M1, SAE1, GRSF1, DCTD, ERP44, NPC1, XRN2, ATP7A, CALR, MECR, SPAST, PCBP3, PUS7, FXR1, ACYP2, AGO3, UBE4A, ERAL1, PAX5, PHF14, MYO1F, BRDT, CAPZB, CDC42, NAA20, NAGK, REXO1, ALG2, TOB1A, RRS1, SDHA, NOL9, ATP9B, SYK, PRDX2, PRKX, ARL8A, ARF1, RAB10, PIM3, GMDS, RAP1B, PDK4, MKNK1, AGO1, NFYC, SNX12, ESF1, ABCE1, MLXIP, DESI2, DDX52, RBM34, SOCS6, TRMO, MYO1D, GBA2, FGFR2, CPO, RAB2A, AP1B1, DDX54, LMAN2, OGA, SCYL1, YRK, SMG7</data>
+      <data key="v_gene_count">400</data>
+      <data key="v_consensus_score">0.933333333333333</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
       <data key="v_community">1</data>
-      <data key="v_community_label">Cluster: cellulose 1,4-beta-cellobiosidase activity</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
     </node>
     <node id="n1">
-      <data key="v_name">GO:0008235</data>
-      <data key="v_label">metalloexopeptidase activity</data>
-      <data key="v_genes_flat">CASP7, ARF1, PLOD3, ENPP3, GNS, PLCD4, SCP2, GSTM2, SPG7, ATAD1, PIM3, FGD6, LRP2, PTGR1, CTRB1, CASP1, PXDN</data>
-      <data key="v_gene_count">17</data>
-      <data key="v_consensus_score">2.16759994849607</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">2</data>
-      <data key="v_community">2</data>
-      <data key="v_community_label">Cluster: hydrolase activity</data>
+      <data key="v_name">GO:0005488</data>
+      <data key="v_label">binding</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, DDX46, SF3A2, DDX42, PUF60, SNIP1, SRPK3, SF3A1, SF3A3, PHF5A, DDX23, RBMX2, NCBP1, DDX1, SF3B4, SF3B2, SRSF7, PTBP1, LSM7, RBM19, TIA1, RBM25, RBM42, DCPS, CWC22, DHX8, LSM6, SDE2, RBM47, RBM22, ZMAT2, AQR, SMU1, DBR1, LARP7, PPIE, SNW1, LSM5, NCBP2, TRA2B, NUP98, CDC5L, LSM4, SRRM2, LSM3, MFAP1, SYF2, NOVA1, LSM2, SART3, SNRPA, PQBP1, RBM8A, NHP2, RBM3, SENP7, U2AF1, ZCRB1, DDX17, PLRG1, PPIL1, DDX41, UBL5, BUD31, YJU2, DHX15, CWC27, MTREX, MBNL1, GLOD4, PSMD1, ADRM1, PSMD2, PSMD4, PSMD7, PSME3, UCHL5, SEM1, NDE1, TTK, PLK1, SIN3A, KAT8, CBX5, PINX1, KAT5, DCTN1, ORC2, CDC20, LRWD1, CENPE, BUB3, XPO1, CHMP3, CHMP5, DCTN2, ZW10, CBX3, WDR82, NAT10, MCM5, TEP1, XRCC1, CBX1, SUN1, PARP1, SMC5, H2AX, RBBP4, RPA2, MCM6, CHD4, RPA1, SMC6, THOC2, THOC1, MSH2, PCNA, CDC73, MCM2, ORC1, ERCC1, GAR1, KDM1A, CDK1, DHX36, THOC6, UBR2, NEDD4, ENY2, SMAD3, PHC1, RRP8, EGR1, SMAD4, SSRP1, SGF29, TOP2B, VPS72, NSD2, HDAC1, BMI1, CPSF6, CBX2, ING5, KAT6A, UBA1, NASP, TONSL, SPHK2, MTA1, DDX21, SET, JADE3, SRF, SPRTN, MSH6, CTR9, BNC2, UBE2A, TAF6, ERCC6, HPF1, TIPIN, DMAP1, JADE1, DVL3, WDR5, SUZ12, IST1, RBF, PHF10, LOXL2, NONO, DEAF1, WDR33, NOP58, DKC1, NOLC1, TOP1, NOP56, PAF1, IMP4, SESN1, HERC4, LEO1, RAE1, EIF3K, EIF3B, EIF3A, EIF3C, EIF3H, EIF3E, EIF3J, EIF3I, EIF3M, EIF3F, DRG1, DENR, MCTS1, ALG6, PGM2, DMD, KSR2, OLA1, TCEA1, FNTA, STT3B, DDX6, CARM1, CATL, CPVL, FRMD5, ARL1, FYNB, DUS2, STIP1, NFU1, UTP23, NOG2, MKRN2, ACE, SNX6, PUS1, UBE2H, SAR1B, CHFR, GGH, EDEM3, SHC1, CDK12, GPD1L, ABCB7, CSK, VPS28, NMD3, KCMF1, ACSF2, COX1, CZIB, PAK1, GFPT1, NFX1, ACSL5, ZYX, LMNA, PDCD6, SRPRA, PGAM5, DPP3, DERL2, CDK10, RTF2, UNKL, TDH, COASY, IDI1, CCNY, CTU1, ASPG, ZMYM2, ISCA1, EPN2, QSOX2, QSOX1, ERO1A, GALT, TMX1, PPME1, UBB, MGAT2, CSTF3, CNDP2, MON1A, RRAGD, SQOR, RTCA, ATG3, AP1M1, SAE1, DCTD, ERP44, NPC1, XRN2, ATP7A, CALR, MECR, SPAST, PCBP3, PUS7, FXR1, ACYP2, AGO3, UBE4A, ERAL1, PAX5, PHF14, MYO1F, BRDT, CDC42, NAA20, NAGK, REXO1, SDHA, NOL9, ATP9B, SYK, PRDX2, PRKX, ARF1, PIM3, GMDS, RAP1B, MKNK1, AGO1, NFYC, SNX12, ESF1, ABCE1, MLXIP, DESI2, RBM34, SOCS6, TRMO, FGFR2, CPO, RAB2A, AP1B1, DDX54, OGA, SCYL1, YRK, SMG7</data>
+      <data key="v_gene_count">335</data>
+      <data key="v_consensus_score">0.576131795789056</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
     </node>
     <node id="n2">
-      <data key="v_name">GO:0004252</data>
-      <data key="v_label">serine-type endopeptidase activity</data>
-      <data key="v_genes_flat">PSMD7, CALR, PGAM2, GFPT1, SMOX, ACADM, CBR1, ACADS, ATG7, DLDH, GFPT2, CBR4, RDH5, SDSL, NDC1, CRYL1, ALDH2, LIAS, COX11, COX17, ECI3, MTRR, RTCB, SEC13, LIPH, PUS10</data>
-      <data key="v_gene_count">26</data>
-      <data key="v_consensus_score">2.12898644072008</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">3</data>
+      <data key="v_name">GO:0003824</data>
+      <data key="v_label">catalytic activity</data>
+      <data key="v_genes_flat">ISY1, SF3A2, SF3B3, SF3A1, DDX23, SF3B2, PTBP1, LSM7, DCPS, CWC22, DHX8, PRP4K, SMU1, LARP7, RBM11, SNW1, CDC5L, LSM4, SRRM2, LSM3, PRPF3, MFAP1, SYF2, NOVA1, RBM8A, SRRM1, NHP2, RBM3, SENP7, U2AF1, DDX17, PPIL1, DDX41, CWC27, MTREX, TGS1, ESS2, MBNL1, GLOD4, PSMD6, PSMD9, PSMD8, UCHL5, CKAP5, PLK1, CBX5, PINX1, LRWD1, CHMP5, DCTN2, ZW10, CBX3, APEX1, CBX1, SUN1, H2AX, HAT1, ORC1, CDK1, DHX36, THOC7, UBR2, RRP8, EGR1, SGF29, TOP2B, NSD2, HDAC1, ING5, UBA1, SPHK2, MTA1, CTR9, BNC2, RCC1, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, VRK1, RAN, LOXL2, NONO, DEAF1, WDR33, NOP58, EIF3L, CDK7, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3H, EIF3E, DRG1, DRG2, NEMF, MCTS1, CPEB3, ALG6, TCEA1, FNTA, TRIP4, FYNB, DUS2, NOG2, ACE, PUS1, GGH, EDEM3, SHC1, CDK12, GPD1L, VPS28, NMD3, KCMF1, CZIB, PAK1, ACSL5, ZYX, SMAP1, LMNA, PDCD6, PGAM5, DPP3, DERL2, ZMYM2, ISCA1, HCFC2, ERO1A, UBB, MGAT2, CSTF3, CNDP2, MON1A, RRAGD, SQOR, ERP44, XRN2, PHF14, MYO1F, BRDT, CAPZB, NAGK, REXO1, ALG2, ATP9B, SYK, PRDX2, ARL8A, ARF1, PIM3, AGO1, NFYC, ESF1, MLXIP, DDX52, RBM34, MYO1D, GBA2, SCYL1, YRK</data>
+      <data key="v_gene_count">165</data>
+      <data key="v_consensus_score">0.458563756506684</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
       <data key="v_community">2</data>
-      <data key="v_community_label">Cluster: hydrolase activity</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
     </node>
     <node id="n3">
-      <data key="v_name">GO:0004553</data>
-      <data key="v_label">hydrolase activity, hydrolyzing O-glycosyl compounds</data>
-      <data key="v_genes_flat">TRUB2, EXO1, CLU, RYBP, CNPY2, BEST3, CIR1, CANB</data>
-      <data key="v_gene_count">8</data>
-      <data key="v_consensus_score">2.12451454175237</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">3</data>
-      <data key="v_community">1</data>
-      <data key="v_community_label">Cluster: cellulose 1,4-beta-cellobiosidase activity</data>
+      <data key="v_name">GO:0036094</data>
+      <data key="v_label">small molecule binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, SUN1, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, CTR9, BNC2, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, IST1, LOXL2, NONO, DEAF1, DKC1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, FYNB, PUS1, GGH, EDEM3, CDK12, GPD1L, VPS28, CZIB, PAK1, ZYX, PDCD6, CTU1, ASPG, ZMYM2, ISCA1, ERO1A, UBB, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">81</data>
+      <data key="v_consensus_score">0.456540997266823</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
     </node>
     <node id="n4">
-      <data key="v_name">GO:0016798</data>
-      <data key="v_label">hydrolase activity, acting on glycosyl bonds</data>
-      <data key="v_genes_flat">TRUB2, EXO1, CPNE8, CLU, RYBP, CNPY2, BEST3, CIR1, CANB</data>
-      <data key="v_gene_count">9</data>
-      <data key="v_consensus_score">2.11953869819854</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">3</data>
-      <data key="v_community">1</data>
-      <data key="v_community_label">Cluster: cellulose 1,4-beta-cellobiosidase activity</data>
+      <data key="v_name">GO:0043167</data>
+      <data key="v_label">ion binding</data>
+      <data key="v_genes_flat">ISY1, SF3A2, DDX42, SNIP1, SF3A1, DDX23, PTBP1, RBM25, RBM42, CWC22, DHX8, LSM6, RBM47, SMU1, LARP7, CDC5L, LSM4, SRRM2, LSM3, MFAP1, SYF2, RBM8A, NHP2, RBM3, SENP7, U2AF1, ZCRB1, DDX17, PLRG1, PPIL1, DDX41, DHX15, CWC27, MTREX, MBNL1, GLOD4, ADRM1, PSMD4, PSMD7, PSME3, UCHL5, CBX5, PINX1, LRWD1, CHMP5, DCTN2, ZW10, CBX3, MCM5, SUN1, H2AX, RBBP4, MSH2, PCNA, ORC1, ERCC1, CDK1, DHX36, UBR2, ENY2, RRP8, EGR1, SGF29, TOP2B, NSD2, HDAC1, CBX2, ING5, NASP, TONSL, SPHK2, MTA1, DDX21, JADE3, SRF, SPRTN, CTR9, BNC2, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, WDR33, NOP58, NOLC1, NOP56, PAF1, IMP4, EIF3K, EIF3C, EIF3H, EIF3E, EIF3J, EIF3I, EIF3F, MCTS1, ALG6, PGM2, DMD, KSR2, OLA1, TCEA1, FNTA, STT3B, FYNB, STIP1, NFU1, UTP23, NOG2, ACE, PUS1, GGH, EDEM3, SHC1, CDK12, GPD1L, VPS28, KCMF1, PAK1, NFX1, ZYX, PDCD6, PGAM5, DPP3, DERL2, CDK10, TDH, ERO1A, UBB, MGAT2, MON1A, RRAGD, SQOR, AP1M1, ERP44, FXR1, ERAL1, PAX5, PHF14, MYO1F, BRDT, CDC42, NAGK, REXO1, SDHA, NOL9, ATP9B, SYK, PRDX2, ARF1, PIM3, RAP1B, AGO1, SNX12, ESF1, MLXIP, RBM34, FGFR2, CPO, RAB2A, SCYL1</data>
+      <data key="v_gene_count">166</data>
+      <data key="v_consensus_score">0.483605434408495</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: ion binding</data>
     </node>
     <node id="n5">
-      <data key="v_name">GO:0004175</data>
-      <data key="v_label">endopeptidase activity</data>
-      <data key="v_genes_flat">TAF2, PSMD7, CALR, NPC1, PGAM2, DHX36, GFPT1, SMOX, ACADM, CBR1, ACADS, ATG7, DLDH, GFPT2, CBR4, RDH5, FNTB, SDSL, CHKB, NFS1, PEX16, VPS18, AP3B2, AP1M1, NDC1, MCAT, CRYL1, ALDH2, HPGDS, ACLY, LIAS, COX11, COX17, ECI3, MTRR, RTCB, ACSF2, CDK9, SEC13, AP1S2, AIG1, CLPP, LIPH, PUS10</data>
-      <data key="v_gene_count">44</data>
-      <data key="v_consensus_score">2.1078236448765</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">3</data>
+      <data key="v_name">GO:0032555</data>
+      <data key="v_label">purine ribonucleotide binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, PUS1, CDK12, GPD1L, VPS28, PAK1, ZYX, PDCD6, ERO1A, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">67</data>
+      <data key="v_consensus_score">0.0766128431212274</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
       <data key="v_community">2</data>
-      <data key="v_community_label">Cluster: hydrolase activity</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
     </node>
     <node id="n6">
-      <data key="v_name">GO:0008233</data>
-      <data key="v_label">peptidase activity</data>
-      <data key="v_genes_flat">TAF2, CASP7, PSMD7, CALR, NPC1, GALT, PGAM2, ARF1, DHX36, GFPT1, SMOX, ACADM, CBR1, ACADS, ATG7, DLDH, GFPT2, CBR4, RDH5, FNTB, SDSL, CHKB, NFS1, PEX16, VPS18, AP3B2, AP1M1, NDC1, MCAT, PLOD3, ENPP3, CRYL1, GNS, PLCD4, SCP2, ALDH2, HPGDS, ACLY, GSTM2, LIAS, COX11, COX17, ECI3, SPG7, ATAD1, MTRR, EPHA4, RTCB, ACSF2, CDK9, PIM3, FGD6, LRP2, SEC13, AP1S2, AIG1, PTGR1, CTRB1, CLPP, CASP1, PXDN, LIPH, PUS10</data>
-      <data key="v_gene_count">63</data>
-      <data key="v_consensus_score">2.10303503337211</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">4</data>
+      <data key="v_name">GO:0035639</data>
+      <data key="v_label">purine ribonucleoside triphosphate binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, ZW10, CBX3, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, PUS1, CDK12, GPD1L, VPS28, PAK1, ZYX, PDCD6, ERO1A, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">65</data>
+      <data key="v_consensus_score">0.061222494811717</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
       <data key="v_community">2</data>
-      <data key="v_community_label">Cluster: hydrolase activity</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
     </node>
     <node id="n7">
-      <data key="v_name">GO:0016787</data>
-      <data key="v_label">hydrolase activity</data>
-      <data key="v_genes_flat">TAF2, CASP7, PSMD7, CALR, NPC1, GALT, PGAM2, ARF1, DHX36, GFPT1, SMOX, ACADM, CBR1, ACADS, ATG7, DLDH, GFPT2, CBR4, RDH5, FNTB, SDSL, CHKB, NFS1, PEX16, VPS18, AP3B2, AP1M1, NDC1, MCAT, PLOD3, ENPP3, CRYL1, GNS, PLCD4, SCP2, ALDH2, HPGDS, ACLY, GSTM2, LIAS, COX11, COX17, ECI3, SPG7, ATAD1, MTRR, EPHA4, RTCB, ACSF2, CDK9, PIM3, FGD6, LRP2, SEC13, AP1S2, AIG1, PTGR1, CTRB1, CLPP, CASP1, PXDN, LIPH, PUS10, TRUB2, EXO1, ZNFX1, CUL5, CPNE8, BOK, CLU, RYBP, CNPY2, BEST3, CIR1, CANB, NDG, PDI, MARF, HSP83, PCH2</data>
-      <data key="v_gene_count">80</data>
-      <data key="v_consensus_score">2.07519703840043</data>
-      <data key="v_size_attr">3</data>
-      <data key="v_degree">7</data>
+      <data key="v_name">GO:0032553</data>
+      <data key="v_label">ribonucleotide binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, PUS1, CDK12, GPD1L, VPS28, PAK1, ZYX, PDCD6, ERO1A, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">67</data>
+      <data key="v_consensus_score">0.0610553594165676</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
       <data key="v_community">2</data>
-      <data key="v_community_label">Cluster: hydrolase activity</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
     </node>
+    <node id="n8">
+      <data key="v_name">GO:0017076</data>
+      <data key="v_label">purine nucleotide binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, PUS1, CDK12, GPD1L, VPS28, PAK1, ZYX, PDCD6, ERO1A, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">67</data>
+      <data key="v_consensus_score">0.0535647379728418</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
+    </node>
+    <node id="n9">
+      <data key="v_name">GO:0000166</data>
+      <data key="v_label">nucleotide binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, SUN1, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, CTR9, BNC2, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, DKC1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, PUS1, CDK12, GPD1L, VPS28, CZIB, PAK1, ZYX, PDCD6, CTU1, ASPG, ZMYM2, ISCA1, ERO1A, UBB, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">77</data>
+      <data key="v_consensus_score">0.0446221432237936</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
+    </node>
+    <node id="n10">
+      <data key="v_name">GO:0046872</data>
+      <data key="v_label">metal ion binding</data>
+      <data key="v_genes_flat">ISY1, SF3A2, DDX42, SNIP1, SF3A1, PTBP1, RBM25, RBM42, CWC22, DHX8, RBM47, SMU1, CDC5L, LSM4, SRRM2, LSM3, MFAP1, RBM8A, NHP2, RBM3, SENP7, U2AF1, ZCRB1, PLRG1, DHX15, CWC27, MTREX, MBNL1, ADRM1, PSMD4, PSMD7, UCHL5, LRWD1, CHMP5, DCTN2, CBX3, MCM5, H2AX, RBBP4, MSH2, PCNA, ORC1, ERCC1, CDK1, DHX36, ENY2, RRP8, EGR1, SGF29, NSD2, HDAC1, CBX2, NASP, TONSL, MTA1, DDX21, JADE3, SRF, SPRTN, DMAP1, JADE1, WDR5, WDR33, NOP58, NOP56, PAF1, IMP4, EIF3H, EIF3J, EIF3I, EIF3F, MCTS1, PGM2, DMD, KSR2, OLA1, TCEA1, FNTA, STIP1, NFU1, UTP23, NOG2, ACE, PUS1, SHC1, VPS28, KCMF1, NFX1, PGAM5, DPP3, DERL2, CDK10, ERO1A, MON1A, AP1M1, ERP44, CDC42, NAGK, SDHA, NOL9, ATP9B, SYK, PRDX2, PIM3, RAP1B, AGO1, SNX12, MLXIP, FGFR2, CPO, RAB2A</data>
+      <data key="v_gene_count">111</data>
+      <data key="v_consensus_score">0.0328991007711197</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: ion binding</data>
+    </node>
+    <node id="n11">
+      <data key="v_name">GO:0003723</data>
+      <data key="v_label">RNA binding</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, PUF60, SF3A3, SRSF7, RBM19, TIA1, RBM25, DCPS, PPIE, SNW1, SYF2, PQBP1, UBL5, DHX15, PSMD2, NDE1, PLK1, CENPE, WDR82, NAT10, H2AX, RBBP4, CDC73, THOC6, VPS72, CBX2, KAT6A, UBA1, TONSL, UBE2A, RBF, PHF10, WDR33, NOLC1, NOP56, SESN1, HERC4, EIF3B, EIF3E, DENR, ALG6, OLA1, FRMD5, SNX6, CHFR, ABCB7, CSK, ACSF2, COX1, PAK1, GFPT1, ZYX, PDCD6, CDK10, IDI1, CCNY, GALT, RTCA, ATG3, AP1M1, SAE1, DCTD, NPC1, ATP7A, PCBP3, AGO3, REXO1, NOL9, GMDS, RAP1B, MKNK1, ABCE1, DESI2, SOCS6</data>
+      <data key="v_gene_count">76</data>
+      <data key="v_consensus_score">0.0316467394257846</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
+    </node>
+    <node id="n12">
+      <data key="v_name">GO:0043168</data>
+      <data key="v_label">anion binding</data>
+      <data key="v_genes_flat">SNIP1, DDX23, PTBP1, RBM42, CWC22, LSM6, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, PSME3, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, SUN1, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, CTR9, BNC2, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, FYNB, PUS1, GGH, EDEM3, CDK12, GPD1L, VPS28, PAK1, NFX1, ZYX, PDCD6, TDH, ERO1A, UBB, MGAT2, MON1A, RRAGD, SQOR, FXR1, ERAL1, PAX5, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">82</data>
+      <data key="v_consensus_score">0.0295358473107014</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
+    </node>
+    <node id="n13">
+      <data key="v_name">GO:0043169</data>
+      <data key="v_label">cation binding</data>
+      <data key="v_genes_flat">ISY1, SF3A2, DDX42, SNIP1, SF3A1, PTBP1, RBM25, RBM42, CWC22, DHX8, RBM47, SMU1, CDC5L, LSM4, SRRM2, LSM3, MFAP1, RBM8A, NHP2, RBM3, SENP7, U2AF1, ZCRB1, PLRG1, DHX15, CWC27, MTREX, MBNL1, ADRM1, PSMD4, PSMD7, UCHL5, LRWD1, CHMP5, DCTN2, CBX3, MCM5, H2AX, RBBP4, MSH2, PCNA, ORC1, ERCC1, CDK1, DHX36, ENY2, RRP8, EGR1, SGF29, NSD2, HDAC1, CBX2, NASP, TONSL, MTA1, DDX21, JADE3, SRF, SPRTN, DMAP1, JADE1, WDR5, WDR33, NOP58, NOP56, PAF1, IMP4, EIF3H, EIF3J, EIF3I, EIF3F, MCTS1, PGM2, DMD, KSR2, OLA1, TCEA1, FNTA, STIP1, NFU1, UTP23, NOG2, ACE, PUS1, SHC1, VPS28, KCMF1, NFX1, PGAM5, DPP3, DERL2, CDK10, ERO1A, MON1A, AP1M1, ERP44, CDC42, NAGK, SDHA, NOL9, ATP9B, SYK, PRDX2, PIM3, RAP1B, AGO1, SNX12, MLXIP, FGFR2, CPO, RAB2A</data>
+      <data key="v_gene_count">111</data>
+      <data key="v_consensus_score">0.026493796864125</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">3</data>
+      <data key="v_community_label">Cluster: ion binding</data>
+    </node>
+    <node id="n14">
+      <data key="v_name">GO:0003676</data>
+      <data key="v_label">nucleic acid binding</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, PUF60, SF3A3, RBMX2, NCBP1, DDX1, SF3B4, SRSF7, PTBP1, LSM7, RBM19, TIA1, RBM25, DCPS, DHX8, SDE2, RBM22, ZMAT2, AQR, PPIE, SNW1, TRA2B, SYF2, PQBP1, PLRG1, UBL5, DHX15, PSMD1, PSMD2, SEM1, NDE1, PLK1, CDC20, CENPE, WDR82, NAT10, CBX1, PARP1, SMC5, H2AX, RBBP4, CDC73, THOC6, SMAD3, PHC1, SMAD4, SSRP1, VPS72, CBX2, KAT6A, UBA1, TONSL, UBE2A, TAF6, DVL3, RBF, PHF10, WDR33, DKC1, NOLC1, NOP56, PAF1, IMP4, SESN1, HERC4, LEO1, RAE1, EIF3B, EIF3H, EIF3E, EIF3F, DENR, MCTS1, ALG6, OLA1, FRMD5, ARL1, NOG2, MKRN2, SNX6, CHFR, ABCB7, CSK, ACSF2, COX1, PAK1, GFPT1, ACSL5, ZYX, PDCD6, CDK10, UNKL, IDI1, CCNY, EPN2, QSOX2, QSOX1, GALT, RTCA, ATG3, AP1M1, SAE1, DCTD, NPC1, ATP7A, PCBP3, ACYP2, AGO3, CDC42, REXO1, NOL9, GMDS, RAP1B, MKNK1, ABCE1, DESI2, SOCS6, FGFR2, SCYL1</data>
+      <data key="v_gene_count">121</data>
+      <data key="v_consensus_score">0.0228919343207117</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
+    </node>
+    <node id="n15">
+      <data key="v_name">GO:1901265</data>
+      <data key="v_label">nucleoside phosphate binding</data>
+      <data key="v_genes_flat">DDX23, PTBP1, CWC22, LARP7, SYF2, DDX17, PPIL1, DDX41, CWC27, MTREX, GLOD4, CBX5, PINX1, CHMP5, DCTN2, ZW10, CBX3, SUN1, H2AX, UBR2, SGF29, TOP2B, NSD2, HDAC1, ING5, SPHK2, MTA1, CTR9, BNC2, ERCC6, HPF1, DMAP1, JADE1, WDR5, SUZ12, LOXL2, NONO, DEAF1, DKC1, NOLC1, NOP56, IMP4, EIF3K, EIF3C, EIF3E, ALG6, STT3B, PUS1, CDK12, GPD1L, VPS28, CZIB, PAK1, ZYX, PDCD6, CTU1, ASPG, ZMYM2, ISCA1, ERO1A, UBB, MGAT2, MON1A, RRAGD, SQOR, FXR1, PHF14, MYO1F, BRDT, REXO1, SYK, PRDX2, ARF1, ESF1, MLXIP, RBM34, SCYL1</data>
+      <data key="v_gene_count">77</data>
+      <data key="v_consensus_score">0.0223110716118968</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">2</data>
+      <data key="v_community_label">Cluster: catalytic activity</data>
+    </node>
+    <node id="n16">
+      <data key="v_name">GO:1901363</data>
+      <data key="v_label">heterocyclic compound binding</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, PUF60, SF3A3, DDX23, RBMX2, NCBP1, DDX1, SF3B4, SRSF7, PTBP1, LSM7, RBM19, TIA1, RBM25, DCPS, CWC22, DHX8, SDE2, RBM47, RBM22, ZMAT2, AQR, LARP7, PPIE, SNW1, TRA2B, SYF2, PQBP1, DDX17, PLRG1, PPIL1, DDX41, UBL5, DHX15, CWC27, MTREX, GLOD4, PSMD1, PSMD2, SEM1, NDE1, PLK1, CBX5, PINX1, CDC20, CENPE, CHMP5, DCTN2, ZW10, CBX3, WDR82, NAT10, CBX1, SUN1, PARP1, SMC5, H2AX, RBBP4, CDC73, CDK1, THOC6, UBR2, SMAD3, PHC1, SMAD4, SSRP1, SGF29, TOP2B, VPS72, NSD2, HDAC1, CBX2, ING5, KAT6A, UBA1, NASP, TONSL, SPHK2, MTA1, CTR9, BNC2, UBE2A, TAF6, ERCC6, HPF1, DMAP1, JADE1, DVL3, WDR5, SUZ12, RBF, PHF10, LOXL2, NONO, DEAF1, WDR33, DKC1, NOLC1, NOP56, PAF1, IMP4, SESN1, HERC4, LEO1, RAE1, EIF3K, EIF3B, EIF3C, EIF3H, EIF3E, EIF3F, DENR, MCTS1, ALG6, OLA1, TCEA1, FNTA, STT3B, FRMD5, ARL1, NOG2, MKRN2, SNX6, PUS1, CHFR, CDK12, GPD1L, ABCB7, CSK, VPS28, ACSF2, COX1, CZIB, PAK1, GFPT1, ACSL5, ZYX, PDCD6, CDK10, UNKL, IDI1, CCNY, CTU1, ASPG, ZMYM2, ISCA1, EPN2, QSOX2, QSOX1, ERO1A, GALT, UBB, MGAT2, MON1A, RRAGD, SQOR, RTCA, ATG3, AP1M1, SAE1, DCTD, NPC1, ATP7A, PCBP3, FXR1, ACYP2, AGO3, PHF14, MYO1F, BRDT, CDC42, REXO1, NOL9, SYK, PRDX2, ARF1, GMDS, RAP1B, MKNK1, ESF1, ABCE1, MLXIP, DESI2, RBM34, SOCS6, FGFR2, SCYL1</data>
+      <data key="v_gene_count">189</data>
+      <data key="v_consensus_score">0.0217261986939098</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
+    </node>
+    <node id="n17">
+      <data key="v_name">GO:0097159</data>
+      <data key="v_label">organic cyclic compound binding</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, PUF60, SF3A3, DDX23, RBMX2, NCBP1, DDX1, SF3B4, SRSF7, PTBP1, LSM7, RBM19, TIA1, RBM25, DCPS, CWC22, DHX8, SDE2, RBM47, RBM22, ZMAT2, AQR, LARP7, PPIE, SNW1, TRA2B, SYF2, PQBP1, DDX17, PLRG1, PPIL1, DDX41, UBL5, DHX15, CWC27, MTREX, GLOD4, PSMD1, PSMD2, SEM1, NDE1, PLK1, CBX5, PINX1, CDC20, CENPE, CHMP5, DCTN2, ZW10, CBX3, WDR82, NAT10, CBX1, SUN1, PARP1, SMC5, H2AX, RBBP4, CDC73, CDK1, THOC6, UBR2, SMAD3, PHC1, SMAD4, SSRP1, SGF29, TOP2B, VPS72, NSD2, HDAC1, CBX2, ING5, KAT6A, UBA1, NASP, TONSL, SPHK2, MTA1, CTR9, BNC2, UBE2A, TAF6, ERCC6, HPF1, DMAP1, JADE1, DVL3, WDR5, SUZ12, IST1, RBF, PHF10, LOXL2, NONO, DEAF1, WDR33, DKC1, NOLC1, NOP56, PAF1, IMP4, SESN1, HERC4, LEO1, RAE1, EIF3K, EIF3B, EIF3C, EIF3H, EIF3E, EIF3F, DENR, MCTS1, ALG6, OLA1, TCEA1, FNTA, STT3B, FRMD5, ARL1, NOG2, MKRN2, SNX6, PUS1, CHFR, CDK12, GPD1L, ABCB7, CSK, VPS28, ACSF2, COX1, CZIB, PAK1, GFPT1, ACSL5, ZYX, PDCD6, CDK10, UNKL, IDI1, CCNY, CTU1, ASPG, ZMYM2, ISCA1, EPN2, QSOX2, QSOX1, ERO1A, GALT, UBB, MGAT2, MON1A, RRAGD, SQOR, RTCA, ATG3, AP1M1, SAE1, DCTD, NPC1, ATP7A, PCBP3, FXR1, ACYP2, AGO3, PHF14, MYO1F, BRDT, CDC42, REXO1, NOL9, SYK, PRDX2, ARF1, GMDS, RAP1B, MKNK1, ESF1, ABCE1, MLXIP, DESI2, RBM34, SOCS6, FGFR2, SCYL1</data>
+      <data key="v_gene_count">190</data>
+      <data key="v_consensus_score">0.01450871643582</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
+    </node>
+    <node id="n18">
+      <data key="v_name">GO:0005515</data>
+      <data key="v_label">protein binding</data>
+      <data key="v_genes_flat">DDX46, SNIP1, SRPK3, PHF5A, PTBP1, RBM42, CWC22, LSM6, ZMAT2, AQR, DBR1, LARP7, PPIE, LSM5, NCBP2, TRA2B, NUP98, SRRM2, NOVA1, LSM2, SART3, SNRPA, DDX17, PPIL1, DDX41, BUD31, YJU2, DHX15, CWC27, MTREX, PSMD2, PSMD4, PSMD7, PSME3, NDE1, TTK, PLK1, SIN3A, KAT8, CBX5, PINX1, KAT5, DCTN1, ORC2, BUB3, XPO1, CHMP3, CHMP5, DCTN2, ZW10, SUN1, PARP1, CHD4, SMC6, THOC2, PCNA, MCM2, KDM1A, THOC6, NEDD4, PHC1, RRP8, SMAD4, SSRP1, SGF29, VPS72, NSD2, HDAC1, BMI1, CPSF6, ING5, KAT6A, UBA1, TONSL, SPHK2, SET, MSH6, UBE2A, HPF1, DMAP1, RBF, PHF10, LOXL2, NONO, DEAF1, WDR33, NOP58, DKC1, TOP1, PAF1, LEO1, RAE1, EIF3K, EIF3B, EIF3C, EIF3J, EIF3F, DRG1, OLA1, CATL, CPVL, ARL1, FYNB, DUS2, STIP1, NFU1, UTP23, ACE, PUS1, UBE2H, SAR1B, GGH, EDEM3, CDK12, GPD1L, NMD3, ACSL5, LMNA, SRPRA, RTF2, COASY, CTU1, ASPG, ERO1A, TMX1, PPME1, MGAT2, SQOR, AP1M1, XRN2, ATP7A, CALR, MECR, SPAST, PCBP3, PUS7, FXR1, ACYP2, UBE4A, ERAL1, PAX5, PHF14, MYO1F, BRDT, CDC42, NAA20, NAGK, PRKX, SNX12, MLXIP, TRMO, FGFR2, CPO, AP1B1, DDX54, OGA, SCYL1, YRK</data>
+      <data key="v_gene_count">158</data>
+      <data key="v_consensus_score">0.0143088715563441</data>
+      <data key="v_size_attr">400</data>
+      <data key="v_degree">18</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: molecular_function</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">335</data>
+    </edge>
+    <edge source="n0" target="n2">
+      <data key="e_weight">165</data>
+    </edge>
+    <edge source="n1" target="n2">
+      <data key="e_weight">134</data>
+    </edge>
     <edge source="n0" target="n3">
-      <data key="e_weight">3</data>
+      <data key="e_weight">81</data>
+    </edge>
+    <edge source="n1" target="n3">
+      <data key="e_weight">81</data>
+    </edge>
+    <edge source="n2" target="n3">
+      <data key="e_weight">75</data>
     </edge>
     <edge source="n0" target="n4">
-      <data key="e_weight">3</data>
+      <data key="e_weight">166</data>
+    </edge>
+    <edge source="n1" target="n4">
+      <data key="e_weight">166</data>
+    </edge>
+    <edge source="n2" target="n4">
+      <data key="e_weight">113</data>
     </edge>
     <edge source="n3" target="n4">
-      <data key="e_weight">8</data>
+      <data key="e_weight">74</data>
+    </edge>
+    <edge source="n0" target="n5">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n1" target="n5">
+      <data key="e_weight">67</data>
     </edge>
     <edge source="n2" target="n5">
-      <data key="e_weight">26</data>
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n4" target="n5">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n0" target="n6">
+      <data key="e_weight">65</data>
     </edge>
     <edge source="n1" target="n6">
-      <data key="e_weight">17</data>
+      <data key="e_weight">65</data>
     </edge>
     <edge source="n2" target="n6">
-      <data key="e_weight">26</data>
+      <data key="e_weight">63</data>
+    </edge>
+    <edge source="n3" target="n6">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n4" target="n6">
+      <data key="e_weight">65</data>
     </edge>
     <edge source="n5" target="n6">
-      <data key="e_weight">44</data>
+      <data key="e_weight">65</data>
     </edge>
     <edge source="n0" target="n7">
-      <data key="e_weight">3</data>
+      <data key="e_weight">67</data>
     </edge>
     <edge source="n1" target="n7">
-      <data key="e_weight">17</data>
+      <data key="e_weight">67</data>
     </edge>
     <edge source="n2" target="n7">
-      <data key="e_weight">26</data>
+      <data key="e_weight">65</data>
     </edge>
     <edge source="n3" target="n7">
-      <data key="e_weight">8</data>
+      <data key="e_weight">67</data>
     </edge>
     <edge source="n4" target="n7">
-      <data key="e_weight">9</data>
+      <data key="e_weight">67</data>
     </edge>
     <edge source="n5" target="n7">
-      <data key="e_weight">44</data>
+      <data key="e_weight">67</data>
     </edge>
     <edge source="n6" target="n7">
-      <data key="e_weight">63</data>
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n0" target="n8">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n1" target="n8">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n2" target="n8">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n3" target="n8">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n4" target="n8">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n0" target="n9">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n1" target="n9">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n2" target="n9">
+      <data key="e_weight">72</data>
+    </edge>
+    <edge source="n3" target="n9">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n4" target="n9">
+      <data key="e_weight">71</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n6" target="n9">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n8" target="n9">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n0" target="n10">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n1" target="n10">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n2" target="n10">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n3" target="n10">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n4" target="n10">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n6" target="n10">
+      <data key="e_weight">22</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n0" target="n11">
+      <data key="e_weight">76</data>
+    </edge>
+    <edge source="n1" target="n11">
+      <data key="e_weight">76</data>
+    </edge>
+    <edge source="n2" target="n11">
+      <data key="e_weight">16</data>
+    </edge>
+    <edge source="n3" target="n11">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n4" target="n11">
+      <data key="e_weight">22</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n6" target="n11">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n9" target="n11">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n10" target="n11">
+      <data key="e_weight">14</data>
+    </edge>
+    <edge source="n0" target="n12">
+      <data key="e_weight">82</data>
+    </edge>
+    <edge source="n1" target="n12">
+      <data key="e_weight">82</data>
+    </edge>
+    <edge source="n2" target="n12">
+      <data key="e_weight">72</data>
+    </edge>
+    <edge source="n3" target="n12">
+      <data key="e_weight">74</data>
+    </edge>
+    <edge source="n4" target="n12">
+      <data key="e_weight">82</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n6" target="n12">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n8" target="n12">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_weight">71</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_weight">27</data>
+    </edge>
+    <edge source="n11" target="n12">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n0" target="n13">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n1" target="n13">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n3" target="n13">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n4" target="n13">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_weight">22</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n8" target="n13">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n9" target="n13">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n10" target="n13">
+      <data key="e_weight">111</data>
+    </edge>
+    <edge source="n11" target="n13">
+      <data key="e_weight">14</data>
+    </edge>
+    <edge source="n12" target="n13">
+      <data key="e_weight">27</data>
+    </edge>
+    <edge source="n0" target="n14">
+      <data key="e_weight">121</data>
+    </edge>
+    <edge source="n1" target="n14">
+      <data key="e_weight">121</data>
+    </edge>
+    <edge source="n2" target="n14">
+      <data key="e_weight">26</data>
+    </edge>
+    <edge source="n3" target="n14">
+      <data key="e_weight">14</data>
+    </edge>
+    <edge source="n4" target="n14">
+      <data key="e_weight">34</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n6" target="n14">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n8" target="n14">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n9" target="n14">
+      <data key="e_weight">14</data>
+    </edge>
+    <edge source="n10" target="n14">
+      <data key="e_weight">25</data>
+    </edge>
+    <edge source="n11" target="n14">
+      <data key="e_weight">76</data>
+    </edge>
+    <edge source="n12" target="n14">
+      <data key="e_weight">13</data>
+    </edge>
+    <edge source="n13" target="n14">
+      <data key="e_weight">25</data>
+    </edge>
+    <edge source="n0" target="n15">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n1" target="n15">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n2" target="n15">
+      <data key="e_weight">72</data>
+    </edge>
+    <edge source="n3" target="n15">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n4" target="n15">
+      <data key="e_weight">71</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n6" target="n15">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n8" target="n15">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n9" target="n15">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n10" target="n15">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n11" target="n15">
+      <data key="e_weight">10</data>
+    </edge>
+    <edge source="n12" target="n15">
+      <data key="e_weight">71</data>
+    </edge>
+    <edge source="n13" target="n15">
+      <data key="e_weight">24</data>
+    </edge>
+    <edge source="n14" target="n15">
+      <data key="e_weight">14</data>
+    </edge>
+    <edge source="n0" target="n16">
+      <data key="e_weight">189</data>
+    </edge>
+    <edge source="n1" target="n16">
+      <data key="e_weight">189</data>
+    </edge>
+    <edge source="n2" target="n16">
+      <data key="e_weight">88</data>
+    </edge>
+    <edge source="n3" target="n16">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n4" target="n16">
+      <data key="e_weight">97</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n6" target="n16">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n8" target="n16">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n9" target="n16">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n10" target="n16">
+      <data key="e_weight">50</data>
+    </edge>
+    <edge source="n11" target="n16">
+      <data key="e_weight">76</data>
+    </edge>
+    <edge source="n12" target="n16">
+      <data key="e_weight">71</data>
+    </edge>
+    <edge source="n13" target="n16">
+      <data key="e_weight">50</data>
+    </edge>
+    <edge source="n14" target="n16">
+      <data key="e_weight">121</data>
+    </edge>
+    <edge source="n15" target="n16">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n0" target="n17">
+      <data key="e_weight">190</data>
+    </edge>
+    <edge source="n1" target="n17">
+      <data key="e_weight">190</data>
+    </edge>
+    <edge source="n2" target="n17">
+      <data key="e_weight">88</data>
+    </edge>
+    <edge source="n3" target="n17">
+      <data key="e_weight">78</data>
+    </edge>
+    <edge source="n4" target="n17">
+      <data key="e_weight">97</data>
+    </edge>
+    <edge source="n5" target="n17">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n6" target="n17">
+      <data key="e_weight">65</data>
+    </edge>
+    <edge source="n7" target="n17">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n8" target="n17">
+      <data key="e_weight">67</data>
+    </edge>
+    <edge source="n9" target="n17">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n10" target="n17">
+      <data key="e_weight">50</data>
+    </edge>
+    <edge source="n11" target="n17">
+      <data key="e_weight">76</data>
+    </edge>
+    <edge source="n12" target="n17">
+      <data key="e_weight">71</data>
+    </edge>
+    <edge source="n13" target="n17">
+      <data key="e_weight">50</data>
+    </edge>
+    <edge source="n14" target="n17">
+      <data key="e_weight">121</data>
+    </edge>
+    <edge source="n15" target="n17">
+      <data key="e_weight">77</data>
+    </edge>
+    <edge source="n16" target="n17">
+      <data key="e_weight">189</data>
+    </edge>
+    <edge source="n0" target="n18">
+      <data key="e_weight">158</data>
+    </edge>
+    <edge source="n1" target="n18">
+      <data key="e_weight">158</data>
+    </edge>
+    <edge source="n2" target="n18">
+      <data key="e_weight">56</data>
+    </edge>
+    <edge source="n3" target="n18">
+      <data key="e_weight">44</data>
+    </edge>
+    <edge source="n4" target="n18">
+      <data key="e_weight">70</data>
+    </edge>
+    <edge source="n5" target="n18">
+      <data key="e_weight">37</data>
+    </edge>
+    <edge source="n6" target="n18">
+      <data key="e_weight">35</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_weight">37</data>
+    </edge>
+    <edge source="n8" target="n18">
+      <data key="e_weight">37</data>
+    </edge>
+    <edge source="n9" target="n18">
+      <data key="e_weight">41</data>
+    </edge>
+    <edge source="n10" target="n18">
+      <data key="e_weight">38</data>
+    </edge>
+    <edge source="n11" target="n18">
+      <data key="e_weight">19</data>
+    </edge>
+    <edge source="n12" target="n18">
+      <data key="e_weight">47</data>
+    </edge>
+    <edge source="n13" target="n18">
+      <data key="e_weight">38</data>
+    </edge>
+    <edge source="n14" target="n18">
+      <data key="e_weight">38</data>
+    </edge>
+    <edge source="n15" target="n18">
+      <data key="e_weight">41</data>
+    </edge>
+    <edge source="n16" target="n18">
+      <data key="e_weight">76</data>
+    </edge>
+    <edge source="n17" target="n18">
+      <data key="e_weight">76</data>
     </edge>
   </graph>
 </graphml>

@@ -1,3 +1,100 @@
+#' Run the full EchoGO workflow from an input folder or explicit file paths
+#'
+#' Runs the canonical EchoGO pipeline end-to-end:
+#' GOseq enrichment loading/annotation -> cross-species g:Profiler enrichment ->
+#' consensus scoring (strict + optional exploratory) -> RRvGO reduction (if enabled) ->
+#' GO-term networks (if enabled) -> optional evaluation and HTML report.
+#'
+#' EchoGO supports two common input styles:
+#'
+#' \strong{1) Classic / de novo transcriptome layout} (Trinity/Trinotate-style)
+#' \itemize{
+#'   \item a count matrix (e.g. \code{gene.counts.matrix.tsv})
+#'   \item one DE table per contrast (e.g. \code{DE_\\*.tsv})
+#'   \item a Trinotate report (e.g. \code{Trinotate.xls} or \code{Trinotate\\*.tsv})
+#'   \item (optional) a GOseq enrichment table if you already computed it
+#' }
+#'
+#' \strong{2) Reference-based RNA-seq layout} (DESeq2 + GOseq precomputed)
+#' \itemize{
+#'   \item \code{allcounts_table.txt} (count matrix; required by current input resolver)
+#'   \item \code{dge_CONTRAST.csv} (DESeq2 table; required by current input resolver)
+#'   \item \code{CONTRAST.GOseq.enriched.tsv} (GOseq enriched categories; used when present)
+#'   \item \code{Trinotate_for_EchoGO.tsv} or \code{Trout_eggNOG_for_EchoGO.tsv} (annotation; required)
+#' }
+#'
+#' In reference-based workflows, GOseq \code{gene_ids} may already be gene symbols/names rather
+#' than transcript IDs. If GOseq \code{gene_ids} do not match the annotation \code{transcript_id},
+#' EchoGO will treat them as already-usable names (intended behavior for reference-based pipelines).
+#'
+#' @param input_dir Optional. Folder containing inputs. If provided, EchoGO will attempt to
+#'   auto-detect required files using filename patterns.
+#' @param goseq_file Optional. Path to a GOseq enrichment file (e.g. \code{\\*GOseq\\*.tsv}).
+#'   If \code{input_dir} is provided, EchoGO will attempt to detect it.
+#' @param trinotate_file Optional but typically required. Path to a Trinotate or Trinotate-like/EggNOG
+#'   annotation table used to map gene IDs to names and derive background universe when requested.
+#' @param de_file Optional. Path to a differential expression table (classic mode: \code{DE_\\*.tsv};
+#'   reference-based: \code{dge_\\*.csv}). If \code{input_dir} is provided and \code{de_file} is NULL,
+#'   EchoGO attempts to detect it.
+#' @param count_matrix_file Optional. Path to a count matrix file (classic or reference-based).
+#'   If \code{input_dir} is provided and \code{count_matrix_file} is NULL, EchoGO attempts to detect it.
+#' @param species Character vector of g:Profiler organism IDs (e.g. \code{"hsapiens"}, \code{"mmusculus"},
+#'   \code{"drerio"}). Validated via \code{echogo_preflight_species()}.
+#' @param species_expr Optional. A tag/taxonomy expression resolved via \code{echogo_resolve()} into
+#'   g:Profiler organism IDs; merged with \code{species} when both are provided.
+#' @param orgdb Character scalar. Bioconductor OrgDb package name for semantic similarity steps
+#'   (e.g. \code{"org.Dr.eg.db"}, \code{"org.Mm.eg.db"}).
+#' @param outdir Output directory for all EchoGO results.
+#' @param make_report Logical; if TRUE, render the HTML report into \code{outdir}.
+#' @param report_sections Character vector selecting report sections to include.
+#' @param report_top_n Integer; top-N terms to display in report tables/figures where applicable.
+#' @param report_theme Character; Bootswatch theme name for the report (passed to R Markdown).
+#' @param report_template Optional; path to a custom Rmd template for report rendering.
+#' @param strict_only Logical; if TRUE, only compute the strict consensus stream (skip exploratory stream).
+#' @param run_evaluation Logical; if TRUE, run evaluation/diagnostic summaries (when enabled).
+#' @param use_trinotate_universe Logical; if TRUE, prefer a background universe derived from Trinotate/EggNOG
+#'   primary names (when available) for cross-species steps (useful for reference-based workflows).
+#' @param verbose Logical; if TRUE, print progress messages.
+#'
+#' @return An (invisible) list returned by \code{run_echogo_pipeline()}, augmented with:
+#' \itemize{
+#'   \item \code{$files$species_used}: path to \code{__species_used.txt}
+#'   \item \code{$files$report_html}: path to the rendered HTML report (or \code{NA_character_})
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' ## Classic scaffold workflow
+#' echogo_scaffold("my_project")
+#' echogo_run(input_dir = "my_project/input", outdir = "my_project/results")
+#'
+#' ## Reference-based RNA-seq (DESeq2 + GOseq precomputed)
+#' input_dir <- "E:/.../dge_RRf_BBf/input"
+#' outdir    <- "E:/.../dge_RRf_BBf/results"
+#' fish_species <- c("drerio","strutta","gaculeatus","olatipes","trubripes","amexicanus",
+#'                   "oniloticus","ssalar","omykiss","okisutch","otshawytscha")
+#'
+#' res <- run_full_echogo(
+#'   input_dir              = input_dir,
+#'   species                = fish_species,
+#'   orgdb                  = "org.Dr.eg.db",
+#'   outdir                 = outdir,
+#'   strict_only            = FALSE,
+#'   run_evaluation         = TRUE,
+#'   use_trinotate_universe = TRUE,
+#'   make_report            = TRUE,
+#'   verbose                = TRUE
+#' )
+#' }
+#'
+#' @seealso
+#' \code{\link{echogo_help}}, \code{\link{echogo_scaffold}}, \code{\link{echogo_run}},
+#' \code{\link{echogo_preflight_species}}, \code{\link{echogo_pick_species}},
+#' \code{\link{echogo_resolve_reference_inputs}}
+#'
+#' @export
+
+
 run_full_echogo <- function(
     input_dir = NULL,
     goseq_file = NULL,
@@ -5,7 +102,7 @@ run_full_echogo <- function(
     de_file = NULL,
     count_matrix_file = NULL,
     species = getOption("EchoGO.default_species", c("hsapiens","mmusculus","drerio")),
-    species_expr = NULL,   # <-- NEW: allow tag/taxonomy expressions
+    species_expr = NULL,   # allow tag/taxonomy expressions
     orgdb   = getOption("EchoGO.default_orgdb", "org.Dr.eg.db"),
     outdir  = "echogo_out",
     make_report = TRUE,
@@ -15,6 +112,7 @@ run_full_echogo <- function(
     report_template = NULL,
     strict_only = FALSE,
     run_evaluation = TRUE,
+    use_trinotate_universe = FALSE,   # <-- NEW: explicit reference-mode switch
     verbose = TRUE
 ) {
   `%||%` <- function(a,b) if (!is.null(a)) a else b
@@ -25,7 +123,6 @@ run_full_echogo <- function(
   }
 
   # ---- species: resolve expr → codes, then validate -------------------------
-  # If species_expr provided, resolve it and merge/override sensibly.
   if (!is.null(species_expr) && nzchar(paste(species_expr, collapse = ""))) {
     expr_ids <- tryCatch(echogo_resolve(species_expr, refresh = FALSE),
                          error = function(e) character(0))
@@ -66,10 +163,20 @@ run_full_echogo <- function(
       hits[[1]]
     }
     goseq_file        <- goseq_file        %||% find_one(file.path(input_dir, c("*GOseq*enrich*","*GOseq*.tsv","*GOseq*.csv")), must = FALSE)
-    trinotate_file    <- trinotate_file    %||% find_one(file.path(input_dir, c("Trinotate*.xls","Trinotate*.xlsx","Trinotate*.tsv","Trinotate*.txt")))
-    count_matrix_file <- count_matrix_file %||% find_one(file.path(input_dir, c("*count*matrix*","*counts*.tsv","*counts*.csv")))
+    trinotate_file <- trinotate_file %||% find_one(
+      file.path(input_dir, c(
+        "Trinotate*.xls",
+        "Trinotate*.xlsx",
+        "Trinotate*.tsv",
+        "Trinotate*.txt",
+        "*eggNOG*EchoGO*.tsv",      # <- your Trout_eggNOG_for_EchoGO.tsv
+        "*eggNOG*EchoGO*.txt"
+      ))
+    )
+
+    count_matrix_file <- count_matrix_file %||% find_one(file.path(input_dir, c("*count*matrix*","*counts*.tsv","*counts*.csv","*counts*.txt")))
     if (is.null(de_file)) {
-      de_file <- find_one(file.path(input_dir, c("DE_*.tsv","*DE_results*subset*","*DE_results*.tsv")))
+      de_file <- find_one(file.path(input_dir, c("DE_*.tsv","*DE_results*subset*","*DE_results*.tsv","dge_*.csv")))
     }
   }
 
@@ -94,6 +201,7 @@ run_full_echogo <- function(
     outdir            = outdir_norm,
     strict_only       = strict_only,
     run_evaluation    = run_evaluation,
+    use_trinotate_universe = use_trinotate_universe,  # <-- pass reference-mode flag
     verbose           = verbose
   )
 

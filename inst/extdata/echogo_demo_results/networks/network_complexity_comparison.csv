@@ -1,4 +1,4 @@
 ontology,total_terms_bg,total_edges_bg,avg_degree_bg,total_terms_exploratory,total_edges_exploratory,avg_degree_exploratory,delta_terms,delta_edges,delta_avg_degree
-BP,15,57,7.6,88,1503,34.16,73,1446,26.559999999999995
-MF,8,14,3.5,49,657,26.82,41,643,23.32
-CC,2,1,1,71,1650,46.48,69,1649,45.48
+BP,39,738,37.85,500,48372,193.49,461,47634,155.64000000000001
+MF,19,171,18,195,5185,53.18,176,5014,35.18
+CC,15,105,14,196,5986,61.08,181,5881,47.08

@@ -1,17 +1,8 @@
 #' EchoGO — Quickstart help
-#'
-#' Print a short overview of the main EchoGO entry points, vignettes,
-#' and helper functions.
-#'
 #' @export
 echogo_help <- function() {
   cat("
 EchoGO — Quickstart
-
-Documentation & vignettes:
-  browseVignettes('EchoGO')                   # list all EchoGO vignettes
-  vignette('EchoGO_workflow')                 # workflow & running the pipeline
-  vignette('EchoGO_interpretation')           # interpreting consensus, RRvGO & networks
 
 Run the built-in demo (fast: 3 species + mouse OrgDb):
   echogo_quickstart(run_demo = TRUE)
@@ -20,6 +11,31 @@ Use your own data:
   echogo_scaffold('my_project')
   # Put files into my_project/input (see _README.txt there)
   echogo_run(input_dir = 'my_project/input', outdir = 'my_project/results')
+
+Reference-based RNA-seq (DESeq2 + GOseq precomputed):
+  If your contrast input folder already contains:
+    - allcounts_table.txt
+    - dge_<CONTRAST>.csv
+    - <CONTRAST>.GOseq.enriched.tsv
+    - Trinotate_for_EchoGO.tsv (or Trout_eggNOG_for_EchoGO.tsv)
+  you can run:
+
+    input_dir <- '.../dge_RRf_BBf/input'
+    outdir    <- '.../dge_RRf_BBf/results'
+    species   <- c('drerio','strutta','gaculeatus','olatipes','trubripes','amexicanus',
+                   'oniloticus','ssalar','omykiss','okisutch','otshawytscha')
+
+    run_full_echogo(input_dir = input_dir,
+                    outdir = outdir,
+                    species = species,
+                    orgdb = 'org.Dr.eg.db',
+                    use_trinotate_universe = TRUE,
+                    strict_only = FALSE,
+                    run_evaluation = TRUE,
+                    make_report = TRUE,
+                    verbose = TRUE)
+
+# use_trinotate_universe = TRUE uses Trinotate/EggNOG primary names as the background universe (when available)
 
 Choosing species codes (for g:Profiler):
   EchoGO uses g:Profiler organism IDs such as:
@@ -30,27 +46,25 @@ Choosing species codes (for g:Profiler):
   EchoGO helpers:
     echogo_pick_species()                 # interactive table to browse/filter and copy IDs
     echogo_preflight_species(c('hsapiens','mmusculus'))
-                                          # validate/suggest IDs before run_full_echogo()
+                                          # validate/suggest species IDs before run_full_echogo()
 
 Checking / installing OrgDb & GO.db:
-  echogo_list_orgdb()                     # see which OrgDb packages are installed
-  echogo_install_orgdb_instructions()     # print BiocManager::install() commands
-  echogo_install_orgdb()                  # automatically install into user library
-  echogo_require_orgdb()                  # ensure OrgDb is available before running
+  - echogo_list_orgdb()                 # see which OrgDb packages are installed
+  - echogo_install_orgdb_instructions() # print BiocManager::install() commands
+  - echogo_install_orgdb()              # automatically install into user library
+  - echogo_require_orgdb()              # ensure OrgDb is available before running
 
 Demo data:
   EchoGO ships with example inputs and frozen results.
   Use:
-    echogo_open_demo()                    # open demo input/results folders and list files
+    echogo_open_demo()  # opens demo input/results folders and lists files
 
 Run the full workflow:
-  run_full_echogo(
-    input_dir,
-    species = getOption('EchoGO.default_species', c('hsapiens','mmusculus','drerio')),
-    orgdb   = getOption('EchoGO.default_orgdb', 'org.Mm.eg.db'),
-    outdir  = 'echogo_out',
-    make_report = TRUE
-  )
+  run_full_echogo(input_dir,
+                  species = getOption('EchoGO.default_species', c('hsapiens','mmusculus','drerio')),
+                  orgdb   = getOption('EchoGO.default_orgdb', 'org.Mm.eg.db'),
+                  outdir  = 'echogo_out',
+                  make_report = TRUE)
 
 See also:
   ?echogo_pick_species
@@ -59,6 +73,7 @@ See also:
   ?echogo_install_orgdb
   ?echogo_require_orgdb
   ?echogo_open_demo
+  ?echogo_resolve_reference_inputs
 ")
 }
 
@@ -124,30 +139,80 @@ echogo_scaffold <- function(path = "echogo_project") {
   dir.create(output, recursive = TRUE, showWarnings = FALSE)
 
   readme <- "
-Place your files in input/ with these names (or set them in input/config.yml):
-  - gene.counts.matrix.tsv
-  - DE_*.tsv (one or more differential expression tables)
-  - Trinotate.xls
+EchoGO — Input folder guide
+==========================
 
-Then run:
+EchoGO supports TWO input layouts.
+
+1) Classic / de novo transcriptome layout (Trinity + Trinotate)
+--------------------------------------------------------------
+Put these files into input/ (or set alternative names in input/config.yml):
+
+  - gene.counts.matrix.tsv
+      • TSV: first column = feature ID, remaining columns = raw counts per sample
+
+  - DE_*.tsv (one or more contrasts)
+      • TSV differential expression results
+      • must contain at least: id, log2FC, pvalue, padj (or mappable equivalents)
+
+  - Trinotate.xls (or Trinotate .tsv/.xlsx export)
+      • standard Trinotate report with GO mappings / EggNOG fields if available
+
+2) Reference-based RNA-seq layout (DESeq2 + GOseq precomputed)
+--------------------------------------------------------------
+EchoGO can run directly from a reference-based experiment input folder that already contains
+the GOseq enrichment output and a Trinotate-like/EggNOG annotation table.
+
+Expected files (example from a contrast folder):
+
+  - allcounts_table.txt
+      • background count matrix (required by the current input resolver)
+
+  - dge_<CONTRAST>.csv
+      • DESeq2 results for that contrast (required by the current input resolver)
+
+  - <CONTRAST>.GOseq.enriched.tsv
+      • GOseq enriched categories table (REQUIRED for reference-based mode)
+
+  - Trinotate_for_EchoGO.tsv   OR   Trout_eggNOG_for_EchoGO.tsv
+      • Trinotate-like / EggNOG-mapped annotation table (REQUIRED)
+
+  - config.yml
+      • optional but recommended (species, OrgDb, report title)
+
+Important note about gene IDs in reference-based mode:
+  • If GOseq 'gene_ids' do not match annotation 'transcript_id', EchoGO assumes 'gene_ids'
+    are already valid gene names and uses them as-is (this is intended for reference-based pipelines).
+
+--------------------------------------------------------------
+Run EchoGO
+--------------------------------------------------------------
+After placing files here:
+
   echogo_run(input_dir = 'PATH/input', outdir = 'PATH/results')
 
-File format notes:
-  * counts: TSV with ID in first column and counts in remaining columns
-  * DE_*: TSV with at least columns: id, log2FC, pvalue, padj
-  * Trinotate.xls: standard Trinotate report
+You can also point echogo_run() directly to a reference-based contrast input folder, e.g.:
+  echogo_run(input_dir = '.../dge_<CONTRAST>/input',
+             outdir    = '.../dge_<CONTRAST>/results')
 
-Species & annotation:
-  EchoGO uses g:Profiler organism IDs (e.g., hsapiens, mmusculus, drerio).
-  Full organism list:
-    https://biit.cs.ut.ee/gprofiler/page/organism-list
+--------------------------------------------------------------
+Species & annotation (g:Profiler + OrgDb)
+--------------------------------------------------------------
+EchoGO uses g:Profiler organism IDs, e.g. hsapiens, mmusculus, drerio, dmelanogaster, celegans, ...
 
-  Helpful R helpers (run these in R after loading EchoGO):
-    echogo_help()                        # overall quickstart
-    echogo_list_orgdb()                  # check installed OrgDb packages
-    echogo_install_orgdb_instructions()  # show BiocManager::install() commands
-    echogo_install_orgdb()               # auto-install GO.db / OrgDb into user library
-    echogo_require_orgdb()               # ensure OrgDb is available before running EchoGO
+Full organism list (external):
+  https://biit.cs.ut.ee/gprofiler/page/organism-list
+
+Helpful EchoGO helpers:
+  echogo_help()
+  echogo_pick_species()
+  echogo_preflight_species(c('hsapiens','mmusculus'))
+
+Checking / installing OrgDb & GO.db:
+  echogo_list_orgdb()
+  echogo_install_orgdb_instructions()
+  echogo_install_orgdb()
+  echogo_require_orgdb()
 "
 
   writeLines(readme, file.path(input, "_README.txt"))
