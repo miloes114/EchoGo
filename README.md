@@ -4,17 +4,17 @@
 
 ### Cross-Species Consensus Enrichment for Non-Model Organisms
 
-**EchoGO** is a modular, end-to-end functional enrichment pipeline designed for:
+**EchoGO** is a modular, end-to-end functional enrichment pipeline designed for **de novo transcriptomes**
+(Trinity → Trinotate → GOseq) and **reference-based RNA-seq workflows** (e.g., HISAT2/STAR + featureCounts + DESeq2),
+as long as you provide the expected input bundle.
 
--   De novo transcriptomes and non-model species\
--   Multi-species orthology support via **g:Profiler**\
--   Integration of **GOseq** and **g:Profiler** into strict & exploratory consensus\
--   Semantic reduction using **RRvGO**\
--   GO term overlap **network analysis**\
+It provides:
+
+-   Multi-species orthology support via **g:Profiler**
+-   Integration of **GOseq** and **g:Profiler** into **strict** & **exploratory** consensus results
+-   Semantic similarity reduction using **RRvGO**
+-   GO term overlap **network analysis**
 -   Optional fully rendered **HTML reports**
-
-EchoGO supports both **de novo transcriptomes (Trinity → Trinotate → GOseq)** and **reference-based RNA-seq workflows** (e.g., HISAT2/STAR + featureCounts + DESeq2), as long as you provide the expected input bundle.
-
 ------------------------------------------------------------------------
 
 ## 📥 Installation
