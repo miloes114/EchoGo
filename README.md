@@ -141,8 +141,7 @@ echogo_run("my_project/input", "my_project/results")
 ```r
 vignette("EchoGO_workflow")
 vignette("EchoGO_interpretation")
-
-
+```
 ------------------------------------------------------------------------
 
 ## ⚙️ Configuration
