@@ -240,7 +240,7 @@ Place these files under `my_project/input/`:
 | **dge\_**<CONTRAST>.GOseq.enriched.tsv | GOseq enriched table produced during input preparation |
 | **dge\_**<CONTRAST>.GOseq.depleted.tsv | Optional: GOseq depleted table (only if any depleted terms exist) |
 | **Trinotate_for_EchoGO.tsv** | Minimal Trinotate-like table used by EchoGO (created from eggNOG output) |
-| \*\*<reference_label>\_eggNOG_for_EchoGO.tsv\*\* | Species-labeled eggNOG table used by EchoGO (created from eggNOG output) |
+| **<reference_label>\_eggNOG_for_EchoGO.tsv** | Species-labeled eggNOG table used by EchoGO (created from eggNOG output) |
 
 At the end, your input folder should look like this:
 
