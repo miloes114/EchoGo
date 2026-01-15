@@ -244,7 +244,7 @@ Place these files under `my_project/input/`:
 
 At the end, your input folder should look like this:
 
-``` text
+```   text
 my_project/input/
 ├── allcounts_table.txt
 ├── dge_<CONTRAST>.csv
@@ -252,13 +252,12 @@ my_project/input/
 ├── dge_<CONTRAST>.GOseq.depleted.tsv        (optional)
 ├── Trinotate_for_EchoGO.tsv
 ├── <reference_label>_eggNOG_for_EchoGO.tsv
-
----
+```  
 
 ## ▶️ Running the Pipeline
 
 ### Basic scaffolded workflow
-```r
+``` r
 echogo_scaffold("my_project")
 
 echogo_run(
