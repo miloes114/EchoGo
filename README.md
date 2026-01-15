@@ -49,6 +49,8 @@ To install with vignettes:
 
 ``` r
 remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE)
+library(EchoGO)
+echogo_help()
 ```
 **Windows note**: If installation warns about curl.dll “Permission denied”, close all R/RStudio sessions and delete the 00LOCK folder in your user library, then reinstall curl and EchoGO.
 
