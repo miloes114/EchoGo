@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17660708.svg)](https://doi.org/10.5281/zenodo.17660708)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18244875.svg)](https://doi.org/10.5281/zenodo.17658714)
 
 # 🧬 EchoGO
 
