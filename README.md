@@ -54,6 +54,14 @@ echogo_help()
 ```
 **Windows note**: If installation warns about curl.dll “Permission denied”, close all R/RStudio sessions and delete the 00LOCK folder in your user library, then reinstall curl and EchoGO.
 
+If you want `browseVignettes("EchoGO")` and `vignette("EchoGO_workflow")` to work after installation, install EchoGO from a **built package tarball**:
+
+- `remotes::install_github(..., build_vignettes = TRUE)` works because it builds the package first.
+- A release asset such as `EchoGO_0.1.2.tar.gz` also works.
+- A raw repository snapshot ZIP from GitHub/Zenodo is **not** the same thing as a built R package and does **not** include the installed vignette metadata that `browseVignettes()` uses.
+
+In short: if you install directly from a source snapshot folder with `R CMD INSTALL <folder>`, the package can still work, but the vignettes will usually not be registered.
+
 ### 4) Install annotation packages (GO.db + OrgDb)
 
 Recommended automatic method:
@@ -139,8 +147,15 @@ echogo_run("my_project/input", "my_project/results")
 
 ### In R (after installation)
 ```r
+browseVignettes("EchoGO")
 vignette("EchoGO_workflow")
 vignette("EchoGO_interpretation")
+```
+
+These commands require an installation that includes built vignette metadata. If they do not appear after install, reinstall from GitHub with:
+
+```r
+remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE, force = TRUE)
 ```
 ------------------------------------------------------------------------
 
