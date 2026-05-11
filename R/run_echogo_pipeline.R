@@ -234,39 +234,24 @@ run_echogo_pipeline <- function(
   if (verbose) message("🧠 Running semantic clustering (RRVGO)...")
   rr_fun <- if (exists("run_rrvgo_consensus_analysis")) run_rrvgo_consensus_analysis else NULL
   if (!is.null(rr_fun)) {
-    true_consensus_df <- consensus_df %>%
-      dplyr::filter(
-        significant_in_any == TRUE,
-        ontology %in% c("BP", "MF", "CC"),
-        in_goseq == TRUE |
-          origin %in% c("GO terms - g:Profiler only (with BG)", "GO terms - Consensus (with BG)")
-      )
-
     rr_formals <- names(formals(rr_fun))
-    rr_call <- list(
-      df_input = true_consensus_df,
-      label    = "true_consensus_with_bg"
+    rr_modes <- .echogo_rrvgo_mode_tables(consensus_df)
+    rr_specs <- list(
+      list(df_input = rr_modes$true_consensus_with_bg, label = "true_consensus_with_bg"),
+      list(df_input = rr_modes$conservative_bg_supported, label = "conservative_bg_supported"),
+      list(df_input = rr_modes$exploratory_all_significant, label = "exploratory_all_significant")
     )
-    if ("orgdb" %in% rr_formals)       rr_call$orgdb       <- orgdb
-    if ("output_base" %in% rr_formals) rr_call$output_base <- dirs$rrvgo
-    if ("outdir" %in% rr_formals)      rr_call$outdir      <- file.path(dirs$rrvgo, "true_consensus_with_bg")
-    do.call(rr_fun, rr_call)
 
-    extra_terms <- setdiff(
-      subset(consensus_df, significant_in_any)$term_id,
-      subset(consensus_df, origin %in% c("GO terms - GOseq only",
-                                         "GO terms - g:Profiler only (with BG)",
-                                         "GO terms - Consensus (with BG)"))$term_id
-    )
-    if (length(extra_terms) > 0) {
-      rr2_call <- list(
-        df_input = subset(consensus_df, significant_in_any),
-        label    = "exploratory_all_significant"
-      )
-      if ("orgdb" %in% rr_formals)       rr2_call$orgdb       <- orgdb
-      if ("output_base" %in% rr_formals) rr2_call$output_base <- dirs$rrvgo
-      if ("outdir" %in% rr_formals)      rr2_call$outdir      <- file.path(dirs$rrvgo, "exploratory_all_significant")
-      do.call(rr_fun, rr2_call)
+    for (rr_spec in rr_specs) {
+      if (!nrow(rr_spec$df_input)) {
+        if (verbose) message("   Â· RRvGO ", rr_spec$label, ": no rows after filtering; skipping.")
+        next
+      }
+      rr_call <- rr_spec
+      if ("orgdb" %in% rr_formals)       rr_call$orgdb       <- orgdb
+      if ("output_base" %in% rr_formals) rr_call$output_base <- dirs$rrvgo
+      if ("outdir" %in% rr_formals)      rr_call$outdir      <- file.path(dirs$rrvgo, rr_spec$label)
+      do.call(rr_fun, rr_call)
     }
     if (legacy_on) .mirror_tree(dirs$rrvgo, file.path(outdir, "Similarity_based_consensus"))
   } else {

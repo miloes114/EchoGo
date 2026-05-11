@@ -14,9 +14,9 @@ run_rrvgo_consensus_analysis(
 )
 }
 \arguments{
-\item{df_input}{A consensus enrichment data frame filtered for one mode (true consensus or exploratory).}
+\item{df_input}{A consensus enrichment data frame filtered for one mode.}
 
-\item{label}{A label to use for the output subfolder (e.g. "true_consensus_with_bg").}
+\item{label}{A label to use for the output subfolder (e.g. "true_consensus_with_bg" or "conservative_bg_supported").}
 
 \item{output_base}{Directory where output will be saved (default: "similarity_based_consensus").
 Tip: pass a canonical path like file.path(outdir, "rrvgo") from the pipeline.}
@@ -29,7 +29,7 @@ falls back to getOption("EchoGO.default_orgdb", "org.Mm.eg.db").}
 \item{similarity_threshold}{Similarity cutoff for clustering (default: 0.7).}
 }
 \description{
-Applies RRvGO-based semantic similarity reduction to GO terms from either the strict
-consensus set or exploratory enrichment set. Produces annotated cluster tables, bubble plots,
+Applies RRvGO-based semantic similarity reduction to GO terms from strict,
+conservative background-supported, or exploratory enrichment sets. Produces annotated cluster tables, bubble plots,
 heatmaps, scatter plots, treemaps, and wordclouds per ontology.
 }
