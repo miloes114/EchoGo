@@ -1,5 +1,17 @@
 # EchoGO NEWS
 
+## EchoGO development
+
+### Changed
+- RRvGO outputs are now split into three semantically honest buckets:
+  - `rrvgo_true_consensus_with_bg` for strict cross-method consensus
+  - `rrvgo_conservative_bg_supported` for GOseq or with-background-supported fallback terms
+  - `rrvgo_exploratory_all_significant` for all significant GO terms
+
+### Documentation
+- Clarified that `with_bg` network outputs are the conservative background-supported layer, not strict cross-method consensus.
+- Added report interpretation notes explaining that legacy evaluation filenames still use the older `true_consensus` wording.
+
 ## EchoGO 0.1.2 (2026-01-14)
 
 ### Added

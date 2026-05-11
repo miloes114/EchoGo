@@ -103,6 +103,10 @@ EchoGO::echogo_quickstart(run_demo = TRUE)
 
 This confirms that consensus scoring, RRvGO, networks, and the HTML report all run successfully.
 
+RRvGO now separates three interpretation layers when data permit: strict `true_consensus_with_bg`, fallback `conservative_bg_supported`, and broad `exploratory_all_significant`.
+
+For HTML report rendering, EchoGO needs Pandoc. If RStudio is installed, EchoGO will automatically use the bundled Pandoc when it can find it.
+
 ------------------------------------------------------------------------
 
 ## 🏁 Quickstart

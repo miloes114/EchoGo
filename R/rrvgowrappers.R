@@ -1,11 +1,11 @@
 #' Run RRvGO Semantic Clustering on Consensus Terms (multi-OrgDb, option-aware)
 #'
-#' Applies RRvGO-based semantic similarity reduction to GO terms from either the strict
-#' consensus set or exploratory enrichment set. Produces annotated cluster tables, bubble plots,
+#' Applies RRvGO-based semantic similarity reduction to GO terms from strict,
+#' conservative background-supported, or exploratory enrichment sets. Produces annotated cluster tables, bubble plots,
 #' heatmaps, scatter plots, treemaps, and wordclouds per ontology.
 #'
-#' @param df_input A consensus enrichment data frame filtered for one mode (true consensus or exploratory).
-#' @param label A label to use for the output subfolder (e.g. "true_consensus_with_bg").
+#' @param df_input A consensus enrichment data frame filtered for one mode.
+#' @param label A label to use for the output subfolder (e.g. "true_consensus_with_bg" or "conservative_bg_supported").
 #' @param output_base Directory where output will be saved (default: "similarity_based_consensus").
 #'        Tip: pass a canonical path like file.path(outdir, "rrvgo") from the pipeline.
 #' @param ontologies Vector of GO ontologies to process (default: c("BP", "MF", "CC")).

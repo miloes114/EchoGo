@@ -346,6 +346,8 @@ Gene-overlap GO term networks:
 -   `with_bg_and_nobg/` → exploratory networks including no-background terms\
     Static PDF/SVG + interactive HTML versions.
 
+Interpretation note: `with_bg/` is the conservative background-supported network layer. It can include GOseq-only and g:Profiler-with-background terms even when strict cross-method consensus is empty.
+
 ### **report/**
 
 The automatically generated HTML report when `make_report = TRUE`.
@@ -450,13 +452,16 @@ In the demo snapshot, you should find:
 
 ```{r rrvgo_check}
 rr_true <- file.path(out, "rrvgo", "rrvgo_true_consensus_with_bg")
+rr_cons <- file.path(out, "rrvgo", "rrvgo_conservative_bg_supported")
 rr_all <- file.path(out, "rrvgo", "rrvgo_exploratory_all_significant")
 
 data.frame(
-  mode = c("True_Consensus_with_BG", "Exploratory_all"),
-  exists = c(dir.exists(rr_true), dir.exists(rr_all))
+  mode = c("True_Consensus_with_BG", "Conservative_BG_Supported", "Exploratory_all"),
+  exists = c(dir.exists(rr_true), dir.exists(rr_cons), dir.exists(rr_all))
 )
 ```
+
+Modern EchoGO runs may also include `rrvgo_conservative_bg_supported/`, a fallback semantic-clustering view that keeps GOseq or with-background-supported biology visible when the strict true-consensus set is empty.
 
 If present, these folders typically contain:
 

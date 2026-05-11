@@ -13,6 +13,31 @@
     return(NA_character_)
   }
   `%||%` <- function(a, b) if (!is.null(a)) a else b
+  ensure_pandoc <- function() {
+    if (isTRUE(rmarkdown::pandoc_available("1.12.3"))) return(TRUE)
+
+    candidates <- unique(c(
+      Sys.getenv("RSTUDIO_PANDOC", unset = ""),
+      file.path(Sys.getenv("ProgramFiles", unset = ""), "Pandoc"),
+      file.path(Sys.getenv("ProgramFiles", unset = ""), "RStudio", "resources", "app", "bin", "quarto", "bin", "tools"),
+      file.path(Sys.getenv("LOCALAPPDATA", unset = ""), "Pandoc"),
+      file.path(Sys.getenv("LOCALAPPDATA", unset = ""), "Programs", "Pandoc")
+    ))
+    candidates <- candidates[nzchar(candidates)]
+
+    for (cand in candidates) {
+      exe <- if (grepl("pandoc\\.exe$", cand, ignore.case = TRUE)) cand else file.path(cand, "pandoc.exe")
+      if (!file.exists(exe)) next
+      Sys.setenv(RSTUDIO_PANDOC = dirname(exe))
+      if (isTRUE(rmarkdown::pandoc_available("1.12.3"))) return(TRUE)
+    }
+    FALSE
+  }
+
+  if (!ensure_pandoc()) {
+    warning("Pandoc not found; skipping report generation. Install Pandoc or RStudio, or set RSTUDIO_PANDOC.")
+    return(NA_character_)
+  }
 
   # --- Base (root) & Report dir
   base_dir   <- normalizePath(outdir, winslash = "/", mustWork = FALSE)

@@ -24,6 +24,12 @@ suppressPackageStartupMessages({
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 npath <- function(x) if (is.null(x)) NULL else normalizePath(x, winslash = "/", mustWork = FALSE)
+truthy_flag <- function(x) {
+  if (is.logical(x)) return(!is.na(x) & x)
+  if (is.numeric(x)) return(!is.na(x) & x != 0)
+  if (is.character(x)) return(tolower(trimws(x)) %in% c("true", "1", "yes", "y"))
+  rep(FALSE, length(x))
+}
 
 # ---- HTML escaping (no knitr::escape_html dependency) ----
 esc_html <- function(x){
@@ -496,6 +502,8 @@ if (is.na(sup_csv)) {
   }
 }
 
+# Retain the legacy Unicode-labelled block for reference, but do not execute it.
+if (FALSE) {
 # Prefer the explicit "NONE significant" placeholder if it exists; otherwise show the ontology plots.
 if (!is.na(pdf_none)) {
   cat(embed_pdf_toggle("GOseq: no significant terms (FDR ≤ 0.05)", pdf_none))
@@ -503,6 +511,16 @@ if (!is.na(pdf_none)) {
   cat(embed_pdf_toggle("Top 50 Enriched GO Terms — Biological Process (GOseq, all depths)", pdf_bp))
   cat(embed_pdf_toggle("Top 50 Enriched GO Terms — Cellular Component (GOseq, all depths)", pdf_cc))
   cat(embed_pdf_toggle("Top 50 Enriched GO Terms — Molecular Function (GOseq, all depths)", pdf_mf))
+}
+}
+
+# Prefer the explicit "NONE significant" placeholder if it exists; otherwise show the ontology plots.
+if (!is.na(pdf_none)) {
+  cat(embed_pdf_toggle("GOseq: no significant terms (FDR <= 0.05)", pdf_none))
+} else {
+  cat(embed_pdf_toggle("Top 50 Enriched GO Terms - Biological Process (GOseq, all depths)", pdf_bp))
+  cat(embed_pdf_toggle("Top 50 Enriched GO Terms - Cellular Component (GOseq, all depths)", pdf_cc))
+  cat(embed_pdf_toggle("Top 50 Enriched GO Terms - Molecular Function (GOseq, all depths)", pdf_mf))
 }
 ```
 
@@ -729,6 +747,7 @@ section_dir_tree(
 ```{r rrvgo-header, results='asis', eval = "rrvgo" %in% sections}
 cat("## 4) RRvGO — Semantic similarity / redundancy reduction\n\n")
 cat("**How to read these panels:** RRvGO clusters semantically similar GO terms to reduce redundancy. In the treemap, larger tiles represent more representative or higher-scoring terms. These views condense long lists into coherent functional themes in both True Consensus and Exploratory modes.\n\n")
+cat("This report separates three RRvGO views when available: `True Consensus` for strict cross-method consensus, `Conservative BG-Supported` for GOseq or with-background-supported terms, and `Exploratory` for the full significant GO landscape.\n\n")
 
 stopifnot(exists("idx"))
 
@@ -771,17 +790,22 @@ pick_rrvgo_rows <- function(mode_rx, ont) {
 
 # Modes & ontologies
 onts  <- c("BP","CC","MF")
-modes_named <- c("true_consensus_with_bg" = "True Consensus",
-                 "exploratory_all_significant" = "Exploratory")
+modes_named <- c(
+  "true_consensus_with_bg" = "True Consensus",
+  "conservative_bg_supported" = "Conservative BG-Supported",
+  "exploratory_all_significant" = "Exploratory"
+)
 
 # Gather rows
 rows <- list()
 for (ont in onts) {
   r1 <- pick_rrvgo_rows("true_consensus_with_bg", ont)
   if (nrow(r1)) r1$mode <- modes_named[["true_consensus_with_bg"]]
-  r2 <- pick_rrvgo_rows("exploratory_all_significant", ont)
-  if (nrow(r2)) r2$mode <- modes_named[["exploratory_all_significant"]]
-  rows <- c(rows, list(r1, r2))
+  r2 <- pick_rrvgo_rows("conservative_bg_supported", ont)
+  if (nrow(r2)) r2$mode <- modes_named[["conservative_bg_supported"]]
+  r3 <- pick_rrvgo_rows("exploratory_all_significant", ont)
+  if (nrow(r3)) r3$mode <- modes_named[["exploratory_all_significant"]]
+  rows <- c(rows, list(r1, r2, r3))
 }
 rr_tbl <- dplyr::bind_rows(rows)
 
@@ -792,7 +816,7 @@ if (!nrow(rr_tbl)) {
   rr_tbl <- rr_tbl |>
     dplyr::distinct(OrgDb, mode, ontology, rel_path, full_path, .keep_all = TRUE) |>
     dplyr::arrange(OrgDb,
-                   factor(mode, levels = c("True Consensus","Exploratory")),
+                   factor(mode, levels = c("True Consensus","Conservative BG-Supported","Exploratory")),
                    factor(ontology, levels = onts)) |>
     dplyr::mutate(exists = exists_file(.data$full_path))
 
@@ -807,8 +831,13 @@ if (!nrow(rr_tbl)) {
   # ---- Embed by OrgDb × Mode × Ontology (ABS path) ----
   for (odb in unique(rr_tbl$OrgDb)) {
     cat(sprintf("\n### %s\n\n", odb))
-    for (m in c("True Consensus","Exploratory")) {
+    for (m in c("True Consensus","Conservative BG-Supported","Exploratory")) {
       cat(sprintf("#### %s\n\n", m))
+      mode_rows <- rr_tbl[rr_tbl$OrgDb == odb & rr_tbl$mode == m & rr_tbl$exists, ]
+      if (!nrow(mode_rows)) {
+        cat("<p><em>No treemaps were generated for this mode.</em></p>\n\n")
+        next
+      }
       for (ont in onts) {
         sub <- rr_tbl[rr_tbl$OrgDb == odb & rr_tbl$mode == m & rr_tbl$ontology == ont & rr_tbl$exists, ]
         if (nrow(sub)) {
@@ -830,6 +859,7 @@ section_dir_tree(
   roots = { rts <- c("similarity_based_consensus","Similarity_based_consensus","rrvgo"); rts[!duplicated(tolower(rts))] },
   notes = list(
     "rrvgo_true_consensus_with_bg/OrgDb=<pkg>/"        = "True Consensus RRvGO outputs per OrgDb.",
+    "rrvgo_conservative_bg_supported/OrgDb=<pkg>/"     = "Conservative background-supported RRvGO outputs per OrgDb.",
     "rrvgo_exploratory_all_significant/OrgDb=<pkg>/"   = "Exploratory RRvGO outputs per OrgDb.",
     "…/rrvgo_<ONT>_treemap.pdf"                        = "Redundancy-reduced treemaps (ONT ∈ {BP, CC, MF}).",
     "…/rrvgo_<ONT>_scatterplot.pdf"                    = "Semantic scatterplots.",
@@ -855,6 +885,8 @@ stopifnot(exists("idx"))
 # Summary CSVs (unchanged logic, now via idx)
 sum_bg <- get_one("^(Network_analysis|network_analysis|networks)/(summary_with_bg\\.csv|with_bg/network_summary_.+\\.csv)$")
 sum_ex <- get_one("^(Network_analysis|network_analysis|networks)/(summary_with_bg_and_nobg\\.csv|with_bg_and_nobg/network_summary_.+\\.csv)$")
+sum_bg_tbl <- if (!is.na(sum_bg)) readr::read_csv(sum_bg, show_col_types = FALSE) else NULL
+sum_ex_tbl <- if (!is.na(sum_ex)) readr::read_csv(sum_ex, show_col_types = FALSE) else NULL
 
 if (!is.na(sum_bg)) print(
   knitr::kable(
@@ -870,6 +902,21 @@ if (!is.na(sum_ex)) print(
     caption = "Network summary — exploratory (with+noBG)"
   )
 )
+
+if (!is.null(sum_bg_tbl) && !is.null(sum_ex_tbl)) {
+  same_network_summary <- dplyr::full_join(
+    sum_bg_tbl %>% dplyr::select(.data$ontology, total_terms_bg = .data$total_terms, total_edges_bg = .data$total_edges),
+    sum_ex_tbl %>% dplyr::select(.data$ontology, total_terms_ex = .data$total_terms, total_edges_ex = .data$total_edges),
+    by = "ontology"
+  ) %>%
+    dplyr::filter(!is.na(.data$total_terms_bg), !is.na(.data$total_terms_ex))
+
+  if (nrow(same_network_summary) &&
+      all(same_network_summary$total_terms_bg == same_network_summary$total_terms_ex) &&
+      all(same_network_summary$total_edges_bg == same_network_summary$total_edges_ex)) {
+    cat("<p><em>Network note: the with-background and exploratory summaries are identical here because the no-background-only terms did not add extra graph edges after the network gene-count and overlap filters were applied.</em></p>\n\n")
+  }
+}
 
 # Interactive widgets from the index (absolute paths via idx$full_path)
 grab_net <- function(mode_dir, ont) {
@@ -920,6 +967,22 @@ if ("evaluation" %in% sections) cat("## 6) Consensus Evaluation — EQI, rarefac
 ```{r echogo-evaluation, results='asis', eval = "evaluation" %in% sections}
 
 cat("**How to read these panels:** EQI and fold-enrichment distributions summarize overall term quality and effect sizes; cumulative and rarefaction curves track how many unique terms appear as tools or species are added. A plateau in True Consensus with continued growth in Exploratory indicates robust, non-redundant signal; the network-complexity table quantifies structural differences between modes.\n\n")
+
+strict_consensus_term_count <- NA_integer_
+if (exists("cons_df") && is.data.frame(cons_df) && nrow(cons_df) &&
+    all(c("origin", "significant_in_any", "ontology") %in% names(cons_df))) {
+  strict_consensus_term_count <- sum(
+    truthy_flag(cons_df$significant_in_any) &
+      cons_df$origin == "GO terms - Consensus (with BG)" &
+      cons_df$ontology %in% c("BP", "MF", "CC"),
+    na.rm = TRUE
+  )
+}
+
+cat("**Evaluation note:** EchoGO's evaluation PDF filenames still retain the legacy `true_consensus` label from earlier releases. Read those files as the package's with-background evaluation view, not as proof that strict cross-method consensus terms exist in the current panel.\n\n")
+if (!is.na(strict_consensus_term_count) && strict_consensus_term_count == 0L) {
+  cat("**Panel note:** This run has 0 strict with-background consensus GO terms, so any evaluation files carrying `true_consensus` are legacy-named outputs rather than strict-consensus evidence.\n\n")
+}
 
 # --- Tiny guard (defined here in case it's not already available) ---
 if (!exists("safe_embed_pdf")) {

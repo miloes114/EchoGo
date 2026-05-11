@@ -404,6 +404,10 @@ Semantic similarity reduction (per ontology BP/MF/CC):
 -   `rrvgo_true_consensus_with_bg/` – strict consensus clusters\
 -   `rrvgo_exploratory_all_significant/` – all significant terms clustered
 
+Current EchoGO builds may also generate `rrvgo_conservative_bg_supported/` for GOseq or with-background-supported fallback clusters when the strict true-consensus set is empty.
+
+Interpretation note: `rrvgo_true_consensus_with_bg/` should be read as strict cross-method consensus only.
+
 These folders typically contain:
 
 -   Treemaps, bubble plots, heatmaps, wordclouds\

@@ -52,7 +52,7 @@ Writes GraphML, PDF/SVG, HTML and summary CSVs; invisibly returns \code{NULL}.
 \description{
 Builds two network modes from the consensus table:
 \itemize{
-  \item \strong{with_bg (True Consensus)} = GOseq (with BG) + g:Profiler (with BG) + Consensus (with BG)
+  \item \strong{with_bg (Conservative background-supported)} = GOseq (with BG) + g:Profiler (with BG) + Consensus (with BG)
   \item \strong{with_bg_and_nobg (Exploratory)} = all of the above \emph{plus} the no-background sources
 }
 Then constructs per-ontology (BP, MF, CC) GO-term overlap networks.
