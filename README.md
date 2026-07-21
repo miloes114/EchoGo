@@ -423,11 +423,11 @@ echogo_open_demo()
 
 If you use EchoGO in publications, please cite:
 
-> Escobar-Sierra C., Langschied F., Inostroza P.A. (2026).\
-> **EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms (v0.1.3).**\
-> Zenodo. DOI: <https://doi.org/10.5281/zenodo.17658715>
+> Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026).  
+> **EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms (v0.1.3).**  
+> Zenodo. DOI: <https://doi.org/10.5281/zenodo.17658714>
 
-Full citation entry is included in `inst/CITATION`.
+The full citation entry is included in `inst/CITATION`.
 
 ------------------------------------------------------------------------
 
@@ -442,4 +442,4 @@ For general questions, contact the maintainers.
 
 ## 💬 Acknowledgements
 
-EchoGO was developed by **Camilo Escobar-Sierra**, **Felix Langschied**, and **Pedro A. Inostroza**, with additional input from collaborators and the community.
+EchoGO was developed by **Camilo Escobar-Sierra**, **Felix Langschied**, **Angelina Miller**, and **Pedro A. Inostroza**, with additional input from collaborators and the community.
