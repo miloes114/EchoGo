@@ -6,6 +6,13 @@
 \usage{
 echogo_pick_species(refresh = FALSE, page_len = 25, force_browser = FALSE)
 }
+\arguments{
+\item{refresh}{Logical; refresh species metadata before displaying it.}
+
+\item{page_len}{Number of rows per page in the interactive table.}
+
+\item{force_browser}{Logical; save and open a standalone widget in a browser.}
+}
 \description{
 Pick species interactively (always shows a view)
 }

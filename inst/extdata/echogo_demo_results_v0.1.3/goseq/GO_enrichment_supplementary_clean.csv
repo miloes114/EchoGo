@@ -1,0 +1,6 @@
+category,term,ontology,numDEInCat,numInCat,total_significant_genes,total_tested_genes,foldEnrichment,over_represented_FDR,depth,gene_names
+GO:0003674,molecular function,MF,24,24,24,120,5,0.001,0,"ISY1, BUD13, SF3B6, U2AF2, SF3B1, DDX46, SF3A2, DDX42, PUF60, SF3B3, SNIP1, SLU7, SRPK3, SF3A1, SF3A3, PHF5A, DDX23, RBMX2, NCBP1, SF3B4, SF3B2, SF3B5, SRSF7"
+GO:0005488,binding,MF,12,30,24,120,2,0.004,1,"ISY1, BUD13, SF3B6, U2AF2, SF3B1, DDX46, SF3A2, DDX42, PUF60, SF3B3, SNIP1, SLU7"
+GO:0008152,metabolic process,BP,6,60,24,120,0.5,0.01,1,"ISY1, BUD13, SF3B6, U2AF2, SF3B1, DDX46"
+GO:0009987,cellular process,BP,2,20,24,120,0.5,0.02,1,"ISY1, BUD13"
+GO:0006355,regulation of DNA-templated transcription,BP,1,40,24,120,0.125,0.04,31,ISY1

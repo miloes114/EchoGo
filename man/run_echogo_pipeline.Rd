@@ -13,8 +13,19 @@ run_echogo_pipeline(
   orgdb = getOption("EchoGO.default_orgdb", "org.Dr.eg.db"),
   outdir = "echogo_out",
   strict_only = FALSE,
+  run_rrvgo = TRUE,
   run_evaluation = TRUE,
   use_trinotate_universe = FALSE,
+  tested_gene_ids = NULL,
+  de_id_column = NULL,
+  de_significant_column = NULL,
+  de_padj_column = NULL,
+  de_lfc_column = NULL,
+  count_id_column = NULL,
+  annotation_id_column = NULL,
+  padj_threshold = 0.05,
+  log2fc_threshold = 1,
+  de_table_significant_only = FALSE,
   verbose = TRUE
 )
 }
@@ -23,7 +34,7 @@ run_echogo_pipeline(
 
 \item{trinotate_file}{Path to Trinotate annotation file}
 
-\item{de_file}{Path to DE results (DESeq2 filtered)}
+\item{de_file}{Path to the full contrast-specific DE results table.}
 
 \item{count_matrix_file}{Path to full count matrix}
 
@@ -35,11 +46,24 @@ to the codes themselves.}
 
 \item{outdir}{Base output directory (standard layout will be created here)}
 
-\item{strict_only}{If TRUE, skip g:Profiler no-background runs and strict plots only}
+\item{strict_only}{If TRUE, skip exploratory no-background runs.}
+
+\item{run_rrvgo}{Whether to run RRvGO semantic reduction (default: TRUE)}
 
 \item{run_evaluation}{Whether to run enrichment evaluation (default: TRUE)}
 
-\item{use_trinotate_universe}{Logical; if TRUE, use EggNOG/Trinotate-derived}
+\item{use_trinotate_universe}{Deprecated compatibility flag retained in run
+metadata. It does not intersect or redefine the tested experiment universe.}
+
+\item{tested_gene_ids}{Optional explicit tested-gene vector or file.}
+
+\item{de_id_column, de_significant_column, de_padj_column, de_lfc_column}{Optional DE columns.}
+
+\item{count_id_column, annotation_id_column}{Optional count/annotation ID columns.}
+
+\item{padj_threshold, log2fc_threshold}{Default DE significance thresholds.}
+
+\item{de_table_significant_only}{Declare that the DE table contains significant rows only.}
 
 \item{verbose}{Print progress}
 }

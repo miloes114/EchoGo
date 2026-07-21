@@ -12,6 +12,17 @@ echogo_species_lookup(
   refresh = FALSE
 )
 }
+\arguments{
+\item{query}{Character vector of names, aliases, IDs, or NCBI taxonomy IDs.}
+
+\item{fields}{Character vector of species-table columns to rank.}
+
+\item{top_n}{Maximum suggestions returned per query.}
+
+\item{fuzzy}{Logical; include approximate text matches.}
+
+\item{refresh}{Logical; refresh species metadata before lookup.}
+}
 \description{
 Suggest best-matching g:Profiler IDs for each input (smart ranking)
 }

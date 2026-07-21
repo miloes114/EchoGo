@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18244875.svg)](https://doi.org/10.5281/zenodo.17658714)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17658715.svg)](https://doi.org/10.5281/zenodo.17658715)
 
 # 🧬 EchoGO
 
@@ -10,8 +10,8 @@ as long as you provide the expected input bundle.
 
 It provides:
 
--   Multi-species orthology support via **g:Profiler**
--   Integration of **GOseq** and **g:Profiler** into **strict** & **exploratory** consensus results
+-   Independent **g:Profiler organism-context analyses** using one matched resolved gene set
+-   Integration of **GOseq** and **g:Profiler** into **conservative** and **exploratory** results
 -   Semantic similarity reduction using **RRvGO**
 -   GO term overlap **network analysis**
 -   Optional fully rendered **HTML reports**
@@ -40,51 +40,36 @@ install.packages(c("remotes", "BiocManager"))
 ### 3) Install EchoGO
 
 ``` r
-remotes::install_github("miloes114/EchoGo", build_vignettes = FALSE)
-library(EchoGO)
-echogo_help()
-```
-
-To install with vignettes:
-
-``` r
 remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE)
 library(EchoGO)
 echogo_help()
 ```
+
+For a faster installation without locally registered vignettes, set
+
+`build_vignettes = FALSE`.
 **Windows note**: If installation warns about curl.dll “Permission denied”, close all R/RStudio sessions and delete the 00LOCK folder in your user library, then reinstall curl and EchoGO.
 
 If you want `browseVignettes("EchoGO")` and `vignette("EchoGO_workflow")` to work after installation, install EchoGO from a **built package tarball**:
 
 - `remotes::install_github(..., build_vignettes = TRUE)` works because it builds the package first.
-- A release asset such as `EchoGO_0.1.2.tar.gz` also works.
+- A release asset such as `EchoGO_0.1.3.tar.gz` also works.
 - A raw repository snapshot ZIP from GitHub/Zenodo is **not** the same thing as a built R package and does **not** include the installed vignette metadata that `browseVignettes()` uses.
 
 In short: if you install directly from a source snapshot folder with `R CMD INSTALL <folder>`, the package can still work, but the vignettes will usually not be registered.
 
-### 4) Install annotation packages (GO.db + OrgDb)
+### 4) Install the OrgDb needed for RRvGO
 
 Recommended automatic method:
 
 ``` r
-EchoGO::echogo_install_orgdb()
+EchoGO::echogo_install_orgdb("org.Mm.eg.db")
 ```
 
-Or install explicitly:
+`GO.db` and `rrvgo` are installed with EchoGO. An organism-specific OrgDb,
+such as `org.Mm.eg.db`, is still needed when RRvGO semantic reduction runs.
 
-``` r
-EchoGO::echogo_install_orgdb(c("GO.db", "org.Mm.eg.db"))
-```
-
-EchoGO requires **GO.db** and at least one **OrgDb** package (e.g., `org.Mm.eg.db`).
-
-### 5) Optional but recommended: RRvGO semantic reduction
-
-``` r
-BiocManager::install("rrvgo")
-```
-
-### 6) Optional: Dependencies for HTML report generation
+### 5) Optional: Dependencies for HTML report generation
 
 ``` r
 install.packages(c(
@@ -94,25 +79,35 @@ install.packages(c(
 ))
 ```
 
-### 7) Test your installation
+HTML reports and vignettes require Pandoc. RStudio includes it; when using R
+from another terminal, confirm that `rmarkdown::pandoc_available()` returns
+`TRUE` and install Quarto or Pandoc if it does not.
+
+### 6) Test your installation
 
 ``` r
 library(EchoGO)
 EchoGO::echogo_quickstart(run_demo = TRUE)
 ```
 
-This confirms that consensus scoring, RRvGO, networks, and the HTML report all run successfully.
+This is a deterministic offline validation using cached demonstration responses
+and the conservative/background-aware stream. It does not need an internet
+connection. Use `echogo_quickstart(run_demo = FALSE)` to copy and inspect only
+the inputs. Use `echogo_quickstart(run_demo = TRUE, live_gprofiler = TRUE)` for
+an optional live integration test. To exercise every exploratory, RRvGO, and evaluation stage,
+run `echogo_quickstart(run_demo = TRUE, full = TRUE)`; the full run can take
+several minutes.
 
 ------------------------------------------------------------------------
 
 ## 🏁 Quickstart
 
 ``` r
-# 1) Install annotation databases
-EchoGO::echogo_install_orgdb()
+# 1) Install one annotation database for RRvGO
+EchoGO::echogo_install_orgdb("org.Mm.eg.db")
 
 # 2) Validate species
-species <- echogo_validate_species(c("hsapiens", "mmusculus", "drerio"))
+species <- echogo_preflight_species(c("hsapiens", "mmusculus", "drerio"))
 
 # 3) Create project scaffold
 echogo_scaffold("my_project")
@@ -128,7 +123,8 @@ echogo_scaffold("my_project")
 #      - dge_<CONTRAST>.GOseq.enriched.tsv
 #      - Trinotate_for_EchoGO.tsv
 #      - <reference_label>_eggNOG_for_EchoGO.tsv
-#    See: doc/reference-based-inputs.md
+#    Generate these with echogo_prepare_reference_inputs().
+#    See: doc/reference-based-inputs.html
 
 # 5) Run the pipeline
 echogo_run("my_project/input", "my_project/results")
@@ -143,13 +139,14 @@ echogo_run("my_project/input", "my_project/results")
 ### Online (GitHub)
 - Workflow vignette: [EchoGO_workflow](doc/EchoGO_workflow.html)
 - Interpretation guide: [EchoGO_interpretation](doc/EchoGO_interpretation.html)
-- Reference-based RNA-seq inputs: [reference-based-inputs](doc/reference-based-inputs.md)
+- Reference-based RNA-seq inputs: [reference-based-inputs](doc/reference-based-inputs.html)
 
 ### In R (after installation)
 ```r
 browseVignettes("EchoGO")
 vignette("EchoGO_workflow")
 vignette("EchoGO_interpretation")
+vignette("reference-based-inputs")
 ```
 
 These commands require an installation that includes built vignette metadata. If they do not appear after install, reinstall from GitHub with:
@@ -200,13 +197,13 @@ echogo_species_lookup(c("human", "mouse", "9606"))
 ### Fuzzy guessing
 
 ``` r
-echogo_guess_species(c("H. sapiens", "rat", "zebra fish"))
+echogo_species_lookup(c("H. sapiens", "rat", "zebra fish"))
 ```
 
 ### Validate selected IDs
 
 ``` r
-species <- echogo_validate_species(c("hsapiens", "mmusculus", "drerio"))
+species <- echogo_preflight_species(c("hsapiens", "mmusculus", "drerio"))
 ```
 
 ### Filter by taxonomy & tags
@@ -233,29 +230,76 @@ Place these files under `my_project/input/`:
 
 | File | Description |
 |------------------------|------------------------------------------------|
-| **gene.counts.matrix.tsv** | TSV format: first column = transcript/gene ID, remaining columns = sample counts |
-| \*\*DE\_\*.tsv\*\* | One or more DE tables with columns: `id`, `log2FC`, `pvalue`, `padj` |
-| **Trinotate.xls** | Standard Trinotate report with GO & KEGG annotation |
+| `gene.counts.matrix.tsv` | TSV format: first column = transcript/gene ID, remaining columns = sample counts |
+| `DE_*.tsv` | One or more DE tables with columns: `id`, `log2FC`, `pvalue`, `padj` |
+| `Trinotate.xls` | Standard Trinotate report with GO & KEGG annotation |
 
 These correspond to the standard Trinity/Trinotate/GOseq workflow:\
 <https://github.com/trinityrnaseq/trinityrnaseq/wiki>
 
 ### Reference-based RNA-seq (HISAT2/STAR + featureCounts + DESeq2)
 
-EchoGO can also run reference-based experiments, as long as you prepare an input folder that mirrors the expected bundle. A complete step-by-step guide (including the external eggNOG-mapper step) is here:
+EchoGO can build the reference-based bundle from a count matrix, DESeq2 CSV
+files, the matching GFF3/GTF, and the matching protein FASTA. The preparation
+helper is resumable around the external eggNOG-mapper step:
 
--   **Reference-based input preparation tutorial:** `doc/reference-based-inputs.md`
+``` r
+prep <- EchoGO::echogo_prepare_reference_inputs(
+  root = "path/to/reference_project",
+  gff_file = "genome.gff3.gz",
+  protein_fasta = "proteins.faa.gz",
+  reference_label = "MySpecies",
+  orgdb = NULL
+)
+
+# Run the command stored in prep$emapper_command, then repeat the same call.
+stopifnot(prep$status %in% c("awaiting_emapper", "complete"))
+```
+
+### Scientific gene-set contract (v0.1.3)
+
+For each contrast, EchoGO derives the g:Profiler foreground from significant
+genes in the DE table and the custom background from the genes tested in that
+same experiment. The default threshold rule is `padj <= 0.05` and
+`abs(log2FoldChange) >= 1`; an explicit logical `significant` column takes
+precedence when present. Missing adjusted p-values do not pass the threshold.
+
+The tested-universe precedence is: an explicit tested-gene list, all rows of a
+full DE table, then the matching count matrix when the DE file is explicitly
+declared significant-only. Foreground and background pass through the same
+deterministic portable canonical-name resolver. Its fixed priority is a genuine
+SwissProt-derived gene symbol, then `EggNM.Preferred_name`, then a portable
+native symbol. Raw transcript, contig, seed-ortholog, species-prefixed Ensembl
+protein, and arbitrary accession IDs are never submitted to g:Profiler; they
+remain in `mapping_table.csv` with the reason `no portable canonical name`.
+Blank values are ignored and duplicate portable names collapse by stable first
+occurrence. Taxonomy labels are retained as provenance but do not numerically
+filter this resolver. After mapping,
+the foreground must be a proper non-degenerate subset of the background or the
+run stops with a diagnostic.
+
+The same resolved vectors are submitted independently under every selected
+g:Profiler organism code. This is organism-context enrichment in a shared
+identifier space, not construction of species-specific ortholog gene sets.
+Exact vectors, the mapping table, per-run response metadata, effective sizes,
+and hashes are saved under `gprofiler/`.
+
+Use a species-native OrgDb, such as `org.Dr.eg.db`, in `orgdb` when one is
+available. Otherwise, leave it `NULL` and GOseq uses eggNOG GO terms. The full
+two-stage walkthrough and troubleshooting guide is here:
+
+-   **Reference-based input preparation tutorial:** [reference-based-inputs](doc/reference-based-inputs.html)
 
 Place these files under `my_project/input/`:
 
 | File | Description |
 |------------------------|------------------------------------------------|
 | **allcounts_table.txt** | featureCounts gene count matrix (first column = gene ID, remaining columns = sample counts) |
-| **dge\_**<CONTRAST>.csv | One DESeq2 results table per contrast (e.g., `dge_Treatment_vs_Control.csv`) |
-| **dge\_**<CONTRAST>.GOseq.enriched.tsv | GOseq enriched table produced during input preparation |
-| **dge\_**<CONTRAST>.GOseq.depleted.tsv | Optional: GOseq depleted table (only if any depleted terms exist) |
+| `dge_<CONTRAST>.csv` | One DESeq2 results table per contrast (e.g., `dge_Treatment_vs_Control.csv`) |
+| `dge_<CONTRAST>.GOseq.enriched.tsv` | GOseq terms passing adjusted FDR 0.05 |
+| `dge_<CONTRAST>.GOseq.depleted.tsv` | Optional: GOseq depleted table from a custom preparation workflow |
 | **Trinotate_for_EchoGO.tsv** | Minimal Trinotate-like table used by EchoGO (created from eggNOG output) |
-| **<reference_label>\_eggNOG_for_EchoGO.tsv** | Species-labeled eggNOG table used by EchoGO (created from eggNOG output) |
+| `<reference_label>_eggNOG_for_EchoGO.tsv` | Species-labeled eggNOG table used by EchoGO (created from eggNOG output) |
 
 At the end, your input folder should look like this:
 
@@ -286,6 +330,10 @@ echogo_run(
 ``` r
 run_full_echogo(
   input_dir = "my_project/input",
+  goseq_file = "my_project/input/dge_Treatment_vs_Control.GOseq.enriched.tsv",
+  trinotate_file = "my_project/input/Trinotate_for_EchoGO.tsv",
+  de_file = "my_project/input/dge_Treatment_vs_Control.csv",
+  count_matrix_file = "my_project/input/allcounts_table.txt",
   species   = species,      # or species_expr = "..."
   orgdb     = "org.Mm.eg.db",
   outdir    = "my_project/results",
@@ -334,6 +382,8 @@ my_project/results/
 ├── evaluation/
 ├── goseq/
 ├── gprofiler/
+│   ├── run_manifest.json
+│   ├── submitted_vectors/
 │   ├── with_custom_background/
 │   └── no_background_genome_wide/
 ├── rrvgo/
@@ -345,6 +395,9 @@ my_project/results/
 └── report/
     └── (HTML report if make_report = TRUE)
 ```
+
+`rrvgo_true_consensus_with_bg/` is a compatibility-only legacy folder name;
+in v0.1.3 it contains the background-aware RRvGO stream.
 
 ------------------------------------------------------------------------
 
@@ -370,8 +423,8 @@ echogo_open_demo()
 
 If you use EchoGO in publications, please cite:
 
-> Escobar-Sierra C., Langschied F., Inostroza P.A. (2025).\
-> **EchoGO: Cross-Species Consensus Functional Enrichment Analysis.**\
+> Escobar-Sierra C., Langschied F., Inostroza P.A. (2026).\
+> **EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms (v0.1.3).**\
 > Zenodo. DOI: <https://doi.org/10.5281/zenodo.17658715>
 
 Full citation entry is included in `inst/CITATION`.

@@ -1,14 +1,23 @@
-EchoGO demo dataset (distilled from HOL03_test full run)
---------------------------------------------------------
-Source results: E:/Gigascience submission/EchoGo_Gigascience_submission/EchoGO/HOL03_test/results
-Source input:   E:/Gigascience submission/EchoGo_Gigascience_submission/EchoGO/HOL03_test/input
+EchoGO v0.1.3 deterministic demonstration dataset
+=================================================
 
-Files:
- - GOseq_enrichment_demo.csv : GOseq subset with gene_ids RESTRICTED to mapped transcripts
- - Trinotate_demo.tsv        : TRINITY -> SYMBOL mapping (synthetic, Metazoa-tagged)
- - DE_results_demo.tsv       : DE subset for mapped transcripts (if DE source found)
- - counts_demo.tsv           : Counts subset for mapped transcripts (if counts source found)
+This synthetic scientific fixture contains no research measurements or
+machine-specific paths.
 
-Run the demo:
- demo_dir <- system.file('extdata','echogo_demo', package='EchoGO')
- echogo_quickstart(run_demo = TRUE)
+Contract checks represented by the fixture:
+- 120 unique tested genes in counts and the full DE table
+- 24 significant genes using the explicit logical 'significant' column
+- 118 annotation-matched genes, two intentionally unmapped tested genes
+- one intentional many-to-one canonical-name collision
+- GOseq rows with explicit 24/120 denominators; the first term has fold 5
+- a strict resolved foreground subset of the resolved background
+- deterministic cached g:Profiler responses for offline quickstart testing
+
+Offline quickstart (default):
+  echogo_quickstart(run_demo = TRUE)
+
+Optional live integration run:
+  echogo_quickstart(run_demo = TRUE, live_gprofiler = TRUE)
+
+Regeneration:
+  source('data-raw/build_demo_v013.R')

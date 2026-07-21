@@ -35,7 +35,7 @@ using multiple complementary metrics:
   \item Fold Enrichment distributions
   \item Term origin distributions
   \item Rarefaction curves showing recovery of new terms from multi-species integration
-  \item Network complexity comparison between strict (True Consensus) and exploratory modes
+  \item Network complexity comparison between conservative/background-aware and exploratory modes
 }
 Generates Venn diagrams, density plots, cumulative and permutation rarefaction curves,
 and summary tables. Designed to mirror the functionality and output structure of the

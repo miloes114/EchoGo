@@ -51,6 +51,6 @@ Writes files; returns \code{NULL} (invisibly).
 \description{
 Constructs GO-term overlap networks using a pre-capped set of terms per ontology,
 ranked fairly: \emph{Consensus/g:Profiler} terms by the relevant consensus score, and
-\emph{GOseq-only} terms by \code{−log10(p)} (auto-detected p column). Uses a
+\emph{GOseq-only} terms by \code{-log10(p)} (auto-detected p column). Uses a
 sparse \code{Matrix::tcrossprod} path by default for speed.
 }

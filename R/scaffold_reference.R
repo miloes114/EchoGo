@@ -4,7 +4,7 @@
 #'   - allcounts_table.txt            (background counts)
 #'   - dge_*.csv                      (DESeq2 results for one contrast)
 #'   - *.GOseq.enriched.tsv           (GOseq over-represented categories)
-#'   - Trout_eggNOG_for_EchoGO.tsv    (Trinotate-like eggNOG table)
+#'   - *_eggNOG_for_EchoGO.tsv        (Trinotate-like eggNOG table)
 #'   - config.yml                     (species, orgdb, report title)
 #'
 #' and returns a list of normalized paths for downstream functions.
@@ -24,14 +24,23 @@ echogo_resolve_reference_inputs <- function(input_dir) {
     stop("Could not find a GOseq enriched file (pattern '*GOseq.enriched.*') in: ", input_dir)
   }
   if (length(goseq_file) > 1L) {
-    message("Multiple GOseq enriched files found; using first: ", basename(goseq_file[1]))
+    stop(
+      "Multiple GOseq enriched files found in: ", input_dir,
+      ". Use one contrast per input directory, or call run_full_echogo() ",
+      "with explicit file paths."
+    )
   }
   goseq_file <- goseq_file[1]
 
   # Trinotate-like annotation (required)
-  trinotate_file <- grep("Trout_eggNOG_for_EchoGO|Trinotate\\.", files, value = TRUE)
+  trinotate_file <- grep(
+    "eggNOG_for_EchoGO\\.tsv$|Trinotate\\.",
+    files,
+    value = TRUE,
+    ignore.case = TRUE
+  )
   if (!length(trinotate_file)) {
-    stop("Could not find Trinotate-like annotation (Trout_eggNOG_for_EchoGO*.tsv or Trinotate.*) in: ", input_dir)
+    stop("Could not find Trinotate-like annotation (*_eggNOG_for_EchoGO.tsv or Trinotate.*) in: ", input_dir)
   }
   if (length(trinotate_file) > 1L) {
     message("Multiple Trinotate-like files found; using first: ", basename(trinotate_file[1]))
@@ -48,7 +57,11 @@ echogo_resolve_reference_inputs <- function(input_dir) {
     de_file <- NA_character_
   } else {
     if (length(de_file) > 1L) {
-      message("Multiple dge_*.csv files found; using first: ", basename(de_file[1]))
+      stop(
+        "Multiple dge_*.csv files found in: ", input_dir,
+        ". Use one contrast per input directory, or call run_full_echogo() ",
+        "with explicit file paths."
+      )
     }
     de_file <- de_file[1]
   }
@@ -74,7 +87,7 @@ echogo_resolve_reference_inputs <- function(input_dir) {
     config_file <- config_file[1]
   }
 
-  # Infer contrast from GOseq enriched name (e.g. "dge_RRf_BBf")
+  # Infer the contrast from the GOseq enriched filename.
   contrast <- sub("\\.GOseq\\.enriched.*$", "", basename(goseq_file))
 
   list(

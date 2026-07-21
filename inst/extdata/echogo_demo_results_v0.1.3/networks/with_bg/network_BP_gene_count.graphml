@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_label" for="node" attr.name="label" attr.type="string"/>
+  <key id="v_genes_flat" for="node" attr.name="genes_flat" attr.type="string"/>
+  <key id="v_gene_count" for="node" attr.name="gene_count" attr.type="double"/>
+  <key id="v_consensus_score" for="node" attr.name="consensus_score" attr.type="double"/>
+  <key id="v_size_attr" for="node" attr.name="size_attr" attr.type="double"/>
+  <key id="v_degree" for="node" attr.name="degree" attr.type="double"/>
+  <key id="v_community" for="node" attr.name="community" attr.type="double"/>
+  <key id="v_community_label" for="node" attr.name="community_label" attr.type="string"/>
+  <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
+  <graph id="G" edgedefault="undirected">
+    <node id="n0">
+      <data key="v_name">GO:0008152</data>
+      <data key="v_label">metabolic process</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, U2AF2, SF3B1, DDX46</data>
+      <data key="v_gene_count">6</data>
+      <data key="v_consensus_score">1.98472747934761</data>
+      <data key="v_size_attr">6</data>
+      <data key="v_degree">1</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: metabolic process</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">GO:0006397</data>
+      <data key="v_label">mRNA processing</data>
+      <data key="v_genes_flat">ISY1, BUD13, SF3B6, U2AF2, SF3B1</data>
+      <data key="v_gene_count">5</data>
+      <data key="v_consensus_score">1.46106908605518</data>
+      <data key="v_size_attr">6</data>
+      <data key="v_degree">1</data>
+      <data key="v_community">1</data>
+      <data key="v_community_label">Cluster: metabolic process</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">5</data>
+    </edge>
+  </graph>
+</graphml>

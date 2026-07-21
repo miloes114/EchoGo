@@ -1,0 +1,44 @@
+schema_version: "1.0"
+echogo_version: "0.1.3"
+status: locked
+interpretation: heuristic_composite_prioritisation_index
+calibrated_probability: false
+caps:
+  p_log10: 6
+  fold: 8
+  depth: 12
+transformations:
+  p: "min(-log10(max(p, machine_double_min)), 6) / 6"
+  fold: "depth_weight * log2(1 + min(coalesce(fold, 0), 8))"
+  depth_weight: "if missing then 1 else min(depth / 12, 1)"
+  prevalence: "supporting_organism_contexts / queried_organism_contexts"
+na_behavior:
+  logical_support: false
+  p_value: 1
+  fold: 0
+  depth_weight: 1
+aggregation_across_organisms:
+  p_value: minimum
+  fold: arithmetic_mean
+  prevalence: fraction_supported
+conservative:
+  formula: "1.00*I_GOseq + 0.80*P_bg + 0.40*F_bg + 0.40*F_GOseq + 0.40*S_p_bg"
+  weights:
+    goseq_indicator: 1.00
+    custom_background_prevalence: 0.80
+    custom_background_fold: 0.40
+    goseq_fold: 0.40
+    custom_background_p: 0.40
+  includes_no_background: false
+  theoretical_range: [0, 4.735940]
+exploratory:
+  formula: "1.00*I_GOseq + 0.70*P_bg + 0.30*P_nobg + 0.35*F_bg + 0.25*F_nobg + 0.35*F_GOseq + 0.35*max(S_p_bg,S_p_nobg,S_p_GOseq)"
+  weights:
+    goseq_indicator: 1.00
+    custom_background_prevalence: 0.70
+    no_background_prevalence: 0.30
+    custom_background_fold: 0.35
+    no_background_fold: 0.25
+    goseq_fold: 0.35
+    best_p: 0.35
+  theoretical_range: [0, 5.361429]

@@ -98,6 +98,29 @@ rel_from_base <- function(path_abs, base_abs) {
   else NA_character_
 }
 
+stage_html_dependencies <- function(path_abs, dst) {
+  if (!identical(tolower(tools::file_ext(path_abs)), "html")) return(invisible(TRUE))
+
+  dep_src <- paste0(tools::file_path_sans_ext(path_abs), "_files")
+  if (!dir.exists(dep_src)) return(invisible(TRUE))
+
+  dep_dst <- file.path(dirname(dst), basename(dep_src))
+  dir.create(dep_dst, recursive = TRUE, showWarnings = FALSE)
+  dep_files <- list.files(dep_src, recursive = TRUE, full.names = TRUE,
+                          all.files = TRUE, include.dirs = FALSE, no.. = TRUE)
+  if (!length(dep_files)) return(invisible(TRUE))
+
+  dep_root <- normalizePath(dep_src, winslash = "/", mustWork = TRUE)
+  rel <- substring(normalizePath(dep_files, winslash = "/", mustWork = TRUE),
+                   nchar(dep_root) + 2L)
+  targets <- file.path(dep_dst, rel)
+  invisible(vapply(unique(dirname(targets)), dir.create, logical(1),
+                   recursive = TRUE, showWarnings = FALSE))
+  copied <- file.copy(dep_files, targets, overwrite = TRUE, copy.date = TRUE)
+  if (!all(copied)) return(invisible(FALSE))
+  invisible(TRUE)
+}
+
 stage_asset <- function(path_abs) {
   if (is.null(path_abs) || is.na(path_abs) || !nzchar(path_abs)) return(NA_character_)
   path_abs <- normalizePath(path_abs, winslash="/", mustWork=FALSE)
@@ -107,13 +130,17 @@ stage_asset <- function(path_abs) {
   if (!is.na(rel)) {
     dst <- file.path(assets_dir, rel)
     dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
-    file.copy(path_abs, dst, overwrite = TRUE)
+    copied <- file.copy(path_abs, dst, overwrite = TRUE, copy.date = TRUE)
+    if (!isTRUE(copied)) return(NA_character_)
+    if (!isTRUE(stage_html_dependencies(path_abs, dst))) return(NA_character_)
     return(file.path("assets", rel))
   }
 
   dst <- file.path(assets_dir, "external", basename(path_abs))
   dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
-  file.copy(path_abs, dst, overwrite = TRUE)
+  copied <- file.copy(path_abs, dst, overwrite = TRUE, copy.date = TRUE)
+  if (!isTRUE(copied)) return(NA_character_)
+  if (!isTRUE(stage_html_dependencies(path_abs, dst))) return(NA_character_)
   file.path("assets", "external", basename(path_abs))
 }
 
@@ -122,7 +149,7 @@ stage_asset <- function(path_abs) {
 # =====================================================
 .local_embed_pdf_toggle <- function(title, path_abs, height="650px") {
 
-  # FIX: Check existence BEFORE staging (using absolute path)
+  # Validate the source before staging it.
   if (is.null(path_abs) || is.na(path_abs) || !nzchar(path_abs)) {
     return(sprintf("\n\n<em>Missing PDF:</em> (no path)\n\n"))
   }
@@ -130,7 +157,7 @@ stage_asset <- function(path_abs) {
     return(sprintf("\n\n<em>Missing PDF:</em> %s\n\n", esc_html(path_abs)))
   }
 
-  # Now stage and use relative path for HTML
+  # Stage the file and keep the report portable with a relative path.
   rel <- stage_asset(path_abs)
   if (is.na(rel)) {
     return(sprintf("\n\n<em>Failed to stage PDF:</em> %s\n\n", esc_html(path_abs)))
@@ -158,9 +185,16 @@ stage_asset <- function(path_abs) {
     return(sprintf("\n\n<em>Failed to stage HTML:</em> %s\n\n", esc_html(path_abs)))
   }
 
+  pdf_path <- file.path(dirname(path_abs), paste0(tools::file_path_sans_ext(basename(path_abs)), ".pdf"))
+  fallback <- ""
+  if (file.exists(pdf_path)) {
+    pdf_rel <- stage_asset(pdf_path)
+    if (!is.na(pdf_rel)) fallback <- sprintf("\n<p><a href=\"%s\" target=\"_blank\" rel=\"noopener\">Open the static PDF version</a></p>", esc_html(pdf_rel))
+  }
+
   sprintf(
-    "\n\n<details><summary>%s</summary>\n<iframe src=\"%s\" width=\"100%%\" height=\"%s\" style=\"border:1px solid #ddd;\"></iframe>\n</details>\n\n",
-    esc_html(title), rel, esc_html(height)
+    "\n\n<details><summary>%s</summary>\n<iframe src=\"%s\" data-external=\"1\" width=\"100%%\" height=\"%s\" style=\"border:1px solid #ddd;\"></iframe>%s\n</details>\n\n",
+    esc_html(title), esc_html(rel), esc_html(height), fallback
   )
 }
 
@@ -172,7 +206,6 @@ embed_html_toggle <- function(title, path, height="650px") {
   .local_embed_html_toggle(title, path, height)
 }
 
-# NOTE: do NOT shadow EchoGO::embed_html_toggle_external_plus()
 embed_html_toggle_external_plus_local <- function(title, path, height="650px") {
   cat(embed_html_toggle(title, path, height))
 }
@@ -357,9 +390,9 @@ if (!is.null(p_local) && isTRUE(p_local$debug)) {
 
 ## Overview
 
-This report summarizes EchoGO outputs generated under:
+This report summarizes the current EchoGO output directory:
 
-- **Base directory:** `r base_dir %||% "(unknown)"`
+- **Output folder:** `r basename(base_dir) %||% "(unknown)"`
 - **Sections included:** `r paste(sections, collapse = ", ")`
 
 If a plot/table is missing, the section still renders and marks the missing file. This template avoids loading large media by default; click ▶ to toggle any figure embed.
@@ -732,7 +765,7 @@ cat("**How to read these panels:** RRvGO clusters semantically similar GO terms 
 
 stopifnot(exists("idx"))
 
-# ---- Safe fallbacks (used only if your helpers aren't attached) ----
+# ---- Safe fallbacks when package helpers are unavailable --------------------
 if (!exists("exists_file")) {
   exists_file <- function(x) {
     x2 <- ifelse(is.na(x) | !nzchar(x), NA_character_, x)
@@ -944,7 +977,7 @@ if (!is.na(ncc_csv)) {
 }
 
 
-# --- EXACT filenames present in your index ---
+# --- Exact filenames present in the index -----------------------------------
 eval_cum_tc <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/cumulative_curve_combined_true_consensus\\.pdf$")
 eval_cum_ex <- get_one("^(evaluation|consensus_enrichment/comparison_to_goseq)/cumulative_curve_combined_exploratory\\.pdf$")
 

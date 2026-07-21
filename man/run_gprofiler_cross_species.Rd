@@ -18,7 +18,9 @@ run_gprofiler_cross_species(
   significant = FALSE,
   sleep_sec = 0.5,
   verbose = TRUE,
-  go_obo = NULL
+  go_obo = NULL,
+  significance_rule = NULL,
+  resolver_definition = NULL
 )
 }
 \arguments{
@@ -29,7 +31,7 @@ run_gprofiler_cross_species(
 \item{species}{character vector of g:Profiler organism codes (e.g., "hsapiens"). Unlimited.
 Named vector allowed for pretty labels (names = codes, values = labels). If unnamed, labels=codes.}
 
-\item{outdir}{output directory root (keeps your structure).}
+\item{outdir}{Output directory root.}
 
 \item{do_no_bg}{logical; if TRUE, also run no-background (genome-wide) analyses.}
 
@@ -41,13 +43,17 @@ Named vector allowed for pretty labels (names = codes, values = labels). If unna
 
 \item{evcodes}{logical; return evidence codes.}
 
-\item{significant}{logical; if TRUE g:Profiler filters to significant; we keep FALSE then filter ourselves as needed.}
+\item{significant}{Logical; if TRUE, g:Profiler filters to significant results.}
 
 \item{sleep_sec}{seconds to pause between species to avoid throttling.}
 
 \item{verbose}{logical; print progress.}
 
-\item{go_obo}{optional path to a GO OBO file; if NULL we auto-cache one per session.}
+\item{go_obo}{Optional path to a GO OBO file; if NULL, EchoGO caches one per session.}
+
+\item{significance_rule}{DE significance rule saved in run metadata.}
+
+\item{resolver_definition}{Shared canonical resolver saved in run metadata.}
 }
 \value{
 list with per-run data.frames and a `$paths` list of written files.

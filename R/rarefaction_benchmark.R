@@ -57,7 +57,7 @@ run_rarefaction_benchmark <- function(
   comparison_dir <- output_dir
   suppressWarnings(dir.create(file.path(comparison_dir, "exploratory_no_bg"), recursive = TRUE, showWarnings = FALSE))
 
-  # ---- Load consensus (same guards as your working version) ----
+  # ---- Load and validate consensus ------------------------------------------
   if (!file.exists(consensus_file)) stop("consensus_file not found: ", consensus_file)
   consensus <- if (grepl("\\.xlsx$", consensus_file, ignore.case = TRUE)) {
     openxlsx::read.xlsx(consensus_file)
@@ -173,7 +173,7 @@ run_rarefaction_benchmark <- function(
     list(stop = sel, methods = list(window = a, segmented = b, knee = c))
   }
 
-  # ---- Core builder (your original plotting style, with greedy order & per-panel vlines) ----
+  # ---- Plot builder ---------------------------------------------------------
   build_mode <- function(bg_mode = TRUE, species_order = NULL) {
     tag <- if (bg_mode) "true_consensus" else "exploratory"
     out_dir <- if (bg_mode) comparison_dir else file.path(comparison_dir, "exploratory_no_bg")
@@ -291,7 +291,7 @@ run_rarefaction_benchmark <- function(
       combo <- plots$BP + plots$MF + plots$CC + plots$ALL +
         patchwork::plot_layout(ncol = 2) +
         patchwork::plot_annotation(
-          title = if (bg_mode) "Cumulative GO Term Curves (True Consensus)"
+          title = if (bg_mode) "Cumulative GO Term Curves (Background-aware)"
           else                 "Cumulative GO Term Curves (Exploratory)"
         )
 
@@ -354,7 +354,7 @@ run_rarefaction_benchmark <- function(
           ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper, fill = .data$ontology), alpha = 0.2, color = NA) +
           ggplot2::facet_wrap(~ontology, scales = "free_y") +
           ggplot2::labs(
-            title = if (bg_mode) "Rarefaction Curve (1000 Perms): GOseq + g:Profiler (True Consensus)"
+            title = if (bg_mode) "Rarefaction Curve (1000 Perms): GOseq + g:Profiler (Background-aware)"
             else                 "Rarefaction Curve (1000 Perms): GOseq + All Significant Terms (Exploratory)",
             x = "Species Randomly Added (Index)", y = "Mean Cumulative Unique GO Terms"
           ) +

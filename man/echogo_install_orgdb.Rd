@@ -2,9 +2,9 @@
 % Please edit documentation in R/install_helpers.R
 \name{echogo_install_orgdb}
 \alias{echogo_install_orgdb}
-\title{Install GO.db / OrgDb packages into the user library (no prompts)}
+\title{Install GO.db / OrgDb packages into the active R library (no prompts)}
 \usage{
-echogo_install_orgdb(pkgs = NULL, update = FALSE)
+echogo_install_orgdb(pkgs = NULL, update = FALSE, lib = .libPaths()[1])
 }
 \arguments{
 \item{pkgs}{Character vector of package names (e.g., c("GO.db","org.Mm.eg.db")).
@@ -13,13 +13,16 @@ c("GO.db","org.Hs.eg.db","org.Mm.eg.db","org.Dr.eg.db",
   "org.Dm.eg.db","org.Rn.eg.db","org.Ce.eg.db").}
 
 \item{update}{Logical; update existing packages? Default FALSE for reproducibility.}
+
+\item{lib}{Character scalar; library to install into. Defaults to
+`.libPaths()[1]`, including the active `renv` project library when present.}
 }
 \value{
 Named logical vector: TRUE if package is loadable after installation.
 }
 \description{
-Installs Bioconductor annotation packages to the **user** library to avoid
-permission issues. If `pkgs = NULL`, it installs any **missing** items from a
-standard OrgDb set plus GO.db. Returns a logical vector (per package) of
-whether the package is now loadable.
+Installs Bioconductor annotation packages to the first active library, which
+respects project-local libraries such as `renv`. If `pkgs = NULL`, it
+installs any **missing** items from a standard OrgDb set plus GO.db. Returns
+a logical vector (per package) of whether the package is now loadable.
 }

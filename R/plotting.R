@@ -67,23 +67,35 @@ plot_lollipop <- function(df, score_col, label, output_path, top_n = 50,
       term_display = factor(term_display, levels = rev(unique(term_display)))
     )
 
-  # Build aesthetics programmatically (avoid conditionals inside aes())
-  p <- ggplot2::ggplot(df, ggplot2::aes_string(x = "term_display", y = score_col))
+  # Use stable internal columns for programmatic aesthetics.
+  df$.__score__ <- df[[score_col]]
+  if (!is.null(color_by)) df$.__colour__ <- df[[color_by]]
+  if (!is.null(size_by)) df$.__size__ <- df[[size_by]]
+
+  p <- ggplot2::ggplot(
+    df,
+    ggplot2::aes(x = .data$term_display, y = .data$.__score__)
+  )
 
   seg_map <- if (is.null(color_by)) {
-    ggplot2::aes_string(xend = "term_display", y = 0, yend = score_col)
+    ggplot2::aes(xend = .data$term_display, y = 0, yend = .data$.__score__)
   } else {
-    ggplot2::aes_string(xend = "term_display", y = 0, yend = score_col, colour = color_by)
+    ggplot2::aes(
+      xend = .data$term_display,
+      y = 0,
+      yend = .data$.__score__,
+      colour = .data$.__colour__
+    )
   }
 
   pt_map <- if (is.null(color_by) && is.null(size_by)) {
     ggplot2::aes()
   } else if (is.null(color_by)) {
-    ggplot2::aes_string(size = size_by)
+    ggplot2::aes(size = .data$.__size__)
   } else if (is.null(size_by)) {
-    ggplot2::aes_string(colour = color_by)
+    ggplot2::aes(colour = .data$.__colour__)
   } else {
-    ggplot2::aes_string(colour = color_by, size = size_by)
+    ggplot2::aes(colour = .data$.__colour__, size = .data$.__size__)
   }
 
   p <- p +

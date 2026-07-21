@@ -30,7 +30,7 @@ Convenience wrapper that:
 
 Expected files inside \code{input_dir}:
   - *_GOseq.enriched.tsv         (required)
-  - Trout_eggNOG_for_EchoGO.tsv  (or Trinotate.*) (required)
+  - *_eggNOG_for_EchoGO.tsv or Trinotate.* (required)
   - dge_*.csv                    (required)
   - allcounts_table.txt          (required)
   - config.yml                   (optional: species, orgdb, report_title)

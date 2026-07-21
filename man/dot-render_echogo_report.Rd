@@ -2,7 +2,7 @@
 % Please edit documentation in R/report_render.R
 \name{.render_echogo_report}
 \alias{.render_echogo_report}
-\title{Internal: render the EchoGO HTML report (robust: knit in root, then move; clean root on success)}
+\title{Render the EchoGO HTML report}
 \usage{
 .render_echogo_report(
   report_title,
@@ -15,6 +15,6 @@
 )
 }
 \description{
-Internal: render the EchoGO HTML report (robust: knit in root, then move; clean root on success)
+Render the EchoGO HTML report
 }
 \keyword{internal}

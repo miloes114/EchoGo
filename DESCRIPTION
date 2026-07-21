@@ -1,8 +1,8 @@
 Package: EchoGO
 Type: Package
-Title: EchoGO: Cross-Species Consensus Enrichment for Non-Model Organisms
-Version: 0.1.2
-Date: 2026-01-14
+Title: Background-Aware Multi-Context Enrichment for Non-Model Organisms
+Version: 0.1.3
+Date: 2026-07-16
 Authors@R: c(
     person("Camilo", "Escobar-Sierra",
            email = "camilo.escobar-sierra@rwth-aachen.de",
@@ -13,9 +13,10 @@ Authors@R: c(
            email = "pedro.inostroza@rwth-aachen.de",
            role  = "aut")
   )
-Description: EchoGO is a modular framework for functional enrichment analysis
+Description: A modular framework for functional enrichment analysis
     in non-model organisms. It integrates bias-aware GOseq enrichment with
-    orthology-based g:Profiler enrichment across multiple species, builds
+    matched experiment-derived gene sets evaluated across multiple g:Profiler
+    organism contexts, builds
     consensus scores, performs semantic similarity reduction with RRvGO, and
     generates curated visual outputs including lollipop plots, rarefaction
     curves, enrichment networks, and HTML reports. It is especially suited
@@ -33,9 +34,10 @@ Imports:
     gprofiler2,
     ontologyIndex,
     AnnotationDbi,
+    GO.db,
+    rrvgo,
     utils,
     stats,
-    methods,
     tibble,
     rlang,
     rappdirs,
@@ -52,9 +54,13 @@ Imports:
     ggvenn,
     patchwork
 Suggests:
+    Biostrings,
+    rtracklayer,
+    GenomicRanges,
+    IRanges,
+    S4Vectors,
     rmarkdown,
     knitr,
-    GO.db,
     DT,
     htmlwidgets,
     yaml,
@@ -62,17 +68,18 @@ Suggests:
     rprojroot,
     testthat (>= 3.0.0),
     ggrepel,
+    goseq,
     visNetwork,
     svglite,
     readxl,
     BiocManager,
     data.table,
     htmltools,
-    rrvgo,
     scales,
     segmented,
     taxize,
-    treemap
+    treemap,
+    withr
 VignetteBuilder: knitr
 URL: https://github.com/miloes114/EchoGo
 BugReports: https://github.com/miloes114/EchoGo/issues

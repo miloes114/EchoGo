@@ -1,16 +1,14 @@
 .onAttach <- function(libname, pkgname) {
 
   banner <- "
-           ><(((º>  🧬   E   c   h   o   G   O   🧬  <º)))><
-
-🐙 🦋 🐸 🐟 EchoGO — Cross-Species Consensus Enrichment 🦐 🐍 🦉 🦇
+EchoGO - matched organism-context enrichment
   "
 
   packageStartupMessage(
     paste0(
       banner,
-      "\nWelcome to EchoGO — your all-in-one toolkit for robust, cross-species functional enrichment analysis.",
-      "\nHow to cite: Escobar-Sierra C., Inostroza P.A., et al. (2025). EchoGO.",
+      "\nWelcome to EchoGO, a toolkit for background-aware and exploratory functional enrichment.",
+      "\nHow to cite: citation('EchoGO')",
       "\nQuick start: echogo_help(); echogo_quickstart(run_demo = TRUE)",
       "\nPick species interactively: echogo_pick_species()",
       "\nMore documentation: vignette('EchoGO_workflow'), vignette('EchoGO_interpretation')",
@@ -25,8 +23,8 @@
 
     packageStartupMessage(
       paste0(
-        "\n🧠 Default OrgDb: ", paste(active_orgdb, collapse = ", "),
-        "\n🧬 Default species: ", paste(active_species, collapse = ", "),
+        "\nDefault OrgDb: ", paste(active_orgdb, collapse = ", "),
+        "\nDefault organism contexts: ", paste(active_species, collapse = ", "),
         "\nTip: change with options(EchoGO.default_orgdb=...), options(EchoGO.default_species=...)\n"
       )
     )
@@ -34,7 +32,7 @@
 
   # Offline indicator (optional but helpful)
   if (!getOption("EchoGO.taxonomy_online", TRUE)) {
-    packageStartupMessage("🔒 Taxonomy enrichment offline: using cached or fallback ranks.\n")
+    packageStartupMessage("Taxonomy enrichment offline: using cached or fallback ranks.\n")
   }
 }
 
@@ -42,7 +40,7 @@
 .onLoad <- function(...) {
   op <- options()
 
-  # Suggest a per-user demo root; we won't create it until used
+  # Suggest a per-user demo root and create it only when needed.
   demo_root_default <- tryCatch({
     if (requireNamespace("rappdirs", quietly = TRUE)) {
       rappdirs::user_data_dir("EchoGO")
@@ -65,7 +63,7 @@
     EchoGO.net_timeout_sec     = 25,
     EchoGO.debug               = FALSE,
 
-    # ---- per-user demo target (used by echogo_quickstart if you decide) ----
+    # ---- Per-user demo target -----------------------------------------------
     EchoGO.demo_root           = demo_root_default
   )
 

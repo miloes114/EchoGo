@@ -1,0 +1,7 @@
+species_code,mode
+hsapiens,with_bg
+mmusculus,with_bg
+drerio,with_bg
+hsapiens,nobg
+mmusculus,nobg
+drerio,nobg

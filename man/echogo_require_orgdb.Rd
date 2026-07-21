@@ -19,5 +19,5 @@ Character vector of packages that are loadable now (possibly a subset of `pkgs`)
 \description{
 This checks that the requested OrgDb packages are available. If they are
 missing and `auto_install = TRUE`, it calls [echogo_install_orgdb()] to
-install them into the user library.
+install them into the active library.
 }

@@ -3,7 +3,7 @@
 #' @description
 #' Builds two network modes from the consensus table:
 #' \itemize{
-#'   \item \strong{with_bg (True Consensus)} = GOseq (with BG) + g:Profiler (with BG) + Consensus (with BG)
+#'   \item \strong{with_bg (conservative/background-aware)} = GOseq plus custom-background g:Profiler evidence
 #'   \item \strong{with_bg_and_nobg (Exploratory)} = all of the above \emph{plus} the no-background sources
 #' }
 #' Then constructs per-ontology (BP, MF, CC) GO-term overlap networks.
@@ -85,8 +85,8 @@ run_all_networks <- function(consensus_df,
   canon_root  <- .mk(outdir, "networks")
   legacy_root <- file.path(outdir, "Network_analysis")
 
-  # ---------- TRUE CONSENSUS (with background only) ----------
-  message("🚀 Generating GO term networks (True Consensus — all with background)…")
+  # ---------- BACKGROUND-AWARE (with background only) ----------
+  message("Generating GO term networks (conservative/background-aware stream)...")
   network_df_with_bg <- consensus_df %>%
     dplyr::mutate(
       ontology = .norm_ont(.data$ontology),
@@ -119,7 +119,7 @@ run_all_networks <- function(consensus_df,
   )
 
   # ---------- EXPLORATORY (with + no background) ----------
-  message("🚀 Generating GO term networks (Exploratory — with BG + no BG)…")
+  message("Generating GO term networks (exploratory - with BG + no BG)...")
   network_df_with_bg_and_nobg <- consensus_df %>%
     dplyr::mutate(
       ontology = .norm_ont(.data$ontology),
@@ -180,19 +180,19 @@ run_all_networks <- function(consensus_df,
           delta_edges      = total_edges_exploratory - total_edges_bg,
           delta_avg_degree = avg_degree_exploratory - avg_degree_bg
         )
-    }, error = function(e) { message("⚠️ Skipping network complexity comparison (read error): ", e$message); NULL })
+    }, error = function(e) { message("Warning: skipping network complexity comparison (read error): ", e$message); NULL })
     if (!is.null(comparison)) {
       readr::write_csv(comparison, comparison_outpath)
       print(comparison)
     }
   } else {
-    message("ℹ Skipping network complexity comparison: summary files not found for both modes.")
+    message("Skipping network complexity comparison: summary files not found for both modes.")
   }
 
-  # Mirror canonical tree → legacy ONLY if explicitly enabled
+  # Mirror canonical tree to legacy only if explicitly enabled
   if (legacy_on && dir.exists(canon_root)) .mirror_tree(canon_root, legacy_root)
 
-  message("✅ Network generation complete.")
+  message("Network generation complete.")
   invisible(NULL)
 }
 
@@ -202,7 +202,7 @@ run_all_networks <- function(consensus_df,
 #' @description
 #' Constructs GO-term overlap networks using a pre-capped set of terms per ontology,
 #' ranked fairly: \emph{Consensus/g:Profiler} terms by the relevant consensus score, and
-#' \emph{GOseq-only} terms by \code{−log10(p)} (auto-detected p column). Uses a
+#' \emph{GOseq-only} terms by \code{-log10(p)} (auto-detected p column). Uses a
 #' sparse \code{Matrix::tcrossprod} path by default for speed.
 #'
 #' @param df Subset of consensus table (columns: \code{term_id}, \code{term_name}, \code{ontology}, \code{all_genes},
@@ -305,7 +305,7 @@ build_go_networks <- function(df,
   set.seed(1L)
 
   for (ont in c("BP","MF","CC")) {
-    message("🔵 [", label, "] ", ont, " — selecting terms")
+    message("[", label, "] ", ont, " - selecting terms")
 
     df_net <- df %>%
       dplyr::mutate(ontology = .norm_ont(.data$ontology)) %>%
@@ -319,7 +319,7 @@ build_go_networks <- function(df,
       dplyr::filter(.data$gene_count >= min_gene_count)
 
     if (nrow(df_net) < 2) {
-      message("⏩ Skipping ", ont, ": too few terms after filter.")
+      message("Skipping ", ont, ": too few terms after filter.")
       stats_rows[[length(stats_rows)+1]] <- tibble::tibble(ontology=ont,total_terms=0,total_edges=0,avg_degree=0)
       next
     }
@@ -338,7 +338,7 @@ build_go_networks <- function(df,
           .data$term_id
         ) %>%
         dplyr::slice_head(n = analysis_cap_per_ontology)
-      message("⚖️  ", ont, " (", label, "): analysis capped to ", nrow(df_net), " terms.")
+      message(ont, " (", label, "): analysis capped to ", nrow(df_net), " terms.")
     } else {
       df_net <- df_net %>%
         dplyr::arrange(
@@ -349,7 +349,7 @@ build_go_networks <- function(df,
     }
 
     # ----- EDGE CONSTRUCTION -----
-    message("🧮 ", ont, ": building overlaps (", if (use_sparse) "sparse" else "pairwise", "; metric=", edge_metric, ")")
+    message(ont, ": building overlaps (", if (use_sparse) "sparse" else "pairwise", "; metric=", edge_metric, ")")
     term_edges <- NULL
 
     tg <- df_net %>%
@@ -360,7 +360,7 @@ build_go_networks <- function(df,
 
     ids <- unique(tg$id)
     if (length(ids) < 2) {
-      message("⏩ Skipping ", ont, ": fewer than 2 terms with genes.")
+      message("Skipping ", ont, ": fewer than 2 terms with genes.")
       stats_rows[[length(stats_rows)+1]] <- tibble::tibble(ontology=ont,total_terms=dplyr::n_distinct(df_net$id),total_edges=0,avg_degree=0)
       next
     }
@@ -428,7 +428,7 @@ build_go_networks <- function(df,
     }
 
     if (is.null(term_edges) || !nrow(term_edges)) {
-      message("⏩ Skipping ", ont, ": no edges with current thresholds.")
+      message("Skipping ", ont, ": no edges with current thresholds.")
       stats_rows[[length(stats_rows)+1]] <- tibble::tibble(ontology=ont,total_terms=dplyr::n_distinct(df_net$id),total_edges=0,avg_degree=0)
       next
     }
@@ -463,11 +463,19 @@ build_go_networks <- function(df,
     graph_path <- file.path(output_dir, paste0("network_", ont, "_", size_by, ".graphml"))
     igraph::write_graph(g, graph_path, format = "graphml")
 
-    # ---- Rmd-style layout + labels + ggsave (plots only) ----
-    layout_tbl <- ggraph::create_layout(g, layout = "fr") %>%
+    # Limit the static plot to an induced subgraph so every plotted edge has
+    # both endpoints in the displayed node set.
+    plot_ids <- igraph::as_data_frame(g, what = "vertices") %>%
+      tibble::as_tibble() %>%
+      dplyr::arrange(dplyr::desc(.data$size_attr)) %>%
+      dplyr::slice_head(n = plotting_cap_per_ontology) %>%
+      dplyr::pull("name")
+    plot_g <- igraph::induced_subgraph(g, vids = plot_ids)
+
+    layout_tbl <- ggraph::create_layout(plot_g, layout = "fr") %>%
       dplyr::mutate(
-        community = igraph::V(g)$community,
-        degree    = igraph::degree(g)
+        community = igraph::V(plot_g)$community,
+        degree    = igraph::V(plot_g)$degree
       )
 
     # join top term per community for legend labels (same as Rmd)
@@ -486,9 +494,7 @@ build_go_networks <- function(df,
 
     layout_tbl <- layout_tbl %>%
       dplyr::left_join(top_terms_plot, by = "community") %>%
-      dplyr::mutate(community_label = paste0("Cluster: ", top_term)) %>%
-      dplyr::arrange(dplyr::desc(size_attr)) %>%
-      dplyr::slice_head(n = plotting_cap_per_ontology)
+      dplyr::mutate(community_label = paste0("Cluster: ", top_term))
 
     top_label_nodes <- layout_tbl %>%
       dplyr::group_by(community) %>%
@@ -556,7 +562,39 @@ build_go_networks <- function(df,
         }
       }")
     html_path <- file.path(output_dir, paste0("network_", ont, "_", size_by, "_filtered.html"))
-    try(htmlwidgets::saveWidget(vis_obj, file = normalizePath(html_path, mustWork = FALSE), selfcontained = TRUE), silent = TRUE)
+    html_path_norm <- normalizePath(html_path, winslash = "/", mustWork = FALSE)
+    selfcontained_error <- NULL
+    widget_saved <- tryCatch({
+      htmlwidgets::saveWidget(vis_obj, file = html_path_norm, selfcontained = TRUE)
+      TRUE
+    }, error = function(e) {
+      selfcontained_error <<- e
+      FALSE
+    })
+
+    if (!widget_saved) {
+      warning(
+        "Could not create a self-contained network widget for ", ont,
+        "; saving it with a companion dependency directory instead. ",
+        "Reason: ", conditionMessage(selfcontained_error),
+        call. = FALSE
+      )
+      widget_saved <- tryCatch({
+        htmlwidgets::saveWidget(vis_obj, file = html_path_norm, selfcontained = FALSE)
+        TRUE
+      }, error = function(e) {
+        warning(
+          "Failed to save the interactive network widget for ", ont,
+          ": ", conditionMessage(e),
+          call. = FALSE
+        )
+        FALSE
+      })
+    }
+
+    if (!widget_saved || !file.exists(html_path)) {
+      warning("Interactive network HTML was not created for ontology ", ont, call. = FALSE)
+    }
 
     # stats
     stats_rows[[length(stats_rows)+1]] <- tibble::tibble(
@@ -570,7 +608,7 @@ build_go_networks <- function(df,
   # summary
   summary_path <- file.path(base_dir, paste0("summary_", label, ".csv"))
   readr::write_csv(dplyr::bind_rows(stats_rows), summary_path)
-  message("📝 Wrote summary: ", summary_path)
+  message("Wrote summary: ", summary_path)
 
   invisible(NULL)
 }

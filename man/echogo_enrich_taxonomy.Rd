@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_species.R
 \name{echogo_enrich_taxonomy}
 \alias{echogo_enrich_taxonomy}
-\title{Enrich species table with taxonomic ranks (superkingdom → genus)
+\title{Enrich species table with taxonomic ranks (superkingdom to genus)
 Uses packaged fallback (data/echogo_taxonomy_fallback.rda) and fills gaps
 from a user cache (taxonomy_lineage.rds). If auto-update is enabled and
 'taxize' is installed, missing ranks are fetched from NCBI classification().}
@@ -14,8 +14,17 @@ echogo_enrich_taxonomy(
   verbose = interactive()
 )
 }
+\arguments{
+\item{df}{Species data frame containing at least `organism` and `ncbi`.}
+
+\item{refresh}{Logical; reserved for an explicit taxonomy refresh.}
+
+\item{rate_limit}{Seconds to pause between online NCBI taxonomy requests.}
+
+\item{verbose}{Logical; report why optional online enrichment is skipped.}
+}
 \description{
-Enrich species table with taxonomic ranks (superkingdom → genus)
+Enrich species table with taxonomic ranks (superkingdom to genus)
 Uses packaged fallback (data/echogo_taxonomy_fallback.rda) and fills gaps
 from a user cache (taxonomy_lineage.rds). If auto-update is enabled and
 'taxize' is installed, missing ranks are fetched from NCBI classification().

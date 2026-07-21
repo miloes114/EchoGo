@@ -9,6 +9,8 @@ echogo_embed_html_toggle(title, path, report_dir, base_dir, height = "650px")
 \arguments{
 \item{title}{Title shown in the toggle summary}
 
+\item{path}{Absolute path to the HTML file (deprecated name for `path_abs`).}
+
 \item{report_dir}{Directory where the report HTML lives}
 
 \item{base_dir}{Root of all outputs (used to compute relative URLs)}

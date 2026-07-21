@@ -20,6 +20,8 @@ echogo_select_species(
 \item{taxon}{named list of rank=value pairs, e.g. list(order="Perciformes")}
 
 \item{include_related}{if TRUE and tags are given, union tag set with taxon/ids}
+
+\item{refresh}{Logical; refresh species metadata before selection.}
 }
 \description{
 Build a species set by IDs, tags, and/or taxonomy filters

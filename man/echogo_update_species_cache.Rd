@@ -6,6 +6,12 @@
 \usage{
 echogo_update_species_cache(update_package_data = FALSE, verbose = TRUE)
 }
+\arguments{
+\item{update_package_data}{Logical; also replace the package fallback data
+when developing EchoGO from its source tree.}
+
+\item{verbose}{Logical; print refresh and write details.}
+}
 \value{
 tibble with columns: organism, name, ncbi, alias
 }

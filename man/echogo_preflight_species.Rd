@@ -6,6 +6,13 @@
 \usage{
 echogo_preflight_species(species, refresh = FALSE, error_if_unknown = TRUE)
 }
+\arguments{
+\item{species}{Character vector of g:Profiler organism IDs or names.}
+
+\item{refresh}{Logical; refresh the species cache before validation.}
+
+\item{error_if_unknown}{Logical; error rather than warn for unresolved input.}
+}
 \description{
 Check species argument and provide actionable feedback (preflight)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_species.R
 \name{echogo_species_table}
 \alias{echogo_species_table}
-\title{Build the augmented species table (cache → taxonomy → tags)}
+\title{Build the augmented species table (cache to taxonomy to tags)}
 \usage{
 echogo_species_table(
   refresh = FALSE,
@@ -10,6 +10,13 @@ echogo_species_table(
   include_tags = TRUE
 )
 }
+\arguments{
+\item{refresh}{Logical; refresh cached species metadata first.}
+
+\item{include_taxonomy}{Logical; add taxonomic rank columns.}
+
+\item{include_tags}{Logical; add curated list-column tags.}
+}
 \description{
-Build the augmented species table (cache → taxonomy → tags)
+Build the augmented species table (cache to taxonomy to tags)
 }

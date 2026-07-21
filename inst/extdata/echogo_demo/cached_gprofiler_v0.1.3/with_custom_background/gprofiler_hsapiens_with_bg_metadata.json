@@ -1,0 +1,33 @@
+{
+  "echogo_version": "0.1.3",
+  "execution": "cached_demo_fixture",
+  "cache_version": "v0.1.3",
+  "organism_code": "hsapiens",
+  "organism_label": "hsapiens",
+  "requested_sources": ["GO:BP", "GO:MF", "GO:CC", "KEGG"],
+  "correction_method": "fdr",
+  "user_threshold": 0.05,
+  "significant": false,
+  "ordered_query": false,
+  "multi_query": false,
+  "background_mode": "custom_background",
+  "submitted_foreground_count": 23,
+  "submitted_background_count": 117,
+  "effective_query_size": 23,
+  "effective_domain_size": 117,
+  "de_significance_rule": {
+    "type": "logical_column",
+    "column": "significant"
+  },
+  "resolver_definition": {
+    "route": "shared_portable_canonical_organism_context",
+    "explicit_species_specific_ortholog_mapping": false
+  },
+  "query_hash": "69fff18507d7d787f0ca6906c7f31fb1",
+  "background_hash": "474ad8c6295af45b97a3edd00b834c3a",
+  "response_metadata": {
+    "source": "deterministic offline demonstration fixture",
+    "database_version": "not_a_live_gprofiler_release"
+  },
+  "status": "cached_fixture"
+}

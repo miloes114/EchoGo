@@ -2,15 +2,17 @@
 % Please edit documentation in R/echogo_html_helpers.R
 \name{.echogo_stage_asset}
 \alias{.echogo_stage_asset}
-\title{Internal: stage a file into report/assets and return a relative URL
+\title{Stage a report asset and return its relative URL
 - If file is under base_dir, preserve its relative subpath under assets/
-- Otherwise stage into assets/external/}
+- Otherwise stage into assets/external/
+- For HTML widgets, also stage a sibling `<name>_files/` directory}
 \usage{
 .echogo_stage_asset(path_abs, report_dir, base_dir)
 }
 \description{
-Internal: stage a file into report/assets and return a relative URL
+Stage a report asset and return its relative URL
 - If file is under base_dir, preserve its relative subpath under assets/
 - Otherwise stage into assets/external/
+- For HTML widgets, also stage a sibling `<name>_files/` directory
 }
 \keyword{internal}

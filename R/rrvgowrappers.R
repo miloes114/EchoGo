@@ -1,10 +1,32 @@
+.echogo_require_rrvgo <- function(
+    is_available = requireNamespace("rrvgo", quietly = TRUE)
+) {
+  if (!isTRUE(is_available)) {
+    stop(
+      "RRvGO semantic reduction was requested, but package 'rrvgo' ",
+      "is not installed.\nInstall it with:\n",
+      "  BiocManager::install('rrvgo')",
+      call. = FALSE
+    )
+  }
+
+  invisible(TRUE)
+}
+
+.echogo_invalid_similarity_matrix <- function(x) {
+  if (is.null(x)) return(TRUE)
+  dims <- dim(x)
+  if (length(dims) != 2L || anyNA(dims) || any(dims < 2L)) return(TRUE)
+  isTRUE(all(is.na(x)))
+}
+
 #' Run RRvGO Semantic Clustering on Consensus Terms (multi-OrgDb, option-aware)
 #'
 #' Applies RRvGO-based semantic similarity reduction to GO terms from either the strict
 #' consensus set or exploratory enrichment set. Produces annotated cluster tables, bubble plots,
 #' heatmaps, scatter plots, treemaps, and wordclouds per ontology.
 #'
-#' @param df_input A consensus enrichment data frame filtered for one mode (true consensus or exploratory).
+#' @param df_input A consensus enrichment data frame filtered for one mode (background-aware or exploratory).
 #' @param label A label to use for the output subfolder (e.g. "true_consensus_with_bg").
 #' @param output_base Directory where output will be saved (default: "similarity_based_consensus").
 #'        Tip: pass a canonical path like file.path(outdir, "rrvgo") from the pipeline.
@@ -21,6 +43,8 @@ run_rrvgo_consensus_analysis <- function(
     orgdb = NULL,
     similarity_threshold = 0.7
 ) {
+  .echogo_require_rrvgo()
+
   `%||%` <- function(a, b) if (!is.null(a)) a else b
   .mk <- function(...) { p <- file.path(...); dir.create(p, recursive = TRUE, showWarnings = FALSE); p }
   .mirror_legacy <- function(src_root, legacy_root) {
@@ -105,7 +129,7 @@ run_rrvgo_consensus_analysis <- function(
     )
 
   for (odb in orgdb_pkgs) {
-    message("▶ RRvGO with OrgDb = ", odb)
+    message("RRvGO with OrgDb = ", odb)
     odb_dir <- .mk(sub_dir, paste0("OrgDb=", odb))
 
     for (ont in ontologies) {
@@ -114,22 +138,22 @@ run_rrvgo_consensus_analysis <- function(
       scores <- scores[!is.na(scores) & is.finite(scores)]
 
       if (length(scores) < 2 || length(unique(scores)) < 2) {
-        message("⏩ Skipping ", label, " [", odb, "]: ", ont, " — too few valid or unique scores")
+        message("Skipping ", label, " [", odb, "]: ", ont, " - too few valid or unique scores")
         next
       }
 
       simMatrix <- tryCatch(
         rrvgo::calculateSimMatrix(names(scores), orgdb = odb, ont = ont, method = "Rel"),
-        error = function(e) { message("⚠️ calculateSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
+        error = function(e) { message("Warning: calculateSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
       )
-      if (is.null(simMatrix) || nrow(simMatrix) < 2 || all(is.na(simMatrix))) {
-        message("⏩ Skipping ", label, " [", odb, "]: ", ont, " — similarity matrix too sparse")
+      if (.echogo_invalid_similarity_matrix(simMatrix)) {
+        message("Skipping ", label, " [", odb, "]: ", ont, " - similarity matrix too sparse")
         next
       }
 
       reducedTerms <- tryCatch(
         rrvgo::reduceSimMatrix(simMatrix, scores, threshold = similarity_threshold, orgdb = odb),
-        error = function(e) { message("⚠️ reduceSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
+        error = function(e) { message("Warning: reduceSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
       )
       if (is.null(reducedTerms)) next
 
@@ -155,11 +179,11 @@ run_rrvgo_consensus_analysis <- function(
             ggrepel::geom_text_repel(max.overlaps = 25, size = 3.5) +
             ggplot2::geom_point(alpha = 0.7) +
             ggplot2::theme_minimal(base_size = 14) +
-            ggplot2::labs(title = paste("RRVGO Semantic Clusters -", ont, "[", label, "] —", odb),
+            ggplot2::labs(title = paste("RRVGO Semantic Clusters -", ont, "[", label, "] -", odb),
                           x = "Cluster", y = "-log10(p-value)", color = "Origin")
         )
         dev.off()
-      }, error = function(e) message("⚠️ Bubble plot [", odb, ":", ont, "]: ", e$message))
+      }, error = function(e) message("Warning: bubble plot [", odb, ":", ont, "]: ", e$message))
 
       tryCatch({
         pdf(file.path(odb_dir, paste0("rrvgo_", ont, "_heatmap.pdf")), width = 12, height = 10)
@@ -167,14 +191,14 @@ run_rrvgo_consensus_analysis <- function(
         rrvgo::heatmapPlot(simMatrix_jittered, reducedTerms, annotateParent = TRUE,
                            annotationLabel = "parentTerm", fontsize = 7)
         dev.off()
-      }, error = function(e) message("⚠️ Heatmap [", odb, ":", ont, "]: ", e$message))
+      }, error = function(e) message("Warning: heatmap [", odb, ":", ont, "]: ", e$message))
 
       if (nrow(simMatrix) >= 3 && any(simMatrix != 0, na.rm = TRUE)) {
         tryCatch({
           pdf(file.path(odb_dir, paste0("rrvgo_", ont, "_scatterplot.pdf")), width = 12, height = 10)
           rrvgo::scatterPlot(simMatrix, head(reducedTerms[order(reducedTerms$score, decreasing = TRUE), ], 300))
           dev.off()
-        }, error = function(e) message("⚠️ Scatter [", odb, ":", ont, "]: ", e$message))
+        }, error = function(e) message("Warning: scatter [", odb, ":", ont, "]: ", e$message))
       }
 
       tryCatch({
@@ -185,24 +209,23 @@ run_rrvgo_consensus_analysis <- function(
         pdf(file.path(odb_dir, paste0("rrvgo_", ont, "_treemap.pdf")), width = 12, height = 10)
         treemap::treemap(
           topTerms_clean, index = c("parentTerm", "term"), vSize = "scaled_size", type = "index",
-          title = paste("RRVGO Treemap -", ont, "[", label, "] —", odb),
+          title = paste("RRVGO Treemap -", ont, "[", label, "] -", odb),
           palette = scales::hue_pal()(length(unique(topTerms_clean$parentTerm))),
           fontcolor.labels = c("#FFFFFFDD", "#00000080"), bg.labels = 0, border.col = "#00000080"
         )
         dev.off()
-      }, error = function(e) message("⚠️ Treemap [", odb, ":", ont, "]: ", e$message))
+      }, error = function(e) message("Warning: treemap [", odb, ":", ont, "]: ", e$message))
 
       tryCatch({
         pdf(file.path(odb_dir, paste0("rrvgo_", ont, "_wordcloud.pdf")), width = 12, height = 10)
         rrvgo::wordcloudPlot(head(reducedTerms[order(reducedTerms$score, decreasing = TRUE), ], 300),
                              min.freq = 1, colors = "darkblue")
         dev.off()
-      }, error = function(e) message("⚠️ Wordcloud [", odb, ":", ont, "]: ", e$message))
+      }, error = function(e) message("Warning: wordcloud [", odb, ":", ont, "]: ", e$message))
     }
   }
 
-  # ---- Optional legacy mirror (keeps old scripts happy) ----
-  # If you're using canonical '.../rrvgo', also mirror to sibling 'Similarity_based_consensus'.
+  # Optionally mirror canonical output to the legacy directory name.
   base_name <- basename(output_base)
   parent_dir <- dirname(output_base)
   if (.legacy_on() && tolower(base_name) %in% c("rrvgo", "similarity_based_consensus")) {

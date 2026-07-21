@@ -7,7 +7,7 @@
 #'
 #' Expected files inside \code{input_dir}:
 #'   - *_GOseq.enriched.tsv         (required)
-#'   - Trout_eggNOG_for_EchoGO.tsv  (or Trinotate.*) (required)
+#'   - *_eggNOG_for_EchoGO.tsv or Trinotate.* (required)
 #'   - dge_*.csv                    (required)
 #'   - allcounts_table.txt          (required)
 #'   - config.yml                   (optional: species, orgdb, report_title)
@@ -31,16 +31,25 @@ echogo_run_reference_rnaseq <- function(
   goseq_file <- grep("GOseq\\.enriched\\.", files, value = TRUE)
   if (!length(goseq_file))
     stop("No GOseq enriched file (*GOseq.enriched.*) found in: ", input_dir)
+  if (length(goseq_file) > 1L)
+    stop("Multiple GOseq enriched files found. Use one contrast per input directory.")
   goseq_file <- goseq_file[1]
 
-  trinotate_file <- grep("Trout_eggNOG_for_EchoGO|Trinotate\\.", files, value = TRUE)
+  trinotate_file <- grep(
+    "eggNOG_for_EchoGO\\.tsv$|Trinotate\\.",
+    files,
+    value = TRUE,
+    ignore.case = TRUE
+  )
   if (!length(trinotate_file))
-    stop("No Trinotate-like file (Trout_eggNOG_for_EchoGO*.tsv or Trinotate.*) found in: ", input_dir)
+    stop("No Trinotate-like file (*_eggNOG_for_EchoGO.tsv or Trinotate.*) found in: ", input_dir)
   trinotate_file <- trinotate_file[1]
 
   de_file <- grep("dge_.*\\.csv$", files, value = TRUE)
   if (!length(de_file))
     stop("No DESeq2 file (dge_*.csv) found in: ", input_dir)
+  if (length(de_file) > 1L)
+    stop("Multiple DESeq2 files found. Use one contrast per input directory.")
   de_file <- de_file[1]
 
   count_matrix_file <- grep("allcounts_table|gene.counts.matrix", files, value = TRUE)

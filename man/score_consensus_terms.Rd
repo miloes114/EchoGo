@@ -15,11 +15,17 @@ score_consensus_terms(
 }
 \arguments{
 \item{df}{Data frame output from `merge_enrichment_sources()`.}
+
+\item{P_CAP, FOLD_CAP}{Positive caps applied to transformed p-values and folds.}
+
+\item{W_STRICT, W_ALL}{Named weight lists for the background-aware and
+exploratory formulas.}
 }
 \value{
 Scored consensus enrichment table.
 }
 \description{
-Applies metrics such as species support, consensus scores, robustness, origin tags, etc.
+Applies the documented heuristic background-aware and exploratory scoring
+formulas to a merged enrichment table. Scores are prioritisation aids, not
+probabilities, effect sizes, or universally calibrated confidence measures.
 }
-\keyword{internal}

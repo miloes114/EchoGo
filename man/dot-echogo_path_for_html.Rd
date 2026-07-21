@@ -2,14 +2,14 @@
 % Please edit documentation in R/echogo_html_helpers.R
 \name{.echogo_path_for_html}
 \alias{.echogo_path_for_html}
-\title{Internal: turn an absolute path into a browser-friendly URL
+\title{Convert an output path to a browser-friendly URL
 If target and report_dir share the same base_dir, return a relative URL.
 Otherwise return a file:/// URL.}
 \usage{
 .echogo_path_for_html(p, report_dir, base_dir)
 }
 \description{
-Internal: turn an absolute path into a browser-friendly URL
+Convert an output path to a browser-friendly URL
 If target and report_dir share the same base_dir, return a relative URL.
 Otherwise return a file:/// URL.
 }

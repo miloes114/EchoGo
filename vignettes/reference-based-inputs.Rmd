@@ -1,0 +1,292 @@
+---
+title: "EchoGO Reference-based Workflow: from genome annotation to inputs"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{EchoGO Reference-based Workflow: from genome annotation to inputs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  error = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+options(rmarkdown.html_vignette.check_title = FALSE)
+```
+
+# What this guide does
+
+This guide starts after alignment, feature counting, and differential-expression
+analysis. It turns a gene-level reference RNA-seq project into the input bundle
+that EchoGO expects.
+
+You need:
+
+1. a gene-level count matrix,
+2. one or more DESeq2 result CSV files,
+3. the matching GFF3 or GTF annotation,
+4. the matching protein FASTA, and
+5. eggNOG-mapper for one external annotation step.
+
+EchoGO does not run the aligner, featureCounts, DESeq2, or eggNOG-mapper.
+The exported `echogo_prepare_reference_inputs()` helper validates identifiers,
+builds unioned exon-length bias data, creates the expressed-background protein
+FASTA, stages eggNOG-mapper, and runs GOseq.
+
+# Install preparation dependencies
+
+Install EchoGO with its vignettes, then install the reference-preparation
+packages:
+
+```{r install, eval=FALSE}
+remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE)
+
+BiocManager::install(c(
+  "Biostrings",
+  "rtracklayer",
+  "GenomicRanges",
+  "IRanges",
+  "S4Vectors",
+  "goseq"
+))
+```
+
+HTML reports and vignettes require Pandoc. RStudio includes it. If you run R
+from another terminal, check `rmarkdown::pandoc_available()` and install Quarto
+or Pandoc if the result is `FALSE`.
+
+If the organism has an OrgDb package, install it too. For zebrafish:
+
+```{r install-orgdb, eval=FALSE}
+EchoGO::echogo_install_orgdb("org.Dr.eg.db")
+```
+
+# Arrange the source directory
+
+A minimal project can look like this:
+
+```text
+reference_project/
+|-- allcounts_table.txt
+|-- dge_Treated_vs_Control.csv
+|-- genome.gff3.gz
+`-- proteins.faa.gz
+```
+
+The first count-matrix column and the DE table gene column must use the same
+identifier type. The annotation and protein FASTA must come from the same
+reference release.
+
+A DE table may contain a logical `significant` or `is_de` column. EchoGO
+uses that column when present. Otherwise it applies
+`padj <= padj_threshold` and
+`abs(log2FoldChange) >= log2fc_threshold`.
+
+# Stage 1: build reference maps and the eggNOG FASTA
+
+Use forward slashes in R paths on Windows. The same call is used for both
+stages, so keep it in a small function:
+
+```{r prepare-stage-1, eval=FALSE}
+library(EchoGO)
+
+prepare_inputs <- function() {
+  echogo_prepare_reference_inputs(
+    root = "path/to/reference_project",
+    gff_file = "genome.gff3.gz",       # GTF/GTF.GZ also works
+    protein_fasta = "proteins.faa.gz",
+    counts_file = "allcounts_table.txt",
+    dge_pattern = "^dge_.*\\.csv$",
+    reference_label = "MySpecies",
+    orgdb = NULL                       # see the OrgDb section below
+  )
+}
+
+prep <- prepare_inputs()
+prep$status
+# "awaiting_emapper"
+
+readLines(prep$emapper_command)
+```
+
+Stage 1 writes reusable files under `echogo_work/`:
+
+- `02_maps/gene_protein_map.tsv`
+- `02_maps/gene_lengths.tsv`
+- `03_proteins/BG_universe_proteins.fa`
+- `04_emapper/RUN_EMAPPER.txt`
+
+Gene-length bias uses the union of exon intervals per gene. If exon records are
+absent, CDS intervals are used and this fallback is reported.
+
+Large vertebrate annotations can require several gigabytes of memory and a few
+minutes on the first import. The next call reuses the reference maps and FASTA.
+Set `reuse_reference = FALSE` only after changing the annotation, FASTA, or ID
+rules.
+
+# External step: run eggNOG-mapper
+
+Run the command saved in `prep$emapper_command` in an environment where
+`emapper.py` is installed. A typical command is:
+
+```bash
+emapper.py \
+  -i "echogo_work/03_proteins/BG_universe_proteins.fa" \
+  --itype proteins \
+  -m diamond \
+  --output BG_universe \
+  --output_dir "echogo_work/04_emapper" \
+  --cpu 8
+```
+
+Local installations may also require `--data_dir`. The required result is:
+
+```text
+echogo_work/04_emapper/BG_universe.emapper.annotations
+```
+
+If you already have a compatible annotation file, pass its absolute path as
+`emapper_file`; EchoGO will not rerun eggNOG-mapper.
+
+# Stage 2: create the EchoGO bundle and run GOseq
+
+After the eggNOG annotation exists, rerun the same call:
+
+```{r prepare-stage-2, eval=FALSE}
+prep <- prepare_inputs()
+stopifnot(identical(prep$status, "complete"))
+
+prep$output_dir
+prep$summary
+```
+
+The completed `echogo_input/` directory contains one set per detected
+contrast:
+
+| File | Purpose |
+|---|---|
+| `allcounts_table.txt` | Gene-level count background |
+| `dge_<CONTRAST>.csv` | DESeq2 result table |
+| `dge_<CONTRAST>.GOseq.enriched.tsv` | GOseq terms passing adjusted FDR 0.05 |
+| `Trinotate_for_EchoGO.tsv` | Minimal gene-level annotation bridge |
+| `<reference_label>_eggNOG_for_EchoGO.tsv` | Labelled eggNOG annotation |
+
+The generated annotation keeps semantic fields separate. An eggNOG preferred
+name or seed ortholog is never copied into `sprot_Top_BLASTX_hit`. EchoGO
+submits a genuine SwissProt gene symbol first when present, otherwise an
+eggNOG preferred name, otherwise a portable native symbol. Raw reference,
+transcript, contig, seed-ortholog, and accession IDs remain visible in the
+mapping provenance but are not sent to g:Profiler. Taxonomy labels are retained
+for provenance and are not interpreted as an ordered numeric cutoff.
+
+The GOseq file is validated to contain exactly the seven columns EchoGO needs:
+`category`, `term`, `ontology`, `numDEInCat`, `numInCat`,
+`over_represented_FDR`, and `gene_ids`.
+
+# Choose the GO source
+
+For a model organism with a well-supported OrgDb, use the species-native
+mapping for GOseq and retain eggNOG for protein names and organism-context
+annotation. This mirrors the validated GRCz11 zebrafish workflow:
+
+```{r native-orgdb, eval=FALSE}
+prep <- echogo_prepare_reference_inputs(
+  root = "path/to/reference_project",
+  gff_file = "genome.gtf.gz",
+  protein_fasta = "proteins.faa.gz",
+  emapper_file = "path/to/annotations/reference.emapper.annotations",
+  reference_label = "drerio",
+  orgdb = "org.Dr.eg.db"
+)
+```
+
+For a non-model organism without an OrgDb, leave `orgdb = NULL`. GOseq then
+uses GO terms recovered from eggNOG-mapper.
+
+Do not substitute an OrgDb from another organism merely to make the function
+run. Its gene identifiers will not represent the native background.
+
+# Run EchoGO on one contrast
+
+Explicit filenames are safest when an input directory contains more than one
+contrast:
+
+```{r run-echogo, eval=FALSE}
+input_dir <- "path/to/reference_project/echogo_input"
+
+result <- run_full_echogo(
+  input_dir = input_dir,
+  goseq_file = file.path(
+    input_dir,
+    "dge_Treated_vs_Control.GOseq.enriched.tsv"
+  ),
+  trinotate_file = file.path(input_dir, "Trinotate_for_EchoGO.tsv"),
+  de_file = file.path(input_dir, "dge_Treated_vs_Control.csv"),
+  count_matrix_file = file.path(input_dir, "allcounts_table.txt"),
+  species = c("hsapiens", "mmusculus", "drerio"),
+  orgdb = "org.Mm.eg.db",
+  outdir = "path/to/reference_project/echogo_results",
+  run_rrvgo = TRUE,
+  make_report = TRUE,
+  verbose = TRUE
+)
+```
+
+The `orgdb` passed to `run_full_echogo()` controls RRvGO semantic
+similarity. It is separate from the optional species-native `orgdb` used
+during input preparation.
+
+# Troubleshooting
+
+## No DE genes overlap the count background
+
+Check the identifier examples before changing thresholds:
+
+```{r inspect-ids, eval=FALSE}
+counts <- read.delim("allcounts_table.txt", check.names = FALSE)
+dge <- read.csv("dge_Treated_vs_Control.csv", check.names = FALSE)
+
+head(counts[[1]])
+head(dge[[1]])
+```
+
+Common causes are version suffixes, `gene-` prefixes, symbols mixed with
+accessions, or DE files from a different reference release.
+
+## Few genes map to proteins or lengths
+
+The helper stops below 50% coverage. Verify that the GFF3/GTF and protein FASTA
+belong together. For unusual annotations, set `counts_id_column` or
+`dge_id_column` explicitly. Set `strip_gene_prefix = FALSE` when
+`gene-` is part of the real count identifier.
+
+## Protein IDs do not match eggNOG queries
+
+The `#query` values in the eggNOG file must be the FASTA identifiers used in
+stage 1. Do not annotate a different proteome or rename FASTA headers between
+stages.
+
+## A rerun is importing the full reference again
+
+Keep the same `work_dir` and leave `reuse_reference = TRUE`. The cache is
+invalidated manually with `reuse_reference = FALSE` after a reference change.
+
+## No GOseq terms pass FDR
+
+This can be a valid result. Check `prep$summary`, the number of DE genes after
+length/GO filtering, and whether the selected OrgDb matches the organism.
+Do not switch from adjusted FDR to raw p-values to force results.
+
+# Next steps
+
+See `vignette("EchoGO_workflow")` for the complete pipeline and
+`vignette("EchoGO_interpretation")` for consensus, RRvGO, and network
+interpretation. Use `citation("EchoGO")` for the package citation.

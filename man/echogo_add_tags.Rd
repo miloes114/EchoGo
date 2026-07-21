@@ -9,6 +9,11 @@ echogo_add_tags(
   yaml_path = system.file("extdata", "species_tags.yaml", package = "EchoGO")
 )
 }
+\arguments{
+\item{df}{Species data frame containing an `organism` column.}
+
+\item{yaml_path}{Path to a species tag YAML file.}
+}
 \description{
 Add curated tag panels from inst/extdata/species_tags.yaml
 }

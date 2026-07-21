@@ -23,11 +23,8 @@ echogo_help()
 # suppressPackageStartupMessages(library(EchoGO))
 
 ## ----demo_paths---------------------------------------------------------------
-demo_in  <- echogo_demo_path()          # Location of demo inputs
-demo_out <- echogo_demo_results_path()  # Location of frozen demo results
-
-cat("Demo input path:\n", demo_in, "\n\n")
-cat("Demo output path:\n", demo_out, "\n")
+demo_in  <- echogo_demo_path()          # Demo inputs
+demo_out <- echogo_demo_results_path()  # Frozen demo results
 
 ## ----eval=FALSE---------------------------------------------------------------
 # echogo_open_demo()  # Opens demo input/results and lists key files
@@ -57,19 +54,19 @@ echogo_list_orgdb()
 ## ----eval=FALSE---------------------------------------------------------------
 # # Get installation instructions (BiocManager::install commands)
 # echogo_install_orgdb_instructions()
-# 
+#
 # # Or let EchoGO install it automatically
-# echogo_install_orgdb(orgdb = "org.Hs.eg.db")
-# 
+# echogo_install_orgdb(pkgs = "org.Hs.eg.db")
+#
 # # Ensure OrgDb is available before running
-# echogo_require_orgdb(orgdb = "org.Mm.eg.db")
+# echogo_require_orgdb(pkgs = "org.Mm.eg.db")
 
 ## ----eval=FALSE---------------------------------------------------------------
 # echogo_pick_species()
 
 ## ----eval=FALSE---------------------------------------------------------------
 # my_species <- c("hsapiens", "mmusculus", "drerio")
-# 
+#
 # # Check if all species are recognized by g:Profiler
 # echogo_preflight_species(my_species)
 
@@ -97,14 +94,26 @@ echogo_list_orgdb()
 # )
 
 ## ----eval=FALSE---------------------------------------------------------------
-# input_dir <- "E:/.../dge_RRf_BBf/input"
-# outdir    <- "E:/.../dge_RRf_BBf/results"
-# 
+# prep <- echogo_prepare_reference_inputs(
+#   root = "path/to/reference_project",
+#   gff_file = "genome.gff3.gz",
+#   protein_fasta = "proteins.faa.gz",
+#   reference_label = "MySpecies",
+#   orgdb = NULL
+# )
+#
+# # Run the command in prep$emapper_command, then repeat the same call.
+# prep$status
+
+## ----eval=FALSE---------------------------------------------------------------
+# input_dir <- "path/to/reference_project/echogo_input"
+# outdir    <- "path/to/reference_project/echogo_results"
+#
 # fish_species <- c(
 #   "drerio", "strutta", "gaculeatus", "olatipes", "trubripes", "amexicanus",
 #   "oniloticus", "ssalar", "omykiss", "okisutch", "otshawytscha"
 # )
-# 
+#
 # res <- run_full_echogo(
 #   input_dir              = input_dir,
 #   species                = fish_species,
@@ -112,14 +121,18 @@ echogo_list_orgdb()
 #   outdir                 = outdir,
 #   strict_only            = FALSE,
 #   run_evaluation         = TRUE,
-#   use_trinotate_universe = TRUE,
 #   make_report            = TRUE,
 #   verbose                = TRUE
 # )
 
 ## ----explore_outputs----------------------------------------------------------
 # See what's in the frozen demo results
-list.files(demo_out, recursive = TRUE, max.depth = 2)
+demo_files <- list.files(demo_out, recursive = TRUE)
+demo_files[vapply(
+  strsplit(gsub("\\\\", "/", demo_files), "/", fixed = TRUE),
+  length,
+  integer(1)
+) <= 3L]
 
 ## ----peek_consensus-----------------------------------------------------------
 consensus_file <- file.path(
@@ -231,7 +244,17 @@ ggplot(plot_df, aes(
 #   report_template = NULL,
 #   strict_only = FALSE,
 #   run_evaluation = TRUE,
-#   use_trinotate_universe = FALSE,
+#   tested_gene_ids = NULL,
+#   de_id_column = NULL,
+#   de_significant_column = NULL,
+#   de_padj_column = NULL,
+#   de_lfc_column = NULL,
+#   count_id_column = NULL,
+#   annotation_id_column = NULL,
+#   padj_threshold = 0.05,
+#   log2fc_threshold = 1,
+#   de_table_significant_only = FALSE,
+#   run_rrvgo = TRUE,
 #   verbose = TRUE
 # )
 
@@ -250,6 +273,9 @@ ggplot(plot_df, aes(
 
 ## ----eval=FALSE---------------------------------------------------------------
 # options(EchoGO.gprofiler_timeout = 120)
+
+## ----eval=FALSE---------------------------------------------------------------
+# citation("EchoGO")
 
 ## ----session-info, echo=FALSE-------------------------------------------------
 sessionInfo()

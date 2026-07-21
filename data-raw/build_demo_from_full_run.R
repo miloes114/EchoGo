@@ -1,11 +1,17 @@
-# Build a small, self-consistent demo from a completed full run (HOL03_test).
-# Writes/overwrites: E:/.../EchoGO/inst/extdata/echogo_demo/
+# Historical full-run extractor retained for provenance only.
+# The release demo is built by data-raw/build_demo_v013.R.
+# Set ECHOGO_BUILD_LEGACY_DEMO=true only when auditing the historical extractor.
+if (!identical(tolower(Sys.getenv("ECHOGO_BUILD_LEGACY_DEMO", unset = "false")), "true")) {
+  source(file.path("data-raw", "build_demo_v013.R"))
+  message("Set ECHOGO_BUILD_LEGACY_DEMO=true to run the historical full-run extractor.")
+} else {
+
+# Build a small, self-consistent demo from a completed EchoGO run.
+# Set ECHOGO_DEMO_SOURCE to the source project directory before running.
 #
-# Key points:
-# - Pull real symbols from your consensus (g:Profiler genes)
-# - Synthesize Trinotate_demo.tsv mapping TRINITY -> SYMBOL (Metazoa-tagged)
-# - REWRITE GOseq gene_ids to only mapped transcripts (critical!)
-# - Filter DE and counts to same mapped set
+# The script samples consensus gene symbols, creates a compact Trinotate-style
+# mapping, and restricts GOseq, differential-expression, and count data to one
+# consistent transcript set.
 
 suppressPackageStartupMessages({
   library(readr)
@@ -20,13 +26,18 @@ suppressPackageStartupMessages({
 `%||%` <- function(a, b) { if (is.null(a) || length(a) == 0 || all(is.na(a))) b else a }
 
 # -------------------- CONFIG -------------------------------------------------
-# Your completed run folder (assumes outputs are in HOL03_test/results/)
-src_project <- "E:/Gigascience submission/EchoGo_Gigascience_submission/EchoGO/HOL03_test"
+package_root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+src_project <- Sys.getenv("ECHOGO_DEMO_SOURCE", unset = "")
+if (!nzchar(src_project) || !dir.exists(src_project)) {
+  stop(
+    "Set ECHOGO_DEMO_SOURCE to a completed EchoGO project containing input/ and results/."
+  )
+}
+src_project <- normalizePath(src_project, winslash = "/", mustWork = TRUE)
 src_results <- file.path(src_project, "results")  # has goseq/, gprofiler/, consensus/
 src_input   <- file.path(src_project, "input")    # original inputs
 
-# Replace the existing shipped demo here:
-demo_dir <- "E:/Gigascience submission/EchoGo_Gigascience_submission/EchoGO/inst/extdata/echogo_demo"
+demo_dir <- file.path(package_root, "inst", "extdata", "echogo_demo")
 
 # overwrite the existing demo files:
 WIPE_DEMO_DIR <- TRUE
@@ -142,8 +153,7 @@ if (is.na(cons_xlsx) || is.na(goseq_csv)) {
   )
 }
 
-# -------------------- LOCATE RAW INPUTS (HOL03_test/input) -------------------
-# Your files are extensionless; we treat them as TSV.
+# -------------------- LOCATE RAW INPUTS -------------------------------------
 cts_in <- pick_one(
   file.path(src_input, "*count_matrix*"),
   file.path(src_input, "*count*matrix*"),
@@ -247,8 +257,27 @@ goseq_out <- goseq_pick %>%
 readr::write_tsv(goseq_out, file.path(demo_dir, "GOseq_enrichment_demo.tsv"))
 
 # (optional but recommended) ensure no stale CSV remains
-csv_legacy <- file.path(demo_dir, "GOseq_enrichment_demo.tsv")
+csv_legacy <- file.path(demo_dir, "GOseq_enrichment_demo.csv")
 if (file.exists(csv_legacy)) file.remove(csv_legacy)
+
+tsv_demo <- file.path(demo_dir, "GOseq_enrichment_demo.tsv")
+stopifnot(
+  file.exists(tsv_demo),
+  !file.exists(csv_legacy),
+  identical(
+    names(goseq_out),
+    c(
+      "category",
+      "term",
+      "ontology",
+      "numDEInCat",
+      "numInCat",
+      "over_represented_FDR",
+      "gene_ids"
+    )
+  ),
+  nrow(goseq_out) > 0
+)
 
 
 # -------------------- DE (filtered to mapped transcripts) -------------------
@@ -256,7 +285,7 @@ if (!is.na(de_in)) {
 
   de_full <- read_table_auto(de_in) %>% ensure_gene_id()
 
-  # optional sanity print (remove later)
+  # Report detected columns for regeneration diagnostics.
   message("[EchoGO] DE columns: ", paste(head(names(de_full), 12), collapse = ", "))
 
   de_demo <- de_full %>%
@@ -295,10 +324,10 @@ if (!is.na(cts_in)) {
 
 # -------------------- README -------------------------------------------------
 readme <- c(
-  "EchoGO demo dataset (distilled from HOL03_test full run)",
-  "--------------------------------------------------------",
-  paste0("Source results: ", normalizePath(src_results, winslash = "/")),
-  paste0("Source input:   ", normalizePath(src_input, winslash = "/")),
+  "EchoGO demo dataset",
+  "-------------------",
+  "Source: frozen output from a completed EchoGO workflow.",
+  "Regeneration: set ECHOGO_DEMO_SOURCE and run data-raw/build_demo_from_full_run.R.",
   "",
   "Files:",
   " - GOseq_enrichment_demo.tsv : GOseq subset with gene_ids RESTRICTED to mapped transcripts",
@@ -324,3 +353,4 @@ message("  goseq:     ", goseq_csv)
 chk <- readr::read_tsv(file.path(demo_dir, "GOseq_enrichment_demo.tsv"), show_col_types = FALSE)
 stopifnot(!any(grepl("^V\\d+$", names(chk))))
 stopifnot(all(c("category","term","ontology","numDEInCat","numInCat","over_represented_FDR","gene_ids") %in% names(chk)))
+}

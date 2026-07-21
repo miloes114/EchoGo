@@ -1,0 +1,34 @@
+{
+  "significance_rule": {
+    "type": "logical_column",
+    "column": "significant",
+    "padj_threshold": {},
+    "log2fc_threshold": {},
+    "missing_adjusted_p": "not_applicable"
+  },
+  "tested_universe_source": "full_de_table",
+  "resolver_definition": {
+    "route": "shared_portable_canonical_organism_context",
+    "annotation_id_column": "transcript_id",
+    "priority": ["SwissProt gene symbol", "eggNOG preferred name", "portable native symbol"],
+    "swissprot_columns": "sprot_Top_BLASTX_hit",
+    "eggnog_preferred_columns": "EggNM.Preferred_name",
+    "native_symbol_columns": [],
+    "swissprot_transform": "Trinotate SwissProt hit to gene symbol; accessions and species suffixes are not submitted",
+    "fallback": "none; raw target IDs are retained only in mapping provenance",
+    "portability_filter": "symbol-like names only; transcript, contig, seed-ortholog, Ensembl protein and arbitrary accessions excluded",
+    "taxonomy_policy": "taxonomy-independent resolver; annotation taxonomy retained as provenance only",
+    "duplicate_policy": "stable first portable canonical name",
+    "use_trinotate_universe": false,
+    "use_trinotate_universe_effect": "compatibility metadata only; does not redefine the tested universe",
+    "explicit_species_specific_ortholog_mapping": false
+  },
+  "counts": {
+    "original_significant": 24,
+    "original_tested": 120,
+    "resolved_foreground": 23,
+    "resolved_background": 117,
+    "foreground_unmapped": 0,
+    "background_unmapped": 2
+  }
+}

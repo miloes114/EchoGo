@@ -19,9 +19,21 @@ run_full_echogo(
   report_top_n = 25,
   report_theme = "flatly",
   report_template = NULL,
+  report_title = NULL,
   strict_only = FALSE,
+  run_rrvgo = TRUE,
   run_evaluation = TRUE,
   use_trinotate_universe = FALSE,
+  tested_gene_ids = NULL,
+  de_id_column = NULL,
+  de_significant_column = NULL,
+  de_padj_column = NULL,
+  de_lfc_column = NULL,
+  count_id_column = NULL,
+  annotation_id_column = NULL,
+  padj_threshold = 0.05,
+  log2fc_threshold = 1,
+  de_table_significant_only = FALSE,
   verbose = TRUE
 )
 }
@@ -33,7 +45,7 @@ auto-detect required files using filename patterns.}
 If \code{input_dir} is provided, EchoGO will attempt to detect it.}
 
 \item{trinotate_file}{Optional but typically required. Path to a Trinotate or Trinotate-like/EggNOG
-annotation table used to map gene IDs to names and derive background universe when requested.}
+annotation table used to resolve portable canonical names and annotate GOseq output.}
 
 \item{de_file}{Optional. Path to a differential expression table (classic mode: \code{DE_\\*.tsv};
 reference-based: \code{dge_\\*.csv}). If \code{input_dir} is provided and \code{de_file} is NULL,
@@ -63,12 +75,27 @@ g:Profiler organism IDs; merged with \code{species} when both are provided.}
 
 \item{report_template}{Optional; path to a custom Rmd template for report rendering.}
 
-\item{strict_only}{Logical; if TRUE, only compute the strict consensus stream (skip exploratory stream).}
+\item{report_title}{Optional report title. Defaults to the output-directory name.}
+
+\item{strict_only}{Logical; if TRUE, compute only the conservative/background-aware stream.}
+
+\item{run_rrvgo}{Logical; if TRUE (default), run RRvGO semantic reduction.}
 
 \item{run_evaluation}{Logical; if TRUE, run evaluation/diagnostic summaries (when enabled).}
 
-\item{use_trinotate_universe}{Logical; if TRUE, prefer a background universe derived from Trinotate/EggNOG
-primary names (when available) for cross-species steps (useful for reference-based workflows).}
+\item{use_trinotate_universe}{Deprecated compatibility flag retained in run
+metadata. It never redefines the experiment-derived tested universe or
+permits raw transcript-ID fallback.}
+
+\item{tested_gene_ids}{Optional explicit tested-gene vector or file.}
+
+\item{de_id_column, de_significant_column, de_padj_column, de_lfc_column}{Optional DE columns.}
+
+\item{count_id_column, annotation_id_column}{Optional count/annotation ID columns.}
+
+\item{padj_threshold, log2fc_threshold}{Default DE significance thresholds.}
+
+\item{de_table_significant_only}{Declare that the DE table contains significant rows only.}
 
 \item{verbose}{Logical; if TRUE, print progress messages.}
 }
@@ -81,7 +108,7 @@ An (invisible) list returned by \code{run_echogo_pipeline()}, augmented with:
 }
 \description{
 Runs the canonical EchoGO pipeline end-to-end:
-GOseq enrichment loading/annotation -> cross-species g:Profiler enrichment ->
+GOseq enrichment loading/annotation -> multi-context g:Profiler enrichment ->
 consensus scoring (strict + optional exploratory) -> RRvGO reduction (if enabled) ->
 GO-term networks (if enabled) -> optional evaluation and HTML report.
 }
@@ -101,12 +128,12 @@ EchoGO supports two common input styles:
   \item \code{allcounts_table.txt} (count matrix; required by current input resolver)
   \item \code{dge_CONTRAST.csv} (DESeq2 table; required by current input resolver)
   \item \code{CONTRAST.GOseq.enriched.tsv} (GOseq enriched categories; used when present)
-  \item \code{Trinotate_for_EchoGO.tsv} or \code{Trout_eggNOG_for_EchoGO.tsv} (annotation; required)
+  \item \code{Trinotate_for_EchoGO.tsv} or \code{<reference_label>_eggNOG_for_EchoGO.tsv} (annotation; required)
 }
 
-In reference-based workflows, GOseq \code{gene_ids} may already be gene symbols/names rather
-than transcript IDs. If GOseq \code{gene_ids} do not match the annotation \code{transcript_id},
-EchoGO will treat them as already-usable names (intended behavior for reference-based pipelines).
+In reference-based workflows, GOseq \code{gene_ids} may already be gene symbols rather
+than transcript IDs. EchoGO preserves those values for GOseq display while the g:Profiler
+vectors still pass through the portable canonical-name resolver.
 }
 \examples{
 \dontrun{
@@ -115,8 +142,8 @@ echogo_scaffold("my_project")
 echogo_run(input_dir = "my_project/input", outdir = "my_project/results")
 
 ## Reference-based RNA-seq (DESeq2 + GOseq precomputed)
-input_dir <- "E:/.../dge_RRf_BBf/input"
-outdir    <- "E:/.../dge_RRf_BBf/results"
+input_dir <- "path/to/reference_project/echogo_input"
+outdir    <- "path/to/reference_project/echogo_results"
 fish_species <- c("drerio","strutta","gaculeatus","olatipes","trubripes","amexicanus",
                   "oniloticus","ssalar","omykiss","okisutch","otshawytscha")
 
@@ -127,7 +154,6 @@ res <- run_full_echogo(
   outdir                 = outdir,
   strict_only            = FALSE,
   run_evaluation         = TRUE,
-  use_trinotate_universe = TRUE,
   make_report            = TRUE,
   verbose                = TRUE
 )

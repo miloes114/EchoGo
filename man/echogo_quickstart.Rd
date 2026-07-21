@@ -8,6 +8,9 @@ echogo_quickstart(
   run_demo = FALSE,
   outdir = getOption("EchoGO.demo_root", default = tempdir()),
   make_report = TRUE,
+  clean = TRUE,
+  full = FALSE,
+  live_gprofiler = FALSE,
   ...
 )
 }
@@ -18,10 +21,20 @@ echogo_quickstart(
 
 \item{make_report}{logical; build the HTML report (default: TRUE)}
 
+\item{clean}{logical; remove previous demo results before running (default: TRUE)}
+
+\item{full}{Logical; run all exploratory, RRvGO, and evaluation stages. The
+default `FALSE` is intended as a quicker first-run validation.}
+
+\item{live_gprofiler}{Logical; if `FALSE` (default), use deterministic cached
+demonstration responses. Set `TRUE` for an optional live integration test.}
+
 \item{...}{passed through to `run_full_echogo()`}
 }
 \description{
 Copies files from the package's `inst/extdata/echogo_demo` into `outdir/echogo_demo`.
 If `run_demo = TRUE`, it runs `run_full_echogo(input_dir = <that folder>)`
-using a small 3-species set (hsapiens, mmusculus, drerio) and OrgDb org.Mm.eg.db, with report ON.
+using a small 3-species set (hsapiens, mmusculus, drerio) and OrgDb org.Mm.eg.db.
+The default is a light installation check. Set `full = TRUE` to include the
+exploratory stream, RRvGO, and evaluation outputs.
 }

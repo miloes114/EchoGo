@@ -1,2 +1,16 @@
 .Rproj.user
 /Meta/
+/doc/
+/.Rhistory
+/EchoGO.Rcheck/
+/EchoGO_*.tar.gz
+/audit/
+/analysis/
+/demo_corrected_v0.1.3/
+/validation_corrected_v0.1.3*/
+/validation_smoke_v0.1.3*/
+/data-raw/build_audit_v013.R
+/data-raw/build_validation_route1_v013.R
+/data-raw/build_validation_synthesis_v013.R
+/data-raw/validation_summary_v013.Rmd
+/inst/extdata/echogo_demo_results_v0.1.3/**/*_filtered_files/

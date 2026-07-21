@@ -11,6 +11,15 @@ echogo_find_species(
   refresh = FALSE
 )
 }
+\arguments{
+\item{query}{Character vector of names, IDs, aliases, or NCBI taxonomy IDs.}
+
+\item{fields}{Character vector of species-table columns to search.}
+
+\item{fuzzy}{Logical; include approximate text matches.}
+
+\item{refresh}{Logical; refresh the species cache before searching.}
+}
 \description{
 Search EchoGO's species list by name/ID/alias/NCBI
 }

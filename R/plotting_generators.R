@@ -69,7 +69,7 @@ NULL
   df$.__short__ <- make.unique(as.character(df$.__short__))
   df$.__short__ <- factor(df$.__short__, levels = rev(df$.__short__))
 
-  # Create fixed aux columns so we can use standard aes()
+  # Create fixed auxiliary columns for standard aes().
   df$.__y__ <- df[[y_col]]
   has_col   <- !is.null(colour_col) && (colour_col %in% names(df))
   has_size  <- !is.null(size_col)   && (size_col   %in% names(df))
@@ -130,27 +130,6 @@ NULL
   dplyr::coalesce(out, fallback)
 }
 
-# Flexible TRUE-consensus detector (unused here, retained for compatibility)
-.detect_true_consensus <- function(d) {
-  n <- nrow(d)
-  if (!n) return(logical(0))
-
-  has_bool <- all(c("in_goseq","num_species_gprof_bg") %in% names(d))
-  if (has_bool) {
-    return( (as.logical(d$in_goseq) %in% TRUE) &
-              (suppressWarnings(as.numeric(d$num_species_gprof_bg)) > 0) )
-  }
-
-  if ("origin" %in% names(d)) {
-    return(grepl("Consensus.*with.*BG|with.*background", d$origin, ignore.case = TRUE))
-  }
-
-  has_any_score <- ("consensus_score" %in% names(d)) & !is.na(d$consensus_score)
-  has_gs  <- "fold_enrichment_goseq" %in% names(d)     & !is.na(d$fold_enrichment_goseq)
-  has_bg  <- "avg_fold_gprof_bg"     %in% names(d)     & !is.na(d$avg_fold_gprof_bg)
-  return( (has_any_score & (has_gs | has_bg)) )
-}
-
 # Helper: write a simple "no significant terms" PDF
 .echogo_write_empty_pdf <- function(outfile, title, subtitle = NULL) {
   grDevices::pdf(outfile, width = 10, height = 6)
@@ -207,7 +186,7 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
   if (!nrow(df_sig)) {
     .echogo_write_empty_pdf(
       outfile  = file.path(outdir, "GO_lollipops_NONE_significant.pdf"),
-      title    = sprintf("GOseq: No terms with FDR ≤ %.2g", fdr_thr),
+      title    = sprintf("GOseq: No terms with FDR <= %.2g", fdr_thr),
       subtitle = "Nothing to plot (this is expected when GOseq FDRs are ~1)."
     )
     return(invisible(NULL))
@@ -215,7 +194,7 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
 
   # Optional: also write a tiny text flag file for the report/pipeline
   cat(
-    sprintf("GOseq significant terms (FDR ≤ %.2g): %d\n", fdr_thr, nrow(df_sig)),
+    sprintf("GOseq significant terms (FDR <= %.2g): %d\n", fdr_thr, nrow(df_sig)),
     file = file.path(outdir, "GOseq_significance_summary.txt")
   )
 
@@ -234,7 +213,7 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
         if (!nrow(d)) {
           .echogo_write_empty_pdf(
             outfile,
-            title    = sprintf("GOseq (%s): No terms with FDR ≤ %.2g at depth %s", ont, fdr_thr, depth_val),
+            title    = sprintf("GOseq (%s): No terms with FDR <= %.2g at depth %s", ont, fdr_thr, depth_val),
             subtitle = "Empty by design (strict GOseq filter)."
           )
           next
@@ -243,7 +222,7 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
         .plot_lollipop_core(
           df = d,
           y_col = "foldEnrichment",
-          title = sprintf("GOseq significant terms (FDR ≤ %.2g) — Depth %s — %s", fdr_thr, depth_val, ont),
+          title = sprintf("GOseq significant terms (FDR <= %.2g) - Depth %s - %s", fdr_thr, depth_val, ont),
           outfile = outfile,
           x_lab = "GO Term",
           y_lab = "Fold Enrichment",
@@ -268,7 +247,7 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
     if (!nrow(d)) {
       .echogo_write_empty_pdf(
         outfile,
-        title    = sprintf("GOseq (%s): No terms with FDR ≤ %.2g", ont, fdr_thr),
+        title    = sprintf("GOseq (%s): No terms with FDR <= %.2g", ont, fdr_thr),
         subtitle = "Empty by design (strict GOseq filter)."
       )
       next
@@ -277,7 +256,7 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
     .plot_lollipop_core(
       df = d,
       y_col = "foldEnrichment",
-      title = sprintf("GOseq significant terms (FDR ≤ %.2g) — All depths — %s", fdr_thr, ont),
+      title = sprintf("GOseq significant terms (FDR <= %.2g) - All depths - %s", fdr_thr, ont),
       outfile = outfile,
       x_lab = "GO Term",
       y_lab = "Fold Enrichment",
@@ -354,7 +333,7 @@ gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
         .plot_lollipop_core(
           df = dd,
           y_col = "fold_enrichment",
-          title = sprintf("g:Profiler (%s) — %s Top 50 Enriched Terms", tools::toTitleCase(sp_label), ont),
+          title = sprintf("g:Profiler (%s) - %s Top 50 Enriched Terms", tools::toTitleCase(sp_label), ont),
           outfile = file.path(outdir, sprintf("gprofiler_%s_%s_%s_lollipop.pdf",
                                               sp_label, if (mode=="with_bg") "with_bg" else "nobg",
                                               gsub(":", "_", ont))),
@@ -372,14 +351,14 @@ gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
 }
 
 # ------------------------------------------------------------------------------
-#  C) Consensus lollipops — True Consensus vs Exploratory
+#  C) Consensus lollipops - background-aware vs exploratory
 # ------------------------------------------------------------------------------
-#' Plot EchoGO consensus lollipops (True Consensus & Exploratory) to mirror Rmd
+#' Plot EchoGO consensus lollipops (background-aware and exploratory) to mirror Rmd
 #' @rdname echogo_plot_generators
 #' @keywords internal
 #' @noRd
 #' @param consensus_df data.frame produced by build_consensus_table()
-#' @param base_outdir canonical base dir for consensus outputs (expects subfolders we create)
+#' @param base_outdir Canonical base directory for generated consensus outputs.
 #' @param top_n integer, default 50
 #' @param legacy_root optional; if provided, mirrors plots into legacy folders
 #'        (`consensus_plots_strict_true_consensus/` and `consensus_plots_all_exploratory/`)
@@ -431,7 +410,7 @@ consensus_make_lollipops <- function(consensus_df, base_outdir, top_n = 50, lega
   out_true <- .make_dir(base_outdir, "plots_strict")
   out_expl <- .make_dir(base_outdir, "plots_exploratory")
 
-  # ---------- TRUE CONSENSUS ----------
+  # ---------- BACKGROUND-AWARE ----------
   true_df <- dplyr::filter(
     cdf,
     .data$ontology %in% c("BP","MF","CC","KEGG"),

@@ -8,6 +8,6 @@ echogo_open_demo()
 }
 \description{
 Prints the paths to the packaged demo inputs and frozen results,
-shows their contents, and attempts to open the folders in the
-system file browser (Windows Explorer, macOS Finder, or Linux xdg-open).
+shows their contents, and, in an interactive R session, opens the folders in
+the system file browser (Windows Explorer, macOS Finder, or Linux xdg-open).
 }

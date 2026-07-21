@@ -19,7 +19,7 @@ Detects the standard reference-based input layout:
   - allcounts_table.txt            (background counts)
   - dge_*.csv                      (DESeq2 results for one contrast)
   - *.GOseq.enriched.tsv           (GOseq over-represented categories)
-  - Trout_eggNOG_for_EchoGO.tsv    (Trinotate-like eggNOG table)
+  - *_eggNOG_for_EchoGO.tsv        (Trinotate-like eggNOG table)
   - config.yml                     (species, orgdb, report title)
 
 and returns a list of normalized paths for downstream functions.

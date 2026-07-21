@@ -17,3 +17,15 @@ test_that("echogo_resolve returns valid organism IDs only", {
   expect_true(all(!is.na(ids) & nzchar(ids)))
   expect_true(all(ids %in% tbl$organism))
 })
+
+test_that("tag-only selection returns the tagged subset", {
+  tbl <- echogo_species_table(refresh = FALSE)
+  expected <- tbl$organism[
+    vapply(tbl$tags, function(x) "AnimalModels" %in% x, logical(1))
+  ]
+
+  selected <- echogo_select_species(tags = "AnimalModels", refresh = FALSE)
+
+  expect_setequal(selected, expected)
+  expect_lt(length(selected), nrow(tbl))
+})

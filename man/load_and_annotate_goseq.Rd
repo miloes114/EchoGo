@@ -9,7 +9,20 @@ load_and_annotate_goseq(
   trinotate_file,
   de_file,
   count_matrix_file,
-  output_dir = "goseq"
+  output_dir = "goseq",
+  gene_sets = NULL,
+  total_significant_genes = NULL,
+  total_tested_genes = NULL,
+  de_id_column = NULL,
+  de_significant_column = NULL,
+  de_padj_column = NULL,
+  de_lfc_column = NULL,
+  count_id_column = NULL,
+  annotation_id_column = NULL,
+  padj_threshold = 0.05,
+  log2fc_threshold = 1,
+  de_table_significant_only = FALSE,
+  use_trinotate_universe = FALSE
 )
 }
 \arguments{
@@ -21,28 +34,34 @@ load_and_annotate_goseq(
 \code{transcript_id}, and ideally \code{sprot_Top_BLASTX_hit}, \code{EggNM.Preferred_name},
 \code{EggNM.max_annot_lvl}).}
 
-\item{de_file}{Path to the DE results file (filtered DE list used by GOseq).
-In reference-based mode this is optional (used mainly for totals / logging);
-if provided, it should correspond to the same contrast as \code{goseq_file}.}
+\item{de_file}{Path to the contrast-specific DE results table.}
 
-\item{count_matrix_file}{Path to the full count matrix (rows = background size).
-Optional; used to estimate background size for fold enrichment. If missing, EchoGO
-may approximate fold enrichment from GOseq columns or leave it as-is depending on inputs.}
+\item{count_matrix_file}{Path to the matching tested-gene count matrix.}
 
-\item{output_dir}{Output folder to save results (default: \code{"goseq"}).
-If \code{options(EchoGO.legacy_aliases)=TRUE}, a legacy mirror is also written to
-\code{"orthology_based_enrichment_support"}.}
+\item{output_dir}{Output folder to save results (default: \code{"goseq"}). If
+\code{options(EchoGO.legacy_aliases)=TRUE}, a compatibility mirror is written.}
+
+\item{gene_sets}{Optional object returned by `prepare_gprofiler_gene_sets()`.}
+
+\item{total_significant_genes, total_tested_genes}{Optional explicit GOseq denominators.}
+
+\item{de_id_column, de_significant_column, de_padj_column, de_lfc_column}{Optional DE columns.}
+
+\item{count_id_column, annotation_id_column}{Optional count/annotation ID columns.}
+
+\item{padj_threshold, log2fc_threshold}{Default DE significance thresholds.}
+
+\item{de_table_significant_only}{Declare that the DE table contains significant rows only.}
+
+\item{use_trinotate_universe}{Deprecated compatibility flag. It does not
+intersect the tested universe or permit raw-ID fallback.}
 }
 \value{
 A data.frame of enriched GO terms with annotations and depth.
-#' The returned data.frame also carries an attribute \code{echogo_bg_universe} when it can be
-derived from Trinotate/EggNOG primary names (used downstream as a background universe).
 }
 \description{
-Loads GOseq results, maps gene names using Trinotate annotations (Metazoa-biased heuristic),
-computes fold enrichment and GO term depth, and exports cleaned results.
-#' In reference-based RNA-seq workflows, GOseq outputs may already contain gene identifiers
-that are gene symbols/names (not transcript IDs). If the identifiers in \code{gene_ids}
-do not match the annotation \code{transcript_id} column, EchoGO will treat \code{gene_ids}
-as already-usable names and use them directly.
+Loads GOseq results, adds display names and annotation provenance, computes
+fold enrichment and GO term depth, and exports cleaned results. In reference-based
+workflows, existing GOseq gene symbols are preserved for display. g:Profiler
+submission remains governed by the portable canonical-name resolver.
 }

@@ -2,11 +2,11 @@
 % Please edit documentation in R/echogo_html_helpers.R
 \name{.echogo_html_details}
 \alias{.echogo_html_details}
-\title{Internal: HTML <details> wrapper}
+\title{Create an HTML details wrapper}
 \usage{
 .echogo_html_details(summary, inner_html)
 }
 \description{
-Internal: HTML <details> wrapper
+Create an HTML details wrapper
 }
 \keyword{internal}

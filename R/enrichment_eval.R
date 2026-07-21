@@ -9,7 +9,7 @@
 #'   \item Fold Enrichment distributions
 #'   \item Term origin distributions
 #'   \item Rarefaction curves showing recovery of new terms from multi-species integration
-#'   \item Network complexity comparison between strict (True Consensus) and exploratory modes
+#'   \item Network complexity comparison between conservative/background-aware and exploratory modes
 #' }
 #' Generates Venn diagrams, density plots, cumulative and permutation rarefaction curves,
 #' and summary tables. Designed to mirror the functionality and output structure of the
@@ -173,7 +173,7 @@ compare_top_terms <- function(consensus_all, goseq, output_dir, mode = "with_bg"
   g_top_all <- pick_top(goseq, "foldEnrichment")
   c_top_all <- pick_top(consensus_use, "score")
 
-  # Save Venn (overall) — only if both sides non-empty
+  # Save Venn (overall) - only if both sides non-empty
   jacc_rows <- list()
   if (nrow(g_top_all) > 0 && nrow(c_top_all) > 0) {
     if (requireNamespace("ggvenn", quietly = TRUE)) {
@@ -342,7 +342,7 @@ summarize_eqi_distributions <- function(consensus_all, goseq, output_dir, mode =
   invisible(NULL)
 }
 
-#' Rarefaction curves (true consensus vs exploratory) + cumulative tables
+#' Rarefaction curves (background-aware vs exploratory) + cumulative tables
 #' Mirrors the Rmd chunk "rarefaction_binary_matrix" + permutation rarefaction
 #' @keywords internal
 run_rarefaction_curves <- function(consensus_file, goseq_file, output_dir) {
@@ -492,7 +492,7 @@ run_rarefaction_curves <- function(consensus_file, goseq_file, output_dir) {
       combo <- plots$BP + plots$MF + plots$CC + plots$ALL +
         patchwork::plot_layout(ncol = 2) +
         patchwork::plot_annotation(
-          title = if (bg_mode) "Cumulative GO Term Curves (True Consensus)"
+          title = if (bg_mode) "Cumulative GO Term Curves (Background-aware)"
           else                 "Cumulative GO Term Curves (Exploratory)"
         )
 
@@ -557,7 +557,7 @@ run_rarefaction_curves <- function(consensus_file, goseq_file, output_dir) {
           ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper, fill = .data$ontology), alpha = 0.2, color = NA) +
           ggplot2::facet_wrap(~ontology, scales = "free_y") +
           ggplot2::labs(
-            title = if (bg_mode) "Rarefaction Curve (1000 Perms): GOseq + g:Profiler (True Consensus)"
+            title = if (bg_mode) "Rarefaction Curve (1000 Perms): GOseq + g:Profiler (Background-aware)"
             else                 "Rarefaction Curve (1000 Perms): GOseq + All Significant Terms (Exploratory)",
             x = "Species Randomly Added (Index)", y = "Mean Cumulative Unique GO Terms"
           ) +
@@ -662,7 +662,7 @@ summarize_network_complexity <- function(label, size_by = "gene_count", network_
   if (any(!is.na(out$total_terms))) {
     try(readr::write_csv(out, root_csv), silent = TRUE)
   } else {
-    message("ℹ No GraphML found for label '", label, "'. Returning NA skeleton.")
+    message("No GraphML found for label '", label, "'. Returning NA skeleton.")
   }
 
   out %>%

@@ -67,7 +67,7 @@ dplyr::glimpse(cons)
 # comp_fold_gs <- depth_w(depth) * log2p1_cap(fold_enrichment_goseq, FOLD_CAP)
 
 ## ----goseq_pseudocode, eval=FALSE---------------------------------------------
-# comp_goseq <- as.integer(isTRUE(in_goseq))
+# comp_goseq <- as.integer(dplyr::coalesce(in_goseq, FALSE))
 
 ## ----weights_pseudocode, eval=FALSE-------------------------------------------
 # W_STRICT <- list(

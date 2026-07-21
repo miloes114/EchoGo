@@ -6,6 +6,11 @@
 \usage{
 echogo_validate_species(species, refresh = FALSE)
 }
+\arguments{
+\item{species}{Character vector of g:Profiler organism IDs or names.}
+
+\item{refresh}{Logical; refresh the species cache before validation.}
+}
 \description{
 Validate and/or suggest species IDs for `run_full_echogo()`
 }

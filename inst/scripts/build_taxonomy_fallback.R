@@ -103,5 +103,5 @@ if (has_usethis) {
 }
 message("[EchoGO] Saved data/echogo_taxonomy_fallback.rda with ", nrow(echogo_taxonomy_fallback), " rows.")
 
-# ---- Clean up progress (optional; keep if you want resume for future updates)
+# ---- Finalize progress ------------------------------------------------------
 # unlink(progress_file)

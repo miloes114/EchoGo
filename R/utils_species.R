@@ -1,5 +1,4 @@
-# ---- file: R/utils_species.R -----------------------------------------------
-# File-level imports (put these at the very top of the file; one block only)
+# Package imports
 #' @importFrom dplyr mutate select distinct arrange bind_rows left_join if_else
 #' @importFrom dplyr .data
 #' @importFrom tibble tibble
@@ -54,6 +53,7 @@ NULL
 
 # gatekeeper: seed cache from packaged data, try online refresh if allowed/stale
 #' Ensure a fresh-enough species cache (offline-first)
+#' @param force Logical; refresh even when the existing cache is current.
 #' @return invisibly TRUE
 #' @export
 echogo_ensure_species_cache <- function(force = FALSE) {
@@ -191,7 +191,7 @@ echogo_ensure_species_cache <- function(force = FALSE) {
   tibble::tibble()
 }
 
-# HTML branch (very best-effort)
+# HTML fallback
 .fetch_html_species <- function() {
   url <- "https://biit.cs.ut.ee/gprofiler/page/organism-list"
   if (requireNamespace("xml2", quietly = TRUE) && requireNamespace("rvest", quietly = TRUE)) {
@@ -283,7 +283,7 @@ echogo_gprofiler_species <- function(refresh = FALSE) {
     if (nrow(cached)) return(.set_prov(cached, "cache"))
   }
 
-  # 2) Live online (API → HTML)
+  # 2) Live online (API to HTML)
   online <- .echogo_fetch_species_online()
   if (nrow(online)) {
     try(readr::write_csv(online, cache_file), silent = TRUE)
@@ -297,6 +297,9 @@ echogo_gprofiler_species <- function(refresh = FALSE) {
 }
 
 #' Refresh and persist the g:Profiler species list
+#' @param update_package_data Logical; also replace the package fallback data
+#'   when developing EchoGO from its source tree.
+#' @param verbose Logical; print refresh and write details.
 #' @inherit echogo_gprofiler_species return
 #' @export
 echogo_update_species_cache <- function(update_package_data = FALSE, verbose = TRUE) {
@@ -341,10 +344,14 @@ echogo_update_species_cache <- function(update_package_data = FALSE, verbose = T
 
 # ---- Taxonomy enrichment (fallback + optional online) -----------------------
 
-#' Enrich species table with taxonomic ranks (superkingdom → genus)
+#' Enrich species table with taxonomic ranks (superkingdom to genus)
 #' Uses packaged fallback (data/echogo_taxonomy_fallback.rda) and fills gaps
 #' from a user cache (taxonomy_lineage.rds). If auto-update is enabled and
 #' 'taxize' is installed, missing ranks are fetched from NCBI classification().
+#' @param df Species data frame containing at least `organism` and `ncbi`.
+#' @param refresh Logical; reserved for an explicit taxonomy refresh.
+#' @param rate_limit Seconds to pause between online NCBI taxonomy requests.
+#' @param verbose Logical; report why optional online enrichment is skipped.
 #' @export
 echogo_enrich_taxonomy <- function(df, refresh = FALSE, rate_limit = 0.3, verbose = interactive()) {
   ranks <- c("superkingdom","kingdom","phylum","class","order","family","genus")
@@ -381,7 +388,7 @@ echogo_enrich_taxonomy <- function(df, refresh = FALSE, rate_limit = 0.3, verbos
       if (!inherits(cl, "try-error")) {
         # unwrap list result if needed
         if (is.list(cl) && length(cl) > 0) cl <- cl[[1]]
-        # keep only what we need
+        # Retain the required fields.
         if (is.data.frame(cl) && all(c("name","rank") %in% names(cl))) {
           lin_cache[[as.character(tx)]] <- cl[, c("name","rank")]
         }
@@ -413,6 +420,8 @@ echogo_enrich_taxonomy <- function(df, refresh = FALSE, rate_limit = 0.3, verbos
 # ---- Tags: curated panels from YAML -----------------------------------------
 
 #' Add curated tag panels from inst/extdata/species_tags.yaml
+#' @param df Species data frame containing an `organism` column.
+#' @param yaml_path Path to a species tag YAML file.
 #' @export
 echogo_add_tags <- function(df, yaml_path = system.file("extdata","species_tags.yaml", package="EchoGO")) {
   if (!requireNamespace("yaml", quietly = TRUE)) {
@@ -430,7 +439,10 @@ echogo_add_tags <- function(df, yaml_path = system.file("extdata","species_tags.
 
 # ---- Unified public builder + interactive view ------------------------------
 
-#' Build the augmented species table (cache → taxonomy → tags)
+#' Build the augmented species table (cache to taxonomy to tags)
+#' @param refresh Logical; refresh cached species metadata first.
+#' @param include_taxonomy Logical; add taxonomic rank columns.
+#' @param include_tags Logical; add curated list-column tags.
 #' @export
 echogo_species_table <- function(refresh = FALSE, include_taxonomy = TRUE, include_tags = TRUE) {
   echogo_ensure_species_cache(force = isTRUE(refresh))
@@ -484,9 +496,13 @@ echogo_list_species <- function(view = interactive(), refresh = FALSE, n = 30) {
   invisible(df)
 }
 
-# ---- Search / validate / pick (kept; augmented below) -----------------------
+# ---- Search and validation --------------------------------------------------
 
 #' Search EchoGO's species list by name/ID/alias/NCBI
+#' @param query Character vector of names, IDs, aliases, or NCBI taxonomy IDs.
+#' @param fields Character vector of species-table columns to search.
+#' @param fuzzy Logical; include approximate text matches.
+#' @param refresh Logical; refresh the species cache before searching.
 #' @export
 echogo_find_species <- function(query,
                                 fields = c("organism","name","alias","ncbi"),
@@ -521,6 +537,8 @@ echogo_find_species <- function(query,
 }
 
 #' Validate and/or suggest species IDs for `run_full_echogo()`
+#' @param species Character vector of g:Profiler organism IDs or names.
+#' @param refresh Logical; refresh the species cache before validation.
 #' @export
 echogo_validate_species <- function(species, refresh = FALSE) {
   stopifnot(is.character(species))
@@ -580,6 +598,9 @@ echogo_validate_species <- function(species, refresh = FALSE) {
 }
 
 #' Pick species interactively (always shows a view)
+#' @param refresh Logical; refresh species metadata before displaying it.
+#' @param page_len Number of rows per page in the interactive table.
+#' @param force_browser Logical; save and open a standalone widget in a browser.
 #' @export
 echogo_pick_species <- function(refresh = FALSE, page_len = 25, force_browser = FALSE) {
   df <- echogo_species_table(refresh = refresh)
@@ -633,13 +654,16 @@ echogo_pick_species <- function(refresh = FALSE, page_len = 25, force_browser = 
 }
 
 #' Check species argument and provide actionable feedback (preflight)
+#' @param species Character vector of g:Profiler organism IDs or names.
+#' @param refresh Logical; refresh the species cache before validation.
+#' @param error_if_unknown Logical; error rather than warn for unresolved input.
 #' @export
 echogo_preflight_species <- function(species, refresh = FALSE, error_if_unknown = TRUE) {
   v <- echogo_validate_species(species, refresh = refresh)
   adoptable <- which(v$status == "suggested" & !is.na(v$suggestion))
   if (length(adoptable)) {
     message("[EchoGO] Interpreting: ",
-            paste0(v$input[adoptable], "→", v$suggestion[adoptable], collapse = ", "))
+            paste0(v$input[adoptable], "->", v$suggestion[adoptable], collapse = ", "))
     v$organism[adoptable] <- v$suggestion[adoptable]
     v$status[adoptable] <- "ok"
   }
@@ -661,27 +685,41 @@ echogo_preflight_species <- function(species, refresh = FALSE, error_if_unknown 
 #' @param tags character vector of tag names, e.g. c("AnimalModels") (optional)
 #' @param taxon named list of rank=value pairs, e.g. list(order="Perciformes")
 #' @param include_related if TRUE and tags are given, union tag set with taxon/ids
+#' @param refresh Logical; refresh species metadata before selection.
 #' @export
 echogo_select_species <- function(ids = NULL, tags = NULL, taxon = NULL,
                                   include_related = TRUE, refresh = FALSE) {
   sp <- echogo_species_table(refresh = refresh)
-  pick <- rep(TRUE, nrow(sp))
+  pick <- rep(FALSE, nrow(sp))
+  has_selection <- FALSE
 
   if (!is.null(ids) && length(ids)) {
-    pick <- pick & (sp$organism %in% ids)
+    pick <- sp$organism %in% ids
+    has_selection <- TRUE
   }
   if (!is.null(tags) && length(tags)) {
     has_tag <- vapply(sp$tags, function(x) any(x %in% tags), logical(1))
-    pick <- if (isTRUE(include_related)) (pick | has_tag) else (pick & has_tag)
+    pick <- if (!has_selection) {
+      has_tag
+    } else if (isTRUE(include_related)) {
+      pick | has_tag
+    } else {
+      pick & has_tag
+    }
+    has_selection <- TRUE
   }
   if (!is.null(taxon) && length(taxon)) {
+    taxon_pick <- rep(TRUE, nrow(sp))
     for (rk in names(taxon)) {
       rk <- tolower(rk)
       if (!rk %in% c("superkingdom","kingdom","phylum","class","order","family","genus")) next
       target <- tolower(as.character(taxon[[rk]]))
-      pick <- pick & tolower(sp[[rk]]) %in% target
+      taxon_pick <- taxon_pick & !is.na(sp[[rk]]) & tolower(sp[[rk]]) %in% target
     }
+    pick <- if (has_selection) pick & taxon_pick else taxon_pick
+    has_selection <- TRUE
   }
+  if (!has_selection) pick[] <- TRUE
   unique(sp$organism[pick])
 }
 
@@ -698,6 +736,9 @@ echogo_select_species <- function(ids = NULL, tags = NULL, taxon = NULL,
 #'
 #' Returns a character vector of valid organism IDs present in the species table.
 #' Never returns NA.
+#' @param expr Species selection expression using IDs, tags, ranks, `AND`, and
+#'   `OR`.
+#' @param refresh Logical; refresh species metadata before resolving.
 #' @export
 echogo_resolve <- function(expr, refresh = FALSE) {
   sp <- echogo_species_table(refresh = refresh)
@@ -776,9 +817,14 @@ echogo_resolve <- function(expr, refresh = FALSE) {
   sort(out)
 }
 
-# ---- Smart lookup (kept; minor polish) --------------------------------------
+# ---- Species lookup ---------------------------------------------------------
 
 #' Suggest best-matching g:Profiler IDs for each input (smart ranking)
+#' @param query Character vector of names, aliases, IDs, or NCBI taxonomy IDs.
+#' @param fields Character vector of species-table columns to rank.
+#' @param top_n Maximum suggestions returned per query.
+#' @param fuzzy Logical; include approximate text matches.
+#' @param refresh Logical; refresh species metadata before lookup.
 #' @export
 echogo_species_lookup <- function(query,
                                   fields  = c("organism","name","alias","ncbi"),

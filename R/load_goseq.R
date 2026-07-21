@@ -1,12 +1,56 @@
+.echogo_compute_goseq_fold <- function(
+    df,
+    total_significant_genes,
+    total_tested_genes
+) {
+  scalar_positive_integer <- function(x, label) {
+    if (!is.numeric(x) || length(x) != 1L || is.na(x) || !is.finite(x) ||
+        x <= 0 || x != as.integer(x)) {
+      stop(label, " must be one positive integer.", call. = FALSE)
+    }
+    as.integer(x)
+  }
+  total_significant_genes <- scalar_positive_integer(
+    total_significant_genes, "total_significant_genes"
+  )
+  total_tested_genes <- scalar_positive_integer(total_tested_genes, "total_tested_genes")
+  if (total_significant_genes > total_tested_genes) {
+    stop("total_significant_genes cannot exceed total_tested_genes.", call. = FALSE)
+  }
+  if (!all(c("numDEInCat", "numInCat") %in% names(df))) {
+    stop("GOseq data require numDEInCat and numInCat columns.", call. = FALSE)
+  }
+  num_de <- suppressWarnings(as.numeric(df$numDEInCat))
+  num_in <- suppressWarnings(as.numeric(df$numInCat))
+  if (any(is.na(num_de)) || any(is.na(num_in)) || any(num_de < 0) || any(num_in < 0)) {
+    stop("GOseq category counts must be finite non-negative numbers.", call. = FALSE)
+  }
+  if (any(num_de > total_significant_genes)) {
+    stop("GOseq numDEInCat exceeds total_significant_genes.", call. = FALSE)
+  }
+  if (any(num_in > total_tested_genes)) {
+    stop("GOseq numInCat exceeds total_tested_genes.", call. = FALSE)
+  }
+  if (any(num_de > num_in)) {
+    stop("GOseq numDEInCat exceeds numInCat; the universes are incompatible.", call. = FALSE)
+  }
+  df$numDEInCat <- num_de
+  df$numInCat <- num_in
+  df$total_significant_genes <- rep(total_significant_genes, nrow(df))
+  df$total_tested_genes <- rep(total_tested_genes, nrow(df))
+  df$foldEnrichment <- (num_de / total_significant_genes) /
+    (num_in / total_tested_genes)
+  df$foldEnrichment[num_in == 0 & num_de == 0] <- NA_real_
+  df
+}
+
 #' @name load_and_annotate_goseq
 #' @title Load and annotate GOseq enrichment results
 #' @description
-#' Loads GOseq results, maps gene names using Trinotate annotations (Metazoa-biased heuristic),
-#' computes fold enrichment and GO term depth, and exports cleaned results.
-#' #' In reference-based RNA-seq workflows, GOseq outputs may already contain gene identifiers
-#' that are gene symbols/names (not transcript IDs). If the identifiers in \code{gene_ids}
-#' do not match the annotation \code{transcript_id} column, EchoGO will treat \code{gene_ids}
-#' as already-usable names and use them directly.
+#' Loads GOseq results, adds display names and annotation provenance, computes
+#' fold enrichment and GO term depth, and exports cleaned results. In reference-based
+#' workflows, existing GOseq gene symbols are preserved for display. g:Profiler
+#' submission remains governed by the portable canonical-name resolver.
 #'
 #' @param goseq_file Path to the GOseq enrichment file (TSV/CSV with columns including
 #'   \code{category}, \code{term}, \code{ontology}, \code{numDEInCat}, \code{numInCat},
@@ -14,18 +58,19 @@
 #' @param trinotate_file Path to the Trinotate report (TSV/XLS; minimally needs
 #'   \code{transcript_id}, and ideally \code{sprot_Top_BLASTX_hit}, \code{EggNM.Preferred_name},
 #'   \code{EggNM.max_annot_lvl}).
-#' @param de_file Path to the DE results file (filtered DE list used by GOseq).
-#'   In reference-based mode this is optional (used mainly for totals / logging);
-#'   if provided, it should correspond to the same contrast as \code{goseq_file}.
-#' @param count_matrix_file Path to the full count matrix (rows = background size).
-#'   Optional; used to estimate background size for fold enrichment. If missing, EchoGO
-#'   may approximate fold enrichment from GOseq columns or leave it as-is depending on inputs.
-#' @param output_dir Output folder to save results (default: \code{"goseq"}).
-#'   If \code{options(EchoGO.legacy_aliases)=TRUE}, a legacy mirror is also written to
-#'   \code{"orthology_based_enrichment_support"}.
+#' @param de_file Path to the contrast-specific DE results table.
+#' @param count_matrix_file Path to the matching tested-gene count matrix.
+#' @param output_dir Output folder to save results (default: \code{"goseq"}). If
+#'   \code{options(EchoGO.legacy_aliases)=TRUE}, a compatibility mirror is written.
+#' @param gene_sets Optional object returned by `prepare_gprofiler_gene_sets()`.
+#' @param total_significant_genes,total_tested_genes Optional explicit GOseq denominators.
+#' @param de_id_column,de_significant_column,de_padj_column,de_lfc_column Optional DE columns.
+#' @param count_id_column,annotation_id_column Optional count/annotation ID columns.
+#' @param padj_threshold,log2fc_threshold Default DE significance thresholds.
+#' @param de_table_significant_only Declare that the DE table contains significant rows only.
+#' @param use_trinotate_universe Deprecated compatibility flag. It does not
+#'   intersect the tested universe or permit raw-ID fallback.
 #' @return A data.frame of enriched GO terms with annotations and depth.
-#' #' The returned data.frame also carries an attribute \code{echogo_bg_universe} when it can be
-#' derived from Trinotate/EggNOG primary names (used downstream as a background universe).
 #' @export
 #' @importFrom dplyr %>% select filter mutate arrange rename left_join distinct transmute
 #' @importFrom stringr str_detect
@@ -37,7 +82,20 @@ load_and_annotate_goseq <- function(
     trinotate_file,
     de_file,
     count_matrix_file,
-    output_dir = "goseq"
+    output_dir = "goseq",
+    gene_sets = NULL,
+    total_significant_genes = NULL,
+    total_tested_genes = NULL,
+    de_id_column = NULL,
+    de_significant_column = NULL,
+    de_padj_column = NULL,
+    de_lfc_column = NULL,
+    count_id_column = NULL,
+    annotation_id_column = NULL,
+    padj_threshold = 0.05,
+    log2fc_threshold = 1,
+    de_table_significant_only = FALSE,
+    use_trinotate_universe = FALSE
 ) {
   `%||%` <- function(a, b) if (!is.null(a)) a else b
   .mk <- function(...) { p <- file.path(...); dir.create(p, recursive = TRUE, showWarnings = FALSE); p }
@@ -57,114 +115,9 @@ load_and_annotate_goseq <- function(
     invisible(NULL)
   }
 
-  # ---- Robust readers -------------------------------------------------
-
-  .detect_delim <- function(file, candidates = c("\t",";",","), n = 50L, expected = NULL) {
-
-    # 1) Header-based scoring (most reliable for GOseq)
-    hdr <- tryCatch(readLines(file, n = 1L, warn = FALSE), error = function(e) "")
-    hdr <- enc2utf8(hdr)
-
-    score_header <- function(sep) {
-      parts <- strsplit(hdr, sep, fixed = TRUE)[[1]]
-      parts <- gsub("^\ufeff", "", parts)          # BOM
-      parts <- gsub("\u00A0", " ", parts, fixed=TRUE)
-      parts <- trimws(parts)
-      parts_lc <- tolower(parts)
-
-      # if separator doesn't split header, this sep is wrong
-      if (length(parts_lc) < 2) return(-Inf)
-
-      if (!is.null(expected)) {
-        sum(parts_lc %in% tolower(expected))
-      } else {
-        0
-      }
-    }
-
-    if (!is.null(expected)) {
-      hs <- vapply(candidates, score_header, numeric(1))
-      best_h <- max(hs, na.rm = TRUE)
-      if (is.finite(best_h) && best_h > 0) {
-        # pick the candidate with best header match (tie -> first)
-        return(candidates[which.max(hs)])
-      }
-    }
-
-    # 2) Fallback: count.fields heuristic (for generic files)
-    best <- candidates[1]
-    best_score <- -Inf
-
-    for (sep in candidates) {
-      cf <- tryCatch(
-        utils::count.fields(file, sep = sep, quote = "", comment.char = "", skipNul = TRUE),
-        error = function(e) integer(0)
-      )
-      if (!length(cf)) next
-      cf <- cf[seq_len(min(length(cf), n))]
-      med <- stats::median(cf)
-      if (is.na(med) || med < 2) next
-
-      # penalize crazy-wide parses (e.g., splitting gene lists on comma)
-      penalty <- if (med > 50) 50 else 0
-      score <- (med - stats::sd(cf)) - penalty
-
-      if (is.finite(score) && score > best_score) {
-        best_score <- score
-        best <- sep
-      }
-    }
-
-    best
-  }
-
-
-  .read_delim_robust <- function(file, candidates = c("\t",";",","), dec=".", expected = NULL, ...) {
-    sep <- .detect_delim(file, candidates = candidates, expected = expected)
-
-    # Special case: csv2-style numbers (sep=';' and decimals use ',')
-    if (identical(sep, ";")) {
-      first <- readLines(file, n = 2L, warn = FALSE)
-      # if we see patterns like "0,123" and NOT "0.123", assume dec=","
-      if (any(grepl("\\d,\\d", first)) && !any(grepl("\\d\\.\\d", first))) dec <- ","
-    }
-
-    # First try: base read.delim with permissive settings
-    out <- tryCatch(
-      utils::read.delim(
-        file,
-        sep = sep,
-        dec = dec,
-        stringsAsFactors = FALSE,
-        check.names = FALSE,
-        quote = "",
-        fill = TRUE,
-        comment.char = "",
-        ...
-      ),
-      error = function(e) NULL
-    )
-    if (!is.null(out)) return(out)
-
-    # Second try: data.table::fread (more forgiving) if available
-    if (requireNamespace("data.table", quietly = TRUE)) {
-      out2 <- tryCatch(
-        data.table::fread(
-          file,
-          sep = sep,
-          dec = dec,
-          data.table = FALSE,
-          fill = TRUE,
-          quote = "",
-          showProgress = FALSE
-        ),
-        error = function(e) NULL
-      )
-      if (!is.null(out2)) return(out2)
-    }
-
-    stop("Failed to read file robustly: ", file)
-  }
+  # Package-level readers keep parsing behavior consistent and testable.
+  .detect_delim <- .echogo_detect_delim
+  .read_delim_robust <- .echogo_read_delim_robust
 
   # Respect global toggle for legacy mirrors
   legacy_on <- isTRUE(getOption("EchoGO.legacy_aliases", FALSE))
@@ -184,7 +137,7 @@ load_and_annotate_goseq <- function(
   # ---- I/O setup (canonical) ----
   output_dir <- normalizePath(.mk(output_dir), winslash = "/", mustWork = FALSE)
 
-  # ---- Load GOseq enrichment (ROBUST) ----
+  # ---- Load GOseq enrichment ----
   df <- .read_delim_robust(
     goseq_file,
     candidates = c("\t",";",","),
@@ -196,12 +149,12 @@ load_and_annotate_goseq <- function(
     )
   )
   message("GOseq columns: ", paste(names(df), collapse = " | "))
-  message("Classes: ", paste(sapply(df[, c("numDEInCat","numInCat","over_represented_FDR")], class), collapse = ", "))
 
   # ---- Sanitize GOseq column names (BOM/whitespace/duplicates) ----
   names(df) <- gsub("^\ufeff", "", names(df))  # remove UTF-8 BOM if present
   names(df) <- trimws(names(df))              # remove leading/trailing spaces
   names(df) <- make.unique(names(df))         # avoid duplicate names (e.g. 'term' + ' term')
+  .echogo_check_goseq_parse(df)
 
   # ---- Normalize GOseq column names (case-insensitive + synonyms) ----
   names_lc <- tolower(names(df))
@@ -223,7 +176,7 @@ load_and_annotate_goseq <- function(
           sep = sep_try,
           stringsAsFactors = FALSE,
           check.names = FALSE,
-          quote = "",
+          quote = "\"",
           fill = TRUE,
           comment.char = ""
         ),
@@ -268,6 +221,16 @@ load_and_annotate_goseq <- function(
     stop("GOseq file missing required column: 'ontology'. Columns found: ",
          paste(names(df), collapse = ", "))
   }
+  numeric_columns <- intersect(
+    c("numDEInCat", "numInCat", "over_represented_FDR"),
+    names(df)
+  )
+  if (length(numeric_columns)) {
+    message(
+      "Classes: ",
+      paste(vapply(df[numeric_columns], function(x) class(x)[1], character(1)), collapse = ", ")
+    )
+  }
   if (!"numDEInCat" %in% names(df) || !"numInCat" %in% names(df)) {
     stop("GOseq file must include 'numDEInCat' and 'numInCat' (or synonyms). Columns found: ",
          paste(names(df), collapse = ", "))
@@ -282,7 +245,7 @@ load_and_annotate_goseq <- function(
 
   df$clean_go_term <- trimws(df$category)
 
-  # ---- Load Trinotate and derive primary names (ROBUST) ----
+  # ---- Load Trinotate and derive display names ----
   tri <- tryCatch(
     {
       .read_delim_robust(
@@ -291,7 +254,7 @@ load_and_annotate_goseq <- function(
       )
     },
     error = function(e) {
-      message("⚠️  Trinotate/eggNOG read failed even in robust mode: ", conditionMessage(e))
+      message("Warning: Trinotate/eggNOG input could not be read: ", conditionMessage(e))
       data.frame()
     }
   )
@@ -300,6 +263,24 @@ load_and_annotate_goseq <- function(
     tri <- tri[0, , drop = FALSE]
   }
   tri[tri == "."] <- NA
+
+  if (is.null(gene_sets)) {
+    gene_sets <- prepare_gprofiler_gene_sets(
+      de_results = de_file,
+      annotation = tri,
+      count_matrix = count_matrix_file,
+      de_id_column = de_id_column,
+      significant_column = de_significant_column,
+      padj_column = de_padj_column,
+      lfc_column = de_lfc_column,
+      count_id_column = count_id_column,
+      annotation_id_column = annotation_id_column,
+      padj_threshold = padj_threshold,
+      log2fc_threshold = log2fc_threshold,
+      de_table_significant_only = de_table_significant_only,
+      use_trinotate_universe = use_trinotate_universe
+    )
+  }
 
   # blast taxonomy (if present)
   if ("sprot_Top_BLASTX_hit" %in% names(tri)) {
@@ -311,14 +292,16 @@ load_and_annotate_goseq <- function(
     tri$blast_taxonomy <- rep(NA_character_, nrow(tri))
   }
 
-  # Metazoan heuristic (EggNOG rank OR BLASTX taxonomy mentions Metazoa)
-  animal_taxid_cutoff <- 33208
+  # Taxonomy is descriptive annotation provenance. Eligibility is based on
+  # explicit lineage labels, never on numeric taxon ordering (taxon IDs are not
+  # ordinal ranks).
   egg_col  <- "EggNM.max_annot_lvl"
   pref_col <- "EggNM.Preferred_name"
   is_animal_eggnog <- egg_col %in% names(tri) &
-    !is.na(suppressWarnings(as.numeric(tri[[egg_col]]))) &
-    suppressWarnings(as.numeric(tri[[egg_col]])) >= animal_taxid_cutoff
-  is_animal_blastx <- stringr::str_detect(tri$blast_taxonomy %||% "", "Metazoa")
+    stringr::str_detect(as.character(tri[[egg_col]]) %||% "", "(?i)Metazoa")
+  is_animal_blastx <- stringr::str_detect(tri$blast_taxonomy %||% "", "(?i)Metazoa")
+  is_animal_eggnog[is.na(is_animal_eggnog)] <- FALSE
+  is_animal_blastx[is.na(is_animal_blastx)] <- FALSE
   tri_animal <- tri[is_animal_eggnog | is_animal_blastx, , drop = FALSE]
 
   # Primary display name preference (length-safe assigns)
@@ -338,16 +321,25 @@ load_and_annotate_goseq <- function(
 
   transcript_map <- dplyr::select(tri_animal, transcript_id, primary_name) %>% dplyr::distinct()
 
-   # ---- Define EggNOG / Trinotate-based background universe (Mode A) ----
-  bg_universe <- unique(stats::na.omit(transcript_map$primary_name))
-  if (!length(bg_universe)) {
-    message("⚠️ No primary_name universe derived from Trinotate; ",
-            "g:Profiler will fall back to GOseq gene_names for background.")
+  contract_map <- gene_sets$mapping_table
+  contract_map <- contract_map[
+    !is.na(contract_map$resolved_name) & nzchar(contract_map$resolved_name),
+    c("original_id", "resolved_name"),
+    drop = FALSE
+  ]
+  if (nrow(contract_map)) {
+    transcript_map <- data.frame(
+      transcript_id = contract_map$original_id,
+      primary_name = contract_map$resolved_name,
+      stringsAsFactors = FALSE
+    )
   }
-  # Attach as attribute so the pipeline can recover it later
-  attr(df, "echogo_bg_universe") <- bg_universe
 
-  # ---- Map gene IDs to names (robust against missing/NA 'gene_ids') ----
+  # Preserve resolved annotation names for diagnostics only. They never replace
+  # the tested experiment universe used for a custom background.
+  attr(df, "echogo_annotation_names") <- unique(stats::na.omit(transcript_map$primary_name))
+
+  # ---- Map gene IDs to display names ----
   if ("gene_ids" %in% names(df)) {
     df$gene_names <- vapply(df$gene_ids, function(glist) {
       if (is.na(glist) || !nzchar(glist)) return("")
@@ -356,8 +348,8 @@ load_and_annotate_goseq <- function(
             ids <- ids[nzchar(ids)]
       if (!length(ids)) return("")
 
-      # If transcript_map is empty OR none of the ids match transcript_id,
-      # treat gene_ids as already-usable names (reference-based mode).
+      # Preserve existing GOseq display names in reference-based mode when no
+      # transcript mapping applies.
       if (!nrow(transcript_map) || !any(ids %in% transcript_map$transcript_id)) {
         return(paste(unique(ids), collapse = ", "))
       }
@@ -373,56 +365,40 @@ load_and_annotate_goseq <- function(
     df$gene_names <- ""
   }
 
-  # ---- Load DE results (ROBUST) ----
-  de_results <- .read_delim_robust(
-    de_file,
-    candidates = c("\t",";",",")
-  )
-
-  # Count matrix (ROBUST): we only need background size (n rows)
-  count_matrix <- tryCatch(
-    {
-      # detect delimiter and read just the first column
-      sep_cm <- .detect_delim(count_matrix_file, candidates = c("\t",";",","))
-      if (requireNamespace("data.table", quietly = TRUE)) {
-        data.table::fread(
-          count_matrix_file,
-          sep = sep_cm,
-          data.table = FALSE,
-          fill = TRUE,
-          quote = "",
-          showProgress = FALSE,
-          select = 1
-        )
-      } else {
-        utils::read.delim(
-          count_matrix_file,
-          sep = sep_cm,
-          stringsAsFactors = FALSE,
-          check.names = FALSE,
-          quote = "",
-          fill = TRUE,
-          comment.char = ""
-        )[, 1, drop = FALSE]
-      }
-    },
-    error = function(e) {
-      message(
-        "⚠️  Primary count matrix read failed (", conditionMessage(e),
-        "). Falling back to line counting..."
+  if ("gene_ids" %in% names(df)) {
+    goseq_ids <- unique(unlist(strsplit(
+      paste(stats::na.omit(as.character(df$gene_ids)), collapse = ","),
+      ",",
+      fixed = TRUE
+    )))
+    goseq_ids <- trimws(goseq_ids)
+    goseq_ids <- goseq_ids[nzchar(goseq_ids)]
+    incompatible_ids <- setdiff(goseq_ids, gene_sets$foreground_original)
+    if (length(incompatible_ids)) {
+      stop(
+        "The GOseq table contains gene IDs outside the significant-gene universe: ",
+        paste(utils::head(incompatible_ids, 8L), collapse = ", "),
+        ". Confirm that GOseq and the DE contrast use the same identifiers and filtering universe.",
+        call. = FALSE
       )
-      ln <- readLines(count_matrix_file, warn = FALSE)
-      ln <- ln[nzchar(trimws(ln))]
-      if (!length(ln)) return(data.frame(dummy = integer(0)))
-      header_guess <- grepl("[A-Za-z]", ln[1])
-      n <- length(ln) - if (header_guess) 1L else 0L
-      if (n < 0L) n <- 0L
-      data.frame(dummy = seq_len(n))
     }
-  )
+  }
 
-  totalDE <- nrow(de_results)
-  totalBG <- nrow(count_matrix)
+  # Denominators come from explicit GOseq metadata or the matched DE gene sets.
+  constant_integer <- function(column, label) {
+    if (!column %in% names(df)) return(NULL)
+    values <- unique(stats::na.omit(suppressWarnings(as.numeric(df[[column]]))))
+    if (length(values) != 1L) {
+      stop("GOseq ", label, " metadata must contain one constant value.", call. = FALSE)
+    }
+    as.integer(values[[1]])
+  }
+  totalDE <- total_significant_genes %||%
+    constant_integer("total_significant_genes", "significant-gene denominator") %||%
+    length(gene_sets$foreground_original)
+  totalBG <- total_tested_genes %||%
+    constant_integer("total_tested_genes", "tested-gene denominator") %||%
+    length(gene_sets$background_original)
 
   # ---- Coerce GOseq counts + FDR to numeric (MUST happen before foldEnrichment) ----
   .to_num <- function(x) {
@@ -446,13 +422,10 @@ load_and_annotate_goseq <- function(
   }
 
 
-  if (totalDE <= 0 || totalBG <= 0) {
-    warning("DE or background size is zero; foldEnrichment will be NA/Inf.")
-  }
-
-  df$foldEnrichment <- with(
+  df <- .echogo_compute_goseq_fold(
     df,
-    (numDEInCat / max(totalDE, 1)) / (numInCat / max(totalBG, 1))
+    total_significant_genes = totalDE,
+    total_tested_genes = totalBG
   )
 
 
@@ -550,6 +523,7 @@ load_and_annotate_goseq <- function(
 
   supp_table <- df %>%
     dplyr::select(category, term, ontology, numDEInCat, numInCat,
+                  total_significant_genes, total_tested_genes,
                   foldEnrichment, over_represented_FDR, depth, gene_names)
   readr::write_csv(supp_table, file.path(output_dir, "GO_enrichment_supplementary_clean.csv"))
   openxlsx::write.xlsx(supp_table, file.path(output_dir, "GO_enrichment_supplementary_clean.xlsx"), overwrite = TRUE)

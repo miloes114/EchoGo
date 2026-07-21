@@ -7,7 +7,7 @@
 echogo_demo_results_path()
 }
 \value{
-A filesystem path to inst/extdata/echogo_demo_results
+A filesystem path to the versioned v0.1.3 frozen demo results.
 }
 \description{
 Path to shipped demo results (frozen snapshot)

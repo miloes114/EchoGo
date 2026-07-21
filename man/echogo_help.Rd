@@ -2,10 +2,10 @@
 % Please edit documentation in R/ux_helpers.R
 \name{echogo_help}
 \alias{echogo_help}
-\title{EchoGO — Quickstart help}
+\title{EchoGO - Quickstart help}
 \usage{
 echogo_help()
 }
 \description{
-EchoGO — Quickstart help
+EchoGO - Quickstart help
 }

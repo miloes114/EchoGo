@@ -6,6 +6,9 @@
 \usage{
 echogo_ensure_species_cache(force = FALSE)
 }
+\arguments{
+\item{force}{Logical; refresh even when the existing cache is current.}
+}
 \value{
 invisibly TRUE
 }

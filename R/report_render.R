@@ -1,11 +1,11 @@
-#' Internal: render the EchoGO HTML report (robust: knit in root, then move; clean root on success)
+#' Render the EchoGO HTML report
 #' @keywords internal
 .render_echogo_report <- function(report_title,
                                   template = NULL,
                                   params   = list(),
                                   theme    = "flatly",
                                   outdir,
-                                  keep_temp_rmd = FALSE,   # ignored; we keep only stable Rmd in report/
+                                  keep_temp_rmd = FALSE,   # retained for API compatibility
                                   verbose_render = FALSE) {
 
   if (!requireNamespace("rmarkdown", quietly = TRUE)) {
@@ -72,7 +72,7 @@ params:
   render_params$dirs$base   <- base_dir
   render_params$dirs$report <- report_dir
 
-  # NEW: keep only params that are declared in the Rmd's YAML
+  # Keep only parameters declared in the template YAML.
   yaml <- tryCatch(rmarkdown::yaml_front_matter(stable_rmd), error = function(e) NULL)
   if (!is.null(yaml) && is.list(yaml$params)) {
     allowed <- names(yaml$params)
@@ -81,13 +81,12 @@ params:
     }
   }
 
-  # MINIMAL FIX: if 'sections' is provided, normalize + force-include 'evaluation'
+  # Normalize requested sections and retain the evaluation section.
   if ("sections" %in% names(render_params)) {
     s <- tolower(unlist(render_params$sections, use.names = FALSE))
     s <- unique(c(s, "evaluation"))
     render_params$sections <- s
   }
-  # (If 'sections' is not provided, the Rmd's default includes 'evaluation' already.)
 
   # --- Env exports used by helpers
   old_opt <- options(echogo.outdir = base_dir); on.exit(options(old_opt), add = TRUE)

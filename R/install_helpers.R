@@ -1,22 +1,25 @@
 # --- R/install_helpers.R -----------------------------------------------------
 
-#' Install GO.db / OrgDb packages into the user library (no prompts)
+#' Install GO.db / OrgDb packages into the active R library (no prompts)
 #'
-#' Installs Bioconductor annotation packages to the **user** library to avoid
-#' permission issues. If `pkgs = NULL`, it installs any **missing** items from a
-#' standard OrgDb set plus GO.db. Returns a logical vector (per package) of
-#' whether the package is now loadable.
+#' Installs Bioconductor annotation packages to the first active library, which
+#' respects project-local libraries such as `renv`. If `pkgs = NULL`, it
+#' installs any **missing** items from a standard OrgDb set plus GO.db. Returns
+#' a logical vector (per package) of whether the package is now loadable.
 #'
 #' @param pkgs Character vector of package names (e.g., c("GO.db","org.Mm.eg.db")).
 #'   If NULL, installs missing ones from the default set:
 #'   c("GO.db","org.Hs.eg.db","org.Mm.eg.db","org.Dr.eg.db",
 #'     "org.Dm.eg.db","org.Rn.eg.db","org.Ce.eg.db").
 #' @param update Logical; update existing packages? Default FALSE for reproducibility.
+#' @param lib Character scalar; library to install into. Defaults to
+#'   `.libPaths()[1]`, including the active `renv` project library when present.
 #' @return Named logical vector: TRUE if package is loadable after installation.
 #' @export
 echogo_install_orgdb <- function(
     pkgs   = NULL,
-    update = FALSE
+    update = FALSE,
+    lib    = .libPaths()[1]
 ) {
   # Default set if not provided
   default_set <- c(
@@ -25,31 +28,41 @@ echogo_install_orgdb <- function(
     "org.Dm.eg.db","org.Rn.eg.db","org.Ce.eg.db"
   )
 
-  if (is.null(pkgs)) {
-    # Only install what is missing from the default set
-    missing <- default_set[!vapply(default_set, requireNamespace, logical(1), quietly = TRUE)]
-    pkgs <- if (length(missing)) missing else character(0)
-  }
+  requested <- if (is.null(pkgs)) default_set else unique(as.character(pkgs))
+  requested <- requested[!is.na(requested) & nzchar(requested)]
+
+  installed <- vapply(requested, requireNamespace, logical(1), quietly = TRUE)
+  to_install <- if (isTRUE(update)) requested else requested[!installed]
 
   # Nothing to do?
-  if (!length(pkgs)) {
-    now <- vapply(default_set, requireNamespace, logical(1), quietly = TRUE)
-    names(now) <- default_set
+  if (!length(to_install)) {
+    now <- vapply(requested, requireNamespace, logical(1), quietly = TRUE)
+    names(now) <- requested
     return(now)
   }
 
-  # Ensure BiocManager + repos + user lib path
-  if (!requireNamespace("BiocManager", quietly = TRUE)) utils::install.packages("BiocManager")
+  if (length(lib) != 1L || is.na(lib) || !nzchar(lib)) {
+    stop("'lib' must be a single non-empty library path.", call. = FALSE)
+  }
+
+  # Ensure BiocManager + repositories, while preserving the active library.
+  dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+  if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    utils::install.packages("BiocManager", lib = lib)
+  }
   options(repos = BiocManager::repositories())
-  dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)
-  .libPaths(c(Sys.getenv("R_LIBS_USER"), .libPaths()))
 
   # Install
-  BiocManager::install(pkgs, ask = FALSE, update = isTRUE(update))
+  BiocManager::install(
+    to_install,
+    lib = lib,
+    ask = FALSE,
+    update = isTRUE(update)
+  )
 
   # Report loadability after install
-  out <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
-  names(out) <- pkgs
+  out <- vapply(requested, requireNamespace, logical(1), quietly = TRUE)
+  names(out) <- requested
   return(out)
 }
 
@@ -57,7 +70,7 @@ echogo_install_orgdb <- function(
 #'
 #' This checks that the requested OrgDb packages are available. If they are
 #' missing and `auto_install = TRUE`, it calls [echogo_install_orgdb()] to
-#' install them into the user library.
+#' install them into the active library.
 #'
 #' @param pkgs Character vector of OrgDb names. If NULL, uses
 #'   getOption(\"EchoGO.default_orgdb\", \"org.Mm.eg.db\").

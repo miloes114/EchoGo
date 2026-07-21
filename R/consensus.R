@@ -81,7 +81,7 @@ summarize_gprofiler_by_term <- function(gprof_df, species_labels, mode = "bg") {
       !!min_pval_col := min(.data$p_value, na.rm = TRUE),
       dplyr::across(dplyr::starts_with("in_"), ~ any(.x, na.rm = TRUE)),
       !!gene_col_out := {
-        # merge all intersections across species; keep unique, non-empty
+        # Merge intersections across organism contexts; retain unique values.
         vals <- paste(.data$intersection, collapse = ",")
         paste(unique(stats::na.omit(trimws(strsplit(vals, ",")[[1]]))), collapse = ", ")
       },
@@ -113,13 +113,35 @@ merge_enrichment_sources <- function(goseq_df, gprof_bg_df, gprof_nobg_df) {
 }
 
 
+.echogo_validate_support_columns <- function(df, columns) {
+  columns <- intersect(columns, names(df))
+  bad <- columns[!vapply(df[columns], is.logical, logical(1))]
+  if (length(bad)) {
+    stop(
+      "All logical support columns must contain only TRUE, FALSE, or NA. ",
+      "Invalid column(s): ", paste(bad, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+.echogo_true_integer <- function(x) {
+  as.integer(dplyr::coalesce(x, FALSE))
+}
+
 #' Score and classify consensus enrichment terms
 #'
-#' Applies metrics such as species support, consensus scores, robustness, origin tags, etc.
+#' Applies the documented heuristic background-aware and exploratory scoring
+#' formulas to a merged enrichment table. Scores are prioritisation aids, not
+#' probabilities, effect sizes, or universally calibrated confidence measures.
 #'
 #' @param df Data frame output from `merge_enrichment_sources()`.
+#' @param P_CAP,FOLD_CAP Positive caps applied to transformed p-values and folds.
+#' @param W_STRICT,W_ALL Named weight lists for the background-aware and
+#'   exploratory formulas.
 #' @return Scored consensus enrichment table.
-#' @keywords internal
+#' @export
 score_consensus_terms <- function(df,
                                   P_CAP = 6,
                                   FOLD_CAP = 8,
@@ -148,6 +170,9 @@ score_consensus_terms <- function(df,
   n_bg_cols   <- length(bg_cols)
   n_nobg_cols <- length(nobg_cols)
 
+  .echogo_validate_support_columns(df, c("in_goseq", bg_cols, nobg_cols))
+  goseq_indicator <- .echogo_true_integer(df$in_goseq)
+
   # helpers
   cap_logp <- function(p, P_CAP) {
     p <- dplyr::coalesce(p, 1)
@@ -175,10 +200,12 @@ score_consensus_terms <- function(df,
       # robustness flags
       is_robust_nobg = !is.na(min_pval_gprof_nobg) & min_pval_gprof_nobg <= 0.05 & num_species_gprof_nobg >= 2,
 
-      # source count (use isTRUE() to ensure only TRUE counts, not NA/FALSE)
-      sources_count = as.integer(isTRUE(.data$in_goseq)) +
-        dplyr::coalesce(rowSums(dplyr::across(dplyr::all_of(bg_cols)),   na.rm = TRUE), 0L) +
-        dplyr::coalesce(rowSums(dplyr::across(dplyr::all_of(nobg_cols)), na.rm = TRUE), 0L),
+      # source count: GOseq is evaluated element-wise; FALSE and NA contribute zero
+      sources_count = as.integer(
+        goseq_indicator +
+          dplyr::coalesce(rowSums(dplyr::across(dplyr::all_of(bg_cols)),   na.rm = TRUE), 0L) +
+          dplyr::coalesce(rowSums(dplyr::across(dplyr::all_of(nobg_cols)), na.rm = TRUE), 0L)
+      ),
 
       # capped/normalized components
       comp_p_strict = cap_logp(min_pval_gprof_bg, P_CAP),
@@ -194,7 +221,7 @@ score_consensus_terms <- function(df,
       comp_fold_gs   = depth_w(depth) * log2p1_cap(fold_enrichment_goseq, FOLD_CAP),
 
       # base indicator (count only explicit TRUE)
-      comp_goseq = as.integer(isTRUE(in_goseq)),
+      comp_goseq = goseq_indicator,
 
       # final scores
       consensus_score =
@@ -214,16 +241,16 @@ score_consensus_terms <- function(df,
         W_ALL$w_p       * comp_p_all,
 
       origin = dplyr::case_when(
-        !is.na(in_goseq) & !is.na(min_pval_gprof_bg)   & min_pval_gprof_bg   <= 0.05 ~ "GO terms - Consensus (with BG)",
-        !is.na(in_goseq) & !is.na(min_pval_gprof_nobg) & min_pval_gprof_nobg <= 0.05 ~ "GO terms - Consensus (no BG)",
-        !is.na(in_goseq) ~ "GO terms - GOseq only",
-        is.na(in_goseq)  & !is.na(min_pval_gprof_bg)   & min_pval_gprof_bg   <= 0.05 ~ "GO terms - g:Profiler only (with BG)",
-        is.na(in_goseq)  & !is.na(min_pval_gprof_nobg) & min_pval_gprof_nobg <= 0.05 ~ "GO terms - g:Profiler only (no BG)",
+        (in_goseq %in% TRUE) & !is.na(min_pval_gprof_bg)   & min_pval_gprof_bg   <= 0.05 ~ "GO terms - Consensus (with BG)",
+        (in_goseq %in% TRUE) & !is.na(min_pval_gprof_nobg) & min_pval_gprof_nobg <= 0.05 ~ "GO terms - Consensus (no BG)",
+        in_goseq %in% TRUE ~ "GO terms - GOseq only",
+        !(in_goseq %in% TRUE) & !is.na(min_pval_gprof_bg)   & min_pval_gprof_bg   <= 0.05 ~ "GO terms - g:Profiler only (with BG)",
+        !(in_goseq %in% TRUE) & !is.na(min_pval_gprof_nobg) & min_pval_gprof_nobg <= 0.05 ~ "GO terms - g:Profiler only (no BG)",
         TRUE ~ "Other"
       ),
 
       significant_in_any = dplyr::if_else(
-        (!is.na(min_pval_goseq)       & min_pval_goseq       <= 0.05) |
+        ((in_goseq %in% TRUE) & !is.na(min_pval_goseq) & min_pval_goseq <= 0.05) |
           (!is.na(min_pval_gprof_bg)    & min_pval_gprof_bg    <= 0.05) |
           (!is.na(min_pval_gprof_nobg)  & min_pval_gprof_nobg  <= 0.05),
         TRUE, FALSE
@@ -233,7 +260,7 @@ score_consensus_terms <- function(df,
         list(in_goseq, min_pval_gprof_bg, min_pval_gprof_nobg),
         function(in_goseq, bg, nobg) {
           sources <- character(0)
-          if (!is.na(in_goseq)) sources <- c(sources, "GOseq")
+          if (isTRUE(in_goseq)) sources <- c(sources, "GOseq")
           if (!is.na(bg)   && bg   <= 0.05) sources <- c(sources, "g:Profiler_BG")
           if (!is.na(nobg) && nobg <= 0.05) sources <- c(sources, "g:Profiler_noBG")
           paste(sources, collapse = "+")
@@ -250,10 +277,12 @@ audit_consensus_flags <- function(df, bg_cols = NULL, nobg_cols = NULL) {
     bg_cols     <- setdiff(setdiff(all_in_cols, nobg_cols), "in_goseq")
   }
 
+  .echogo_validate_support_columns(df, c("in_goseq", bg_cols, nobg_cols))
+
   # Compute sums without dplyr::across() (safe even if 0 columns)
   bg_sum <- if (length(bg_cols))   rowSums(as.data.frame(df[, bg_cols,   drop = FALSE]), na.rm = TRUE) else rep(0L, nrow(df))
   nb_sum <- if (length(nobg_cols)) rowSums(as.data.frame(df[, nobg_cols, drop = FALSE]), na.rm = TRUE) else rep(0L, nrow(df))
-  src_calc <- as.integer(isTRUE(df$in_goseq)) + bg_sum + nb_sum
+  src_calc <- .echogo_true_integer(df[["in_goseq"]]) + bg_sum + nb_sum
 
   dplyr::bind_cols(
     df,
@@ -282,8 +311,14 @@ audit_consensus_flags <- function(df, bg_cols = NULL, nobg_cols = NULL) {
 
   # Keep GO-only (others like KEGG/REAC remain NA)
   normalize_goid <- function(vec_chr) {
-    m <- regmatches(vec_chr, regexpr("GO:\\d{7}", vec_chr))
-    out <- ifelse(nzchar(m), m, NA_character_)
+    hits <- regexpr("GO:\\d{7}", vec_chr)
+    out <- rep(NA_character_, length(vec_chr))
+    matched <- !is.na(hits) & hits > 0L
+    out[matched] <- substring(
+      vec_chr[matched],
+      hits[matched],
+      hits[matched] + attr(hits, "match.length")[matched] - 1L
+    )
     out
   }
 
@@ -321,7 +356,7 @@ audit_consensus_flags <- function(df, bg_cols = NULL, nobg_cols = NULL) {
     used <- "GO.db"
 
   } else {
-    # Fallback if you ship go-basic.obo with the package (inst/extdata/go-basic.obo)
+    # Fallback for a packaged go-basic.obo file.
     go_obo <- system.file("extdata","go-basic.obo", package = "EchoGO")
     if (requireNamespace("ontologyIndex", quietly = TRUE) && file.exists(go_obo)) {
       go_ont <- ontologyIndex::get_ontology(go_obo, extract_tags = "minimal")
@@ -390,8 +425,8 @@ build_consensus_table <- function(
   gprof_all_bg   <- load_gprofiler_results(file.path(gprofiler_dir, "with_custom_background"), "with_bg", species_map)
   gprof_all_nobg <- load_gprofiler_results(file.path(gprofiler_dir, "no_background_genome_wide"), "nobg", species_map)
 
-  message("✅ g:Profiler with_bg terms: ", if (nrow(gprof_all_bg)) nrow(gprof_all_bg) else 0L)
-  message("✅ g:Profiler no_bg terms: ",   if (nrow(gprof_all_nobg)) nrow(gprof_all_nobg) else 0L)
+  message("g:Profiler with_bg terms: ", if (nrow(gprof_all_bg)) nrow(gprof_all_bg) else 0L)
+  message("g:Profiler no_bg terms: ",   if (nrow(gprof_all_nobg)) nrow(gprof_all_nobg) else 0L)
 
   # summaries (pass *labels* only)
   sp_labels <- unname(species_map)
@@ -467,7 +502,7 @@ build_consensus_table <- function(
   # Optional sanity check
   bad_rows <- audit_consensus_flags(consensus_df)
   if (nrow(bad_rows)) {
-    message("⚠️ Inconsistencies detected in sources/species flags:")
+    message("Warning: inconsistencies detected in sources/species flags:")
     print(bad_rows, n = 20)
   }
 
@@ -496,6 +531,6 @@ build_consensus_table <- function(
     asTable = TRUE
   )
 
-  message("✅ Consensus table saved to: ", output_dir)
+  message("Consensus table saved to: ", output_dir)
   consensus_df
 }

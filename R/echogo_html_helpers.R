@@ -1,4 +1,4 @@
-#' Internal: HTML <details> wrapper
+#' Create an HTML details wrapper
 #' @keywords internal
 .echogo_html_details <- function(summary, inner_html) {
   paste0(
@@ -9,7 +9,7 @@
   )
 }
 
-#' Internal: turn an absolute path into a browser-friendly URL
+#' Convert an output path to a browser-friendly URL
 #' If target and report_dir share the same base_dir, return a relative URL.
 #' Otherwise return a file:/// URL.
 #' @keywords internal
@@ -57,7 +57,7 @@
 #' @export
 echogo_embed_pdf_toggle <- function(title, path, report_dir, base_dir, height = "650px") {
 
-  # FIX: absolute existence check first
+  # Validate the source before staging it.
   if (is.null(path) || is.na(path) || !nzchar(path)) {
     return(.echogo_html_details(title, "<em>Missing file:</em> (no path)"))
   }
@@ -91,9 +91,9 @@ echogo_embed_pdf_toggle <- function(title, path, report_dir, base_dir, height = 
 #' @export
 embed_html_toggle_external_plus <- function(title, path_abs, report_dir, base_dir, height = "650px") {
 
-  # FIX: absolute existence check first
+  # Validate the source before staging it.
   if (is.null(path_abs) || is.na(path_abs) || !nzchar(path_abs)) {
-    return(.echogo_html_details(title, "<em>Missing HTML:</em> (no path)</em>"))
+    return(.echogo_html_details(title, "<em>Missing HTML:</em> (no path)"))
   }
   if (!file.exists(path_abs)) {
     return(.echogo_html_details(title, "<em>Not found in index or not generated for this run.</em>"))
@@ -108,13 +108,30 @@ embed_html_toggle_external_plus <- function(title, path_abs, report_dir, base_di
     "<iframe src='%s' data-external='1' style='width:100%%;height:%s;border:1px solid #ddd;border-radius:6px;'></iframe>",
     url, height
   )
-  .echogo_html_details(title, iframe)
+
+  pdf_path <- file.path(
+    dirname(path_abs),
+    paste0(tools::file_path_sans_ext(basename(path_abs)), ".pdf")
+  )
+  fallback <- ""
+  if (file.exists(pdf_path)) {
+    pdf_url <- .echogo_stage_asset(pdf_path, report_dir = report_dir, base_dir = base_dir)
+    if (!is.na(pdf_url)) {
+      fallback <- paste0(
+        "<p><a href='", pdf_url,
+        "' target='_blank' rel='noopener'>Open the static PDF version</a></p>"
+      )
+    }
+  }
+
+  .echogo_html_details(title, paste0(iframe, fallback))
 }
 
 #' Embed an HTML file (iframe) with a collapsible toggle (deprecated alias)
 #'
 #' Deprecated. Use [embed_html_toggle_external_plus()] instead.
 #' @inheritParams embed_html_toggle_external_plus
+#' @param path Absolute path to the HTML file (deprecated name for `path_abs`).
 #' @export
 echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height = "650px") {
   .Deprecated("embed_html_toggle_external_plus", package = "EchoGO")
@@ -127,9 +144,50 @@ echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height =
   )
 }
 
-#' Internal: stage a file into report/assets and return a relative URL
+# Copy an htmlwidgets companion directory beside a staged HTML file.
+# htmlwidgets uses `<widget>_files/` when a widget is not self-contained.
+.echogo_stage_html_dependencies <- function(path_abs, dst) {
+  if (!identical(tolower(tools::file_ext(path_abs)), "html")) {
+    return(invisible(TRUE))
+  }
+
+  dep_src <- paste0(tools::file_path_sans_ext(path_abs), "_files")
+  if (!dir.exists(dep_src)) return(invisible(TRUE))
+
+  dep_dst <- file.path(dirname(dst), basename(dep_src))
+  dir.create(dep_dst, recursive = TRUE, showWarnings = FALSE)
+
+  dep_files <- list.files(
+    dep_src,
+    recursive = TRUE,
+    full.names = TRUE,
+    all.files = TRUE,
+    include.dirs = FALSE,
+    no.. = TRUE
+  )
+  if (!length(dep_files)) return(invisible(TRUE))
+
+  dep_root <- normalizePath(dep_src, winslash = "/", mustWork = TRUE)
+  rel <- substring(
+    normalizePath(dep_files, winslash = "/", mustWork = TRUE),
+    nchar(dep_root) + 2L
+  )
+  targets <- file.path(dep_dst, rel)
+  invisible(vapply(unique(dirname(targets)), dir.create, logical(1),
+                   recursive = TRUE, showWarnings = FALSE))
+
+  copied <- file.copy(dep_files, targets, overwrite = TRUE, copy.date = TRUE)
+  if (!all(copied)) {
+    warning("Failed to stage one or more HTML widget dependencies for: ", path_abs)
+    return(invisible(FALSE))
+  }
+  invisible(TRUE)
+}
+
+#' Stage a report asset and return its relative URL
 #' - If file is under base_dir, preserve its relative subpath under assets/
 #' - Otherwise stage into assets/external/
+#' - For HTML widgets, also stage a sibling `<name>_files/` directory
 #' @keywords internal
 .echogo_stage_asset <- function(path_abs, report_dir, base_dir) {
   if (is.null(path_abs) || is.na(path_abs) || !nzchar(path_abs)) return(NA_character_)
@@ -156,13 +214,17 @@ echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height =
     rel <- substr(p, nchar(prefix) + 1, nchar(p))
     dst <- file.path(assets_dir, rel)
     dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
-    file.copy(path_abs, dst, overwrite = TRUE)
+    copied <- file.copy(path_abs, dst, overwrite = TRUE, copy.date = TRUE)
+    if (!isTRUE(copied)) return(NA_character_)
+    if (!isTRUE(.echogo_stage_html_dependencies(path_abs, dst))) return(NA_character_)
     return(gsub("\\\\", "/", file.path("assets", rel)))
   }
 
   dst <- file.path(assets_dir, "external", basename(path_abs))
   dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
-  file.copy(path_abs, dst, overwrite = TRUE)
+  copied <- file.copy(path_abs, dst, overwrite = TRUE, copy.date = TRUE)
+  if (!isTRUE(copied)) return(NA_character_)
+  if (!isTRUE(.echogo_stage_html_dependencies(path_abs, dst))) return(NA_character_)
   gsub("\\\\", "/", file.path("assets", "external", basename(path_abs)))
 }
 

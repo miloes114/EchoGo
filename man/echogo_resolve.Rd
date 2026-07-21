@@ -10,6 +10,12 @@ Supports tokens:
 \usage{
 echogo_resolve(expr, refresh = FALSE)
 }
+\arguments{
+\item{expr}{Species selection expression using IDs, tags, ranks, `AND`, and
+`OR`.}
+
+\item{refresh}{Logical; refresh species metadata before resolving.}
+}
 \description{
 Operators:
   - OR  (union)

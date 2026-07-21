@@ -14,7 +14,7 @@ run_rrvgo_consensus_analysis(
 )
 }
 \arguments{
-\item{df_input}{A consensus enrichment data frame filtered for one mode (true consensus or exploratory).}
+\item{df_input}{A consensus enrichment data frame filtered for one mode (background-aware or exploratory).}
 
 \item{label}{A label to use for the output subfolder (e.g. "true_consensus_with_bg").}
 
