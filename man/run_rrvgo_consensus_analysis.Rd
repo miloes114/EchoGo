@@ -2,34 +2,25 @@
 % Please edit documentation in R/rrvgowrappers.R
 \name{run_rrvgo_consensus_analysis}
 \alias{run_rrvgo_consensus_analysis}
-\title{Run RRvGO Semantic Clustering on Consensus Terms (multi-OrgDb, option-aware)}
+\title{Run RRvGO semantic clustering on evidence terms}
 \usage{
-run_rrvgo_consensus_analysis(
-  df_input,
-  label = "with_bg_only",
-  output_base = "similarity_based_consensus",
-  ontologies = c("BP", "MF", "CC"),
-  orgdb = NULL,
-  similarity_threshold = 0.7
-)
+run_rrvgo_consensus_analysis(...)
 }
 \arguments{
-\item{df_input}{A consensus enrichment data frame filtered for one mode (background-aware or exploratory).}
-
-\item{label}{A label to use for the output subfolder (e.g. "true_consensus_with_bg").}
-
-\item{output_base}{Directory where output will be saved (default: "similarity_based_consensus").
-Tip: pass a canonical path like file.path(outdir, "rrvgo") from the pipeline.}
-
-\item{ontologies}{Vector of GO ontologies to process (default: c("BP", "MF", "CC")).}
-
-\item{orgdb}{Character vector of OrgDb package names. If NULL or missing,
-falls back to getOption("EchoGO.default_orgdb", "org.Mm.eg.db").}
-
-\item{similarity_threshold}{Similarity cutoff for clustering (default: 0.7).}
+\item{...}{Arguments forwarded to the underlying RRvGO analysis:
+`df_input` (evidence data frame for one semantic product), `label` (output
+subfolder label), `output_base` (output directory), `ontologies` (GO
+ontologies to process), `orgdb` (deprecated compatibility alias),
+`similarity_threshold` (semantic-similarity cutoff), `semantic_product`,
+`semantic_reference_role`, and `semantic_reference_orgdb`. The historical
+score-era word `consensus` in argument values and the exported function
+name is retained only for API compatibility.}
 }
 \description{
-Applies RRvGO-based semantic similarity reduction to GO terms from either the strict
-consensus set or exploratory enrichment set. Produces annotated cluster tables, bubble plots,
-heatmaps, scatter plots, treemaps, and wordclouds per ontology.
+Applies RRvGO-based semantic similarity reduction to primary custom-background
+evidence. Representative selection uses deterministic non-inferential order,
+never a p-value or composite score. Produces annotated cluster tables, bubble plots,
+heatmaps, scatter plots, treemaps, and wordclouds per ontology. The exported
+function name and default output-folder name retain the historical word
+`consensus` for API compatibility; they do not denote consensus scoring.
 }

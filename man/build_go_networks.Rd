@@ -20,12 +20,11 @@ build_go_networks(
 )
 }
 \arguments{
-\item{df}{Subset of consensus table (columns: \code{term_id}, \code{term_name}, \code{ontology}, \code{all_genes},
-\code{origin}, \code{in_goseq}, \code{significant_in_any}, \code{consensus_score}, optionally \code{consensus_score_all} and a GOseq p-value column).}
+\item{df}{Historical wide consensus-table subset.}
 
 \item{label}{Output subfolder under \code{outdir/networks}. (Expected: "with_bg" or "with_bg_and_nobg")}
 
-\item{size_by}{\code{"gene_count"} (default) or \code{"consensus_score"} for node sizing.}
+\item{size_by}{Historical node-size setting.}
 
 \item{min_shared_genes}{Edge threshold when \code{edge_metric="shared"}. Default \code{2}.}
 
@@ -49,8 +48,7 @@ build_go_networks(
 Writes files; returns \code{NULL} (invisibly).
 }
 \description{
-Constructs GO-term overlap networks using a pre-capped set of terms per ontology,
-ranked fairly: \emph{Consensus/g:Profiler} terms by the relevant consensus score, and
-\emph{GOseq-only} terms by \code{-log10(p)} (auto-detected p column). Uses a
-sparse \code{Matrix::tcrossprod} path by default for speed.
+Legacy helper for historical wide score tables. Canonical v0.1.4 scoreless
+network construction uses the primary-evidence path in
+\code{run_all_networks()}.
 }

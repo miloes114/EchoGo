@@ -1,19 +1,13 @@
 #' @name evaluate_consensus_vs_goseq
-#' @title Evaluate Consensus vs. GOseq Enrichment
+#' @title Evaluate EchoGO evidence alongside GOseq
 #' @description
-#' Compares EchoGO consensus enrichment results against GOseq-only enrichment
-#' using multiple complementary metrics:
-#' \itemize{
-#'   \item Jaccard Index for term overlap (overall, per ontology, by depth)
-#'   \item Enrichment Quality Index (EQI) distributions and summary statistics
-#'   \item Fold Enrichment distributions
-#'   \item Term origin distributions
-#'   \item Rarefaction curves showing recovery of new terms from multi-species integration
-#'   \item Network complexity comparison between conservative/background-aware and exploratory modes
-#' }
-#' Generates Venn diagrams, density plots, cumulative and permutation rarefaction curves,
-#' and summary tables. Designed to mirror the functionality and output structure of the
-#' corresponding .Rmd analysis step in the EchoGO workflow.
+#' For canonical v0.1.4 scoreless evidence, writes descriptive primary
+#' diagnostics: evidence-profile composition, annotation-context recurrence,
+#' custom-background recognition coverage and provenance availability. It does
+#' not evaluate a composite score or treat more terms as better performance.
+#' Historical wide score-era tables remain supported through a compatibility
+#' path. The exported function and `consensus_file` argument retain legacy names
+#' for API compatibility; canonical input is the exact-term evidence workbook.
 #'
 #' @param consensus_file Path to consensus enrichment Excel file.
 #' @param goseq_file Path to GOseq enrichment results CSV.
@@ -57,6 +51,13 @@ evaluate_consensus_vs_goseq <- function(
   }
 
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+  # v0.1.4 canonical scoreless evaluation: primary evidence only. Default-domain
+  # rows are intentionally excluded and cannot alter these diagnostics.
+  preview <- openxlsx::read.xlsx(consensus_file)
+  if ("evidence_profile" %in% names(preview)) {
+    .echogo_evaluate_scoreless_evidence(preview, consensus_file, output_dir)
+    return(invisible(NULL))
+  }
   exploratory_dir <- file.path(output_dir, "exploratory_no_bg")
   dir.create(exploratory_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -117,6 +118,55 @@ evaluate_consensus_vs_goseq <- function(
 
   invisible(NULL)
 }  # end evaluate_consensus_vs_goseq()
+
+.echogo_evaluate_scoreless_evidence <- function(evidence, consensus_file, output_dir) {
+  primary <- evidence[evidence$evidence_profile != "NO_PRIMARY_SUPPORT" &
+                        evidence$ontology %in% c("BP", "MF", "CC"), , drop = FALSE]
+  profile_counts <- primary %>%
+    dplyr::count(.data$ontology, .data$evidence_profile, name = "term_n") %>%
+    dplyr::arrange(.data$ontology, .data$evidence_profile)
+  readr::write_csv(profile_counts, file.path(output_dir, "primary_evidence_profile_counts.csv"))
+
+  recurrence <- primary %>%
+    dplyr::transmute(
+      term_id, ontology, evidence_profile,
+      alternative_context_support_n,
+      alternative_context_support_fraction,
+      alternative_queried_context_n,
+      gprof_custom_context_support_n,
+      queried_context_n
+    )
+  readr::write_csv(recurrence, file.path(output_dir, "primary_annotation_context_recurrence.csv"))
+
+  provenance_path <- file.path(dirname(consensus_file), "term_source_provenance_long.csv")
+  if (file.exists(provenance_path)) {
+    provenance <- readr::read_csv(provenance_path, show_col_types = FALSE)
+    custom <- provenance[provenance$background_mode == "custom_experimental_background", , drop = FALSE]
+    if (nrow(custom)) {
+      coverage <- custom %>%
+        dplyr::group_by(.data$context_code, .data$context_label, .data$context_role) %>%
+        dplyr::summarise(
+          term_rows = dplyr::n(),
+          qualifying_term_rows = sum(.data$source_qualifies %in% TRUE),
+          submitted_foreground_n = dplyr::first(.data$submitted_foreground_n),
+          submitted_background_n = dplyr::first(.data$submitted_background_n),
+          effective_query_n = dplyr::first(.data$effective_query_n),
+          effective_domain_n = dplyr::first(.data$effective_background_or_domain_n),
+          .groups = "drop"
+        )
+      readr::write_csv(coverage, file.path(output_dir, "custom_background_context_recognition_coverage.csv"))
+    }
+  }
+  writeLines(
+    c(
+      "Scoreless v0.1.4 evaluation summary.",
+      "Primary outputs are descriptive: evidence-profile composition, annotation-context recurrence, recognition coverage, and provenance availability.",
+      "No composite score, cross-context p-value aggregate, default-domain evidence, or raw term-count quality claim is used."
+    ),
+    file.path(output_dir, "README_scoreless_evaluation.txt")
+  )
+  invisible(NULL)
+}
 
 
 #' Compute Jaccard index between two sets

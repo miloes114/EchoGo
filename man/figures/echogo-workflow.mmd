@@ -1,0 +1,40 @@
+%% Figure 1. EchoGO overview and intended use.
+%% Canonical editable source; caption and README-ready copy are in
+%% echogo_conceptual_flow.md. No external images or fonts are required.
+%% Palette: inst/reports/echogo_report.css and R/report_visuals.R.
+%% GOseq results are supplied; EchoGO does not run the upstream GOseq analysis.
+%% Target GOseq enters evidence assembly directly, not the context analysis.
+%% Optional default-domain exploration is described in the caption.
+%%{init: {"theme":"base","htmlLabels":false,"fontFamily":"Arial, Helvetica, sans-serif","themeVariables":{"fontFamily":"Arial, Helvetica, sans-serif","fontSize":"24px"},"themeCSS":"text, .label { font-family: Arial, Helvetica, sans-serif !important; }","flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":32,"rankSpacing":24,"padding":14,"wrappingWidth":440}}}%%
+flowchart TB
+    A["RNA-seq experiment<br/>Reference-based or de novo"]
+    B["Experimental feature space<br/>Differentially expressed features ·<br/>tested features<br/>Target annotation"]
+    T["Target functional analysis<br/>GOseq"]
+    P["Identifier resolution<br/>Foreground · background<br/>Representability"]
+    C["Selected annotation contexts<br/>Biologically relevant<br/>organism resources"]
+    G["Contextual enrichment<br/>g:Profiler<br/>Experiment-specific background"]
+    E["GO-term evidence assembly<br/>Target only · target + context<br/>Context-derived hypotheses"]
+    F["Functional synthesis<br/>Semantic themes · networks · reports<br/>Biological interpretation and hypotheses"]
+
+    A --> B
+    B --> T
+    B --> P
+    T ---> E
+    P --> C
+    C --> G
+    G --> E
+    E --> F
+
+    classDef study fill:#fbefec,stroke:#b4523a,stroke-width:2px,color:#193247;
+    classDef inputs fill:#f5f8fa,stroke:#526574,stroke-width:1.5px,color:#193247;
+    classDef target fill:#f2f8fb,stroke:#176b87,stroke-width:2px,color:#193247;
+    classDef context fill:#fff8eb,stroke:#d99a26,stroke-width:2px,color:#193247;
+    classDef evidence fill:#eef7f8,stroke:#2a8f88,stroke-width:2px,color:#193247;
+    classDef interpretation fill:#f3f8f4,stroke:#2f7d5b,stroke-width:2px,color:#193247;
+    class A study;
+    class B,P inputs;
+    class T target;
+    class C,G context;
+    class E evidence;
+    class F interpretation;
+    linkStyle default stroke:#526574,stroke-width:1.5px;

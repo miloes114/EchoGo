@@ -2,28 +2,42 @@
 % Please edit documentation in R/consensus.R
 \name{build_consensus_table}
 \alias{build_consensus_table}
-\title{Build Consensus Enrichment Table}
+\title{Build the canonical scoreless exact-term evidence table}
 \usage{
 build_consensus_table(
   goseq_file,
   gprofiler_dir = "cross_species_gprofiler",
   species_map = c(hsapiens = "human", mmusculus = "mouse", drerio = "zebrafish"),
-  output_dir = "consensus_enrichment"
+  output_dir = "consensus_enrichment",
+  target_context = NULL,
+  context_metadata = NULL,
+  adjusted_p_threshold = 0.05,
+  annotation_provenance = NULL
 )
 }
 \arguments{
-\item{goseq_file}{Path to GOseq annotated enrichment CSV file.}
+\item{goseq_file}{Annotated GOseq result CSV.}
 
-\item{gprofiler_dir}{Directory with g:Profiler enrichment subfolders (default: "cross_species_gprofiler").}
+\item{gprofiler_dir}{g:Profiler output root.}
 
-\item{species_map}{Named character vector mapping g:Profiler species codes -> labels.}
+\item{species_map}{Named g:Profiler organism code to label mapping.}
 
-\item{output_dir}{Output folder to write final consensus Excel tables.}
+\item{output_dir}{Output directory.}
+
+\item{target_context}{Optional researcher-designated target g:Profiler code or label.}
+
+\item{context_metadata}{Optional researcher-supplied context rationale provenance.}
+
+\item{adjusted_p_threshold}{Source-specific adjusted-p qualification threshold.}
+
+\item{annotation_provenance}{Optional resolver mapping table.}
 }
 \value{
-A scored consensus data frame.
+Exact-term evidence data frame, with long provenance attached as an attribute.
 }
 \description{
-Merges GOseq and g:Profiler enrichment results (with and without background)
-into a scored consensus table with logical annotations, supporting downstream visualizations.
+The returned table is a complete, provenance-linked evidence landscape. It
+never combines p-values across contexts. `target_goseq_supported` is derived
+from the configured source-specific adjusted-p threshold, not from GOseq row
+presence.
 }

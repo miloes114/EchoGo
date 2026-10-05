@@ -1,4 +1,8 @@
-#' Rarefaction benchmark (exploratory/consensus) with priority ordering & plateau
+#' Deprecated legacy rarefaction benchmark
+#'
+#' This compatibility utility consumes pre-v0.1.4 score-era tables. It is not
+#' part of the canonical v0.1.4 evidence workflow and does not define current
+#' support, recurrence, or semantic-product outputs.
 #'
 #' Builds the same cumulative and permutation rarefaction curves as
 #' \code{run_rarefaction_curves()}, but:
@@ -19,8 +23,9 @@
 #' @param species_priority Character vector of species labels to pin first
 #'   (e.g., \code{c("hsapiens","mmusculus","rnorvegicus","drerio","dmelanogaster","celegans","ggallus","xtropicalis")}).
 #'   Labels must match the column suffixes used in the consensus (e.g., \code{in_<label>_nobg}).
-#' @param use_modes Character vector of modes to build. Any of \code{c("true_consensus","exploratory")}.
-#'   Default \code{"exploratory"}.
+#' @param use_modes Historical input-mode labels from a pre-v0.1.4 table.
+#'   Default \code{"exploratory"}; these labels are retained only for
+#'   compatibility with legacy files.
 #' @param min_steps Minimum steps before testing plateau (default 5).
 #' @param window_k Moving window (steps) for gain test (default 3).
 #' @param min_abs_gain Absolute new-term gain over last \code{window_k} steps below which we stop (default 5).

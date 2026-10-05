@@ -2,7 +2,7 @@
 % Please edit documentation in R/enrichment_eval.R
 \name{evaluate_consensus_vs_goseq}
 \alias{evaluate_consensus_vs_goseq}
-\title{Evaluate Consensus vs. GOseq Enrichment}
+\title{Evaluate EchoGO evidence alongside GOseq}
 \usage{
 evaluate_consensus_vs_goseq(
   consensus_file,
@@ -27,17 +27,11 @@ prefers "<run>/networks" (canonical) and falls back to "<run>/Network_analysis" 
 Invisibly returns NULL; writes plots and tables to `output_dir`.
 }
 \description{
-Compares EchoGO consensus enrichment results against GOseq-only enrichment
-using multiple complementary metrics:
-\itemize{
-  \item Jaccard Index for term overlap (overall, per ontology, by depth)
-  \item Enrichment Quality Index (EQI) distributions and summary statistics
-  \item Fold Enrichment distributions
-  \item Term origin distributions
-  \item Rarefaction curves showing recovery of new terms from multi-species integration
-  \item Network complexity comparison between conservative/background-aware and exploratory modes
-}
-Generates Venn diagrams, density plots, cumulative and permutation rarefaction curves,
-and summary tables. Designed to mirror the functionality and output structure of the
-corresponding .Rmd analysis step in the EchoGO workflow.
+For canonical v0.1.4 scoreless evidence, writes descriptive primary
+diagnostics: evidence-profile composition, annotation-context recurrence,
+custom-background recognition coverage and provenance availability. It does
+not evaluate a composite score or treat more terms as better performance.
+Historical wide score-era tables remain supported through a compatibility
+path. The exported function and `consensus_file` argument retain legacy names
+for API compatibility; canonical input is the exact-term evidence workbook.
 }

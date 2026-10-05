@@ -22,5 +22,7 @@ echogo_run(
 }
 \description{
 This wrapper prefers the modern `run_full_echogo(input_dir = ...)` interface.
-It reads `input/config.yml` when present to pick species/orgdb.
+It reads `input/config.yml` when present to obtain researcher-declared
+enrichment contexts, target/no-target state, and optional RRvGO semantic
+reference configuration.
 }

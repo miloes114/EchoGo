@@ -7,9 +7,17 @@
 echogo_run_reference_rnaseq(
   input_dir,
   outdir,
-  strict_only = FALSE,
+  strict_only = NULL,
+  run_exploratory_default_domain = FALSE,
+  target_context = NULL,
+  context_metadata = NULL,
   run_evaluation = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  species = NULL,
+  run_rrvgo = FALSE,
+  semantic_reference_orgdb = NULL,
+  semantic_reference_role = NULL,
+  orgdb = NULL
 )
 }
 \arguments{
@@ -17,7 +25,24 @@ echogo_run_reference_rnaseq(
 
 \item{outdir}{Base output directory (EchoGO will create its standard layout here).}
 
-\item{strict_only, run_evaluation, verbose}{Passed to \code{run_echogo_pipeline()}.}
+\item{strict_only}{Deprecated compatibility alias passed to \code{run_echogo_pipeline()}.}
+
+\item{run_exploratory_default_domain, target_context, context_metadata}{Passed to \code{run_echogo_pipeline()}.}
+
+\item{run_evaluation}{Run scoreless evaluation/diagnostic summaries.}
+
+\item{verbose}{Print progress messages.}
+
+\item{species}{Researcher-selected g:Profiler organism contexts. If omitted,
+they must be present in config.yml.}
+
+\item{run_rrvgo}{Enable optional RRvGO semantic reduction.}
+
+\item{semantic_reference_orgdb}{Preferred RRvGO semantic-reference OrgDb.}
+
+\item{semantic_reference_role}{Declared `target_reference` or `proxy` role.}
+
+\item{orgdb}{Deprecated compatibility alias for `semantic_reference_orgdb`.}
 }
 \value{
 Invisible list returned by \code{run_echogo_pipeline()}.
@@ -26,12 +51,14 @@ Invisible list returned by \code{run_echogo_pipeline()}.
 Convenience wrapper that:
   - detects standard scaffold inputs inside \code{input_dir}
   - calls \code{run_echogo_pipeline()} with the right files
-  - uses config.yml (if present) to set species/orgdb, otherwise defaults.
+  - uses config.yml (if present) for explicit context and optional RRvGO
+    semantic-reference declarations.
 
 Expected files inside \code{input_dir}:
   - *_GOseq.enriched.tsv         (required)
   - *_eggNOG_for_EchoGO.tsv or Trinotate.* (required)
   - dge_*.csv                    (required)
   - allcounts_table.txt          (required)
-  - config.yml                   (optional: species, orgdb, report_title)
+  - config.yml                   (recommended: contexts, target declaration,
+                                   and optional RRvGO configuration)
 }

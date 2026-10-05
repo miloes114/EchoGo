@@ -1,0 +1,61 @@
+---
+title: "Zebrafish: reference-rich functional interpretation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Zebrafish: reference-rich functional interpretation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Zebrafish is the experimental target in this reference-rich use case. Target
+GOseq enrichment remains the biological anchor. Researcher-selected fish
+contexts are annotation lenses for asking which parts of that target
+interpretation are represented across selected fish annotation contexts and
+which additional hypotheses emerge.
+
+They are not independently exposed organisms, experimental replicates, or proof
+that another fish species would respond in the same way.
+
+```r
+run_full_echogo(
+  input_dir = "zebrafish_inputs",
+  outdir = "zebrafish_results",
+  species = c(drerio = "zebrafish", strutta = "brown_trout", gaculeatus = "stickleback"),
+  target_context = "drerio",
+  context_metadata = data.frame(
+    context_code = c("drerio", "strutta", "gaculeatus"),
+    context_rationale = c("Experimental target", "Selected fish annotation lens", "Selected fish annotation lens")
+  ),
+  run_exploratory_default_domain = FALSE,
+  run_rrvgo = TRUE,
+  semantic_reference_orgdb = "org.Dr.eg.db",
+  semantic_reference_role = "target_reference"
+)
+```
+
+Read `TARGET_ONLY` as target-supported biology and `TARGET_PLUS_CONTEXT` as
+target biology recovered through one or more selected alternative annotation
+contexts. `ALTERNATIVE_CONTEXT` rows are new hypotheses to inspect in the
+source-provenance trail. If enabled, RRvGO uses `org.Dr.eg.db` as a semantic
+reference and reports target-supported and alternative-context theme maps
+separately.
+
+## What the frozen zebrafish exercise demonstrates
+
+The curated, frozen zebrafish validation exercise has 44 target GOseq terms.
+Its exact-term evidence contains 2 `TARGET_ONLY`, 42
+`TARGET_PLUS_CONTEXT`, and 180 `ALTERNATIVE_CONTEXT` terms across the selected
+fish annotation contexts. It therefore demonstrates both target-plus-context
+recovery and traceable follow-up hypotheses that the compact packaged demo does
+not contain.
+
+RRvGO used `org.Dr.eg.db` with the `target_reference` role and `Rel` similarity
+for separate target-supported and alternative-context products. These are
+annotation-context summaries, not independent validation: the alternative
+fish contexts are researcher-selected resources, not independent exposure
+experiments or biological replicates.
+
+The packaged deterministic demonstration is intentionally compact. It
+illustrates the product contract without claiming a new zebrafish result; use a
+frozen validation bundle or your own inputs to obtain evidence appropriate to
+the study question.

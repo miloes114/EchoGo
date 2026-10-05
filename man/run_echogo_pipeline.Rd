@@ -2,19 +2,23 @@
 % Please edit documentation in R/run_echogo_pipeline.R
 \name{run_echogo_pipeline}
 \alias{run_echogo_pipeline}
-\title{Run the full EchoGO enrichment pipeline}
+\title{Run the EchoGO evidence and interpretation pipeline}
 \usage{
 run_echogo_pipeline(
   goseq_file,
   trinotate_file,
   de_file,
   count_matrix_file,
-  species = getOption("EchoGO.default_species", c("hsapiens", "mmusculus", "drerio")),
-  orgdb = getOption("EchoGO.default_orgdb", "org.Dr.eg.db"),
+  species = NULL,
+  orgdb = NULL,
   outdir = "echogo_out",
-  strict_only = FALSE,
+  strict_only = NULL,
+  run_exploratory_default_domain = FALSE,
+  target_context = NULL,
+  context_metadata = NULL,
   run_rrvgo = TRUE,
   run_evaluation = TRUE,
+  semantic_reference_role = NULL,
   use_trinotate_universe = FALSE,
   tested_gene_ids = NULL,
   de_id_column = NULL,
@@ -26,7 +30,8 @@ run_echogo_pipeline(
   padj_threshold = 0.05,
   log2fc_threshold = 1,
   de_table_significant_only = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  semantic_reference_orgdb = NULL
 )
 }
 \arguments{
@@ -42,15 +47,31 @@ run_echogo_pipeline(
 a named vector like c(hsapiens="human", mmusculus="mouse"); if unnamed, labels default
 to the codes themselves.}
 
-\item{orgdb}{Character|OrgDb|list for RRvGO (optional; passed through if supported)}
+\item{orgdb}{Deprecated compatibility alias for
+`semantic_reference_orgdb`. It is not an enrichment context.}
 
 \item{outdir}{Base output directory (standard layout will be created here)}
 
-\item{strict_only}{If TRUE, skip exploratory no-background runs.}
+\item{strict_only}{Deprecated compatibility alias. TRUE disables optional
+default-domain exploration; use `run_exploratory_default_domain` for new work.}
+
+\item{run_exploratory_default_domain}{If TRUE, run the optional
+default-domain exploratory g:Profiler layer. Defaults to FALSE.}
+
+\item{target_context}{Researcher-declared target g:Profiler context code or
+label. Use `NA_character_` for an explicit no-target declaration.}
+
+\item{context_metadata}{Optional data frame identifying queried contexts by
+`context_code` and/or `context_label` with optional `context_rationale` and
+`selection_basis`. This is interpretive provenance only and never affects
+enrichment, recurrence, evidence profiles, ordering, RRvGO, networks or evaluation.}
 
 \item{run_rrvgo}{Whether to run RRvGO semantic reduction (default: TRUE)}
 
 \item{run_evaluation}{Whether to run enrichment evaluation (default: TRUE)}
+
+\item{semantic_reference_role}{Required when RRvGO is enabled: either
+`target_reference` or `proxy`.}
 
 \item{use_trinotate_universe}{Deprecated compatibility flag retained in run
 metadata. It does not intersect or redefine the tested experiment universe.}
@@ -66,12 +87,15 @@ metadata. It does not intersect or redefine the tested experiment universe.}
 \item{de_table_significant_only}{Declare that the DE table contains significant rows only.}
 
 \item{verbose}{Print progress}
+
+\item{semantic_reference_orgdb}{Preferred OrgDb package used only for RRvGO
+semantic similarity. Required when RRvGO is enabled.}
 }
 \value{
 Named list with inputs, dirs, objects, files
 }
 \description{
 Loads and processes enrichment results using GOseq and g:Profiler,
-integrates them into a consensus table, and generates semantic, network, and
-evaluation outputs.
+assembles provenance-linked exact-term evidence, and generates semantic,
+gene-sharing network, and evaluation outputs.
 }

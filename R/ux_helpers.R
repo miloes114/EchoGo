@@ -1,4 +1,11 @@
 #' EchoGO - Quickstart help
+#'
+#' Prints offline-demo and own-data guidance. The standard workflow requires
+#' precomputed target GOseq as its primary target evidence, DE results,
+#' a complete tested-feature background and compatible annotation. Own-data
+#' runs require researcher-selected annotation contexts and an explicit target
+#' or no-target g:Profiler declaration; that declaration does not remove GOseq.
+#' When RRvGO is enabled, declare its semantic reference and reference role.
 #' @export
 echogo_help <- function() {
   cat("
@@ -7,13 +14,23 @@ EchoGO - Quickstart
 Run the built-in demo (light first-run validation; offline by default):
   echogo_quickstart(run_demo = TRUE)
 
-Run every exploratory stage (several minutes):
+Run the extended demo (default-domain exploration, RRvGO and diagnostics):
   echogo_quickstart(run_demo = TRUE, full = TRUE)
 
 Use your own data:
   echogo_scaffold('my_project')
-  # Put files into my_project/input (see _README.txt there)
-  echogo_run(input_dir = 'my_project/input', outdir = 'my_project/results')
+  # Populate inputs: DE results, complete tested-feature background,
+  # annotation and REQUIRED precomputed target GOseq (see input/_README.txt).
+  # Replace this illustrative zebrafish panel for your biological question.
+  echogo_run(input_dir = 'my_project/input', outdir = 'my_project/results',
+             species = c('drerio', 'omykiss'), target_context = 'drerio',
+             run_exploratory_default_domain = FALSE, run_rrvgo = TRUE,
+             semantic_reference_orgdb = 'org.Dr.eg.db',
+             semantic_reference_role = 'target_reference')
+  # Record optional context rationale with context_metadata or config.yml.
+  # If no queried context is the target: target_context = NA_character_.
+  # Target GOseq stays required; this declares only the g:Profiler context.
+  # To skip semantic reduction, set run_rrvgo = FALSE.
 
 Reference-based RNA-seq (DESeq2 + GOseq precomputed):
   If your contrast input folder already contains:
@@ -31,8 +48,10 @@ Reference-based RNA-seq (DESeq2 + GOseq precomputed):
     run_full_echogo(input_dir = input_dir,
                     outdir = outdir,
                     species = species,
-                    orgdb = 'org.Dr.eg.db',
-                    strict_only = FALSE,
+                    target_context = 'drerio',
+                    semantic_reference_orgdb = 'org.Dr.eg.db',
+                    semantic_reference_role = 'target_reference',
+                    run_exploratory_default_domain = FALSE,
                     run_evaluation = TRUE,
                     make_report = TRUE,
                     verbose = TRUE)
@@ -58,7 +77,7 @@ Checking / installing OrgDb & GO.db:
   - echogo_list_orgdb()                 # see which OrgDb packages are installed
   - echogo_install_orgdb_instructions() # print BiocManager::install() commands
   - echogo_install_orgdb('org.Mm.eg.db')# install one OrgDb into the active library
-  - echogo_require_orgdb()              # ensure OrgDb is available before running
+  - echogo_require_orgdb(c('GO.db','org.Dr.eg.db')) # preflight a declared reference
 
 Demo data:
   EchoGO ships with example inputs and frozen results.
@@ -67,8 +86,10 @@ Demo data:
 
 Run the full workflow:
   run_full_echogo(input_dir,
-                  species = getOption('EchoGO.default_species', c('hsapiens','mmusculus','drerio')),
-                  orgdb   = getOption('EchoGO.default_orgdb', 'org.Mm.eg.db'),
+                  species = c('drerio','strutta'),
+                  target_context = 'drerio',
+                  semantic_reference_orgdb = 'org.Dr.eg.db',
+                  semantic_reference_role = 'target_reference',
                   outdir  = 'echogo_out',
                   make_report = TRUE)
 
@@ -86,16 +107,17 @@ See also:
 
 
 .validate_quickstart_result <- function(res, require_report = FALSE) {
-  consensus_file <- res$files$consensus_xlsx
+  `%||%` <- function(a, b) if (is.null(a)) b else a
+  evidence_file <- res$files$exact_term_evidence %||% res$files$consensus_xlsx
 
-  if (is.null(consensus_file) || !file.exists(consensus_file)) {
-    stop("EchoGO demo did not produce its consensus table.", call. = FALSE)
+  if (is.null(evidence_file) || !file.exists(evidence_file)) {
+    stop("EchoGO demo did not produce its exact-term evidence table.", call. = FALSE)
   }
 
-  consensus <- openxlsx::read.xlsx(consensus_file)
-  if (!nrow(consensus)) {
+  evidence <- if (grepl("\\.xlsx$", evidence_file, ignore.case = TRUE)) openxlsx::read.xlsx(evidence_file) else readr::read_csv(evidence_file, show_col_types = FALSE)
+  if (!nrow(evidence)) {
     stop(
-      "EchoGO demo completed but returned an empty consensus table. ",
+      "EchoGO demo completed but returned an empty exact-term evidence table. ",
       "Inspect the GOseq parsing and g:Profiler input vectors.",
       call. = FALSE
     )
@@ -120,7 +142,9 @@ See also:
 #'
 #' Copies files from the package's `inst/extdata/echogo_demo` into `outdir/echogo_demo`.
 #' If `run_demo = TRUE`, it runs `run_full_echogo(input_dir = <that folder>)`
-#' using a small 3-species set (hsapiens, mmusculus, drerio) and OrgDb org.Mm.eg.db.
+#' using a small fixed set of researcher-declared annotation contexts. The target
+#' context is zebrafish (`drerio`); the full demonstration uses `org.Dr.eg.db`
+#' as an explicitly declared target semantic reference.
 #' The default is a light installation check. Set `full = TRUE` to include the
 #' exploratory stream, RRvGO, and evaluation outputs.
 #'
@@ -145,18 +169,38 @@ echogo_quickstart <- function(run_demo = FALSE,
   if (src == "") stop("Demo data not found in inst/extdata/echogo_demo of the package.")
 
   demo_dir <- file.path(outdir, "echogo_demo")
-  dir.create(demo_dir, recursive = TRUE, showWarnings = FALSE)
-  files <- list.files(src, full.names = TRUE)
-  ok <- file.copy(files, demo_dir, recursive = TRUE, overwrite = TRUE)
-  if (!all(ok)) warning("Some demo files could not be copied.")
+  .echogo_copy_tree(src, demo_dir, overwrite = TRUE)
 
   message("Demo data copied to: ", normalizePath(demo_dir, winslash = "/"))
 
   if (!isTRUE(run_demo)) return(invisible(demo_dir))
 
-  # Fixed small demo set for speed
-  species_demo <- c("hsapiens","mmusculus","drerio")
-  orgdb_demo   <- "org.Mm.eg.db"
+  # The built-in demo is explicitly offline unless live_gprofiler = TRUE.
+  # Scope both species and taxonomy refresh controls to this invocation so a
+  # missing or stale user cache cannot trigger an external request, while
+  # preserving the caller's options on success or error.
+  offline_options <- NULL
+  if (!isTRUE(live_gprofiler)) {
+    offline_options <- options(
+      EchoGO.species_autoupdate = FALSE,
+      EchoGO.taxonomy_online = FALSE
+    )
+    on.exit(options(offline_options), add = TRUE)
+  }
+
+  # This fixed panel is part of the documented demonstration, not an own-data
+  # default. Names become context labels in all user-facing output.
+  species_demo <- c(zebrafish = "drerio", mouse = "mmusculus", human = "hsapiens")
+  context_metadata_demo <- data.frame(
+    context_code = c("drerio", "mmusculus", "hsapiens"),
+    context_rationale = c(
+      "Experimental target annotation context.",
+      "Selected mammalian annotation context for comparative follow-up.",
+      "Selected human annotation context for comparative follow-up."
+    ),
+    stringsAsFactors = FALSE
+  )
+  semantic_reference_demo <- "org.Dr.eg.db"
 
   demo_files <- list(
     goseq = file.path(demo_dir, "GOseq_enrichment_demo.tsv"),
@@ -181,7 +225,7 @@ echogo_quickstart <- function(run_demo = FALSE,
   }
 
   if (!isTRUE(live_gprofiler)) {
-    cache <- file.path(demo_dir, "cached_gprofiler_v0.1.3")
+    cache <- file.path(demo_dir, "cache")
     if (!dir.exists(cache)) {
       stop("The deterministic demo g:Profiler cache is missing: ", cache, call. = FALSE)
     }
@@ -210,9 +254,6 @@ echogo_quickstart <- function(run_demo = FALSE,
 
   message("Demo GOseq input: ", basename(demo_files$goseq))
 
-  # Ensure required OrgDb is present (auto-install if missing)
-  echogo_require_orgdb(c("GO.db", orgdb_demo), auto_install = TRUE)
-
   run_args <- list(
     input_dir         = demo_dir,
     goseq_file        = demo_files$goseq,
@@ -220,10 +261,14 @@ echogo_quickstart <- function(run_demo = FALSE,
     de_file           = demo_files$de,
     count_matrix_file = demo_files$counts,
     species           = species_demo,
-    orgdb             = orgdb_demo,
+    target_context    = "drerio",
+    context_metadata  = context_metadata_demo,
+    semantic_reference_orgdb = semantic_reference_demo,
+    semantic_reference_role = "target_reference",
     outdir            = results_dir,
     make_report       = isTRUE(make_report),
-    strict_only       = !isTRUE(full),
+    strict_only       = NULL,
+    run_exploratory_default_domain = isTRUE(full),
     run_rrvgo         = isTRUE(full),
     run_evaluation    = isTRUE(full),
     use_trinotate_universe = FALSE
@@ -232,9 +277,13 @@ echogo_quickstart <- function(run_demo = FALSE,
   res <- do.call(run_full_echogo, run_args)
 
   .validate_quickstart_result(res, require_report = isTRUE(make_report))
+  `%||%` <- function(a, b) if (is.null(a)) b else a
   message(
     "EchoGO demo completed successfully.\n",
-    "Results: ", normalizePath(results_dir, winslash = "/", mustWork = FALSE)
+    "Start with the biological HTML report: ", res$files$report_html %||% "not rendered", "\n",
+    "Exact-term evidence: ", res$files$exact_term_evidence %||% res$files$consensus_xlsx, "\n",
+    "Representability audit: ", res$files$mapping_table %||% file.path(results_dir, "gprofiler", "submitted_vectors", "mapping_table.csv"), "\n",
+    "Results directory: ", normalizePath(results_dir, winslash = "/", mustWork = FALSE)
   )
 
   if (interactive() && !is.null(res$files$report_html) && !is.na(res$files$report_html)) {
@@ -308,16 +357,43 @@ Run EchoGO
 --------------------------------------------------------------
 After placing files here:
 
-  echogo_run(input_dir = 'PATH/input', outdir = 'PATH/results')
+  # Replace the illustrative contexts for your biological question.
+  echogo_run(input_dir = 'PATH/input', outdir = 'PATH/results',
+             species = c('drerio', 'omykiss'), target_context = 'drerio',
+             run_rrvgo = FALSE, run_exploratory_default_domain = FALSE)
 
 You can also point echogo_run() directly to a reference-based contrast input folder, e.g.:
   echogo_run(input_dir = '.../dge_<CONTRAST>/input',
-             outdir    = '.../dge_<CONTRAST>/results')
+             outdir    = '.../dge_<CONTRAST>/results',
+             species = c('drerio', 'omykiss'), target_context = 'drerio',
+             run_rrvgo = FALSE, run_exploratory_default_domain = FALSE)
+
+Target GOseq is required primary target evidence. Declaring NO_TARGET below
+means no target g:Profiler context is queried; it does not remove GOseq.
 
 --------------------------------------------------------------
-Species & annotation (g:Profiler + OrgDb)
---------------------------------------------------------------
-EchoGO uses g:Profiler organism IDs, e.g. hsapiens, mmusculus, drerio, dmelanogaster, celegans, ...
+Scientific configuration
+------------------------
+EchoGO does not choose biological annotation contexts for your experiment.
+Set 'species' to researcher-selected g:Profiler organism IDs, for example:
+  species: [drerio, strutta]
+
+Declare exactly one of:
+  target_context: drerio      # a queried target g:Profiler context
+  target_context: NO_TARGET   # no target g:Profiler context is queried
+
+Target GOseq remains the experimental anchor when NO_TARGET is declared.
+Optional context_metadata records rationale/provenance and never affects statistics.
+
+Default-domain g:Profiler exploration is opt-in:
+  run_exploratory_default_domain: false
+
+RRvGO is optional and uses a separate semantic reference:
+  run_rrvgo: false
+  semantic_reference_orgdb: null   # e.g. org.Dr.eg.db when RRvGO is enabled
+  semantic_reference_role: null    # target_reference or proxy
+
+The semantic OrgDb is not an enrichment context and EchoGO does not infer it.
 
 Full organism list (external):
   https://biit.cs.ut.ee/gprofiler/page/organism-list
@@ -327,18 +403,33 @@ Helpful EchoGO helpers:
   echogo_pick_species()
   echogo_preflight_species(c('hsapiens','mmusculus'))
 
-Checking / installing OrgDb & GO.db:
+Checking / installing optional RRvGO dependencies:
   echogo_list_orgdb()
   echogo_install_orgdb_instructions()
-  echogo_install_orgdb()
-  echogo_require_orgdb()
+  echogo_install_orgdb('org.Dr.eg.db')
+  echogo_require_orgdb(c('GO.db','org.Dr.eg.db'))
 "
 
   writeLines(readme, file.path(input, "_README.txt"))
 
-  yaml <- "species: [hsapiens, mmusculus, drerio]
-orgdb: org.Mm.eg.db
-report_title: EchoGO Report
+  yaml <- "# REQUIRED: add researcher-selected g:Profiler organism codes.
+species: []
+
+# REQUIRED: replace null with a queried context code or NO_TARGET.
+target_context: null
+
+# Optional provenance. Add context_code/context_rationale rows if useful.
+context_metadata: []
+
+# Optional broader exploratory tier; never primary evidence.
+run_exploratory_default_domain: false
+
+# Optional RRvGO semantic summarization. When true, declare both fields.
+run_rrvgo: false
+semantic_reference_orgdb: null
+semantic_reference_role: null
+
+report_title: EchoGO biological interpretation
 "
   writeLines(yaml, file.path(input, "config.yml"))
 
@@ -350,7 +441,9 @@ report_title: EchoGO Report
 #' Run EchoGO from a folder of inputs (and optional YAML)
 #'
 #' This wrapper prefers the modern `run_full_echogo(input_dir = ...)` interface.
-#' It reads `input/config.yml` when present to pick species/orgdb.
+#' It reads `input/config.yml` when present to obtain researcher-declared
+#' enrichment contexts, target/no-target state, and optional RRvGO semantic
+#' reference configuration.
 #'
 #' @param input_dir folder containing your inputs (see scaffold README)
 #' @param outdir results directory (default sibling 'results')
@@ -368,31 +461,67 @@ echogo_run <- function(input_dir,
     cfg <- yaml::read_yaml(config)
   }
 
-  species <- cfg$species %||% getOption("EchoGO.default_species",
-                                        c("hsapiens","mmusculus","drerio"))
-  orgdb   <- cfg$orgdb   %||% getOption("EchoGO.default_orgdb", "org.Mm.eg.db")
+  dots <- list(...)
+  species <- dots$species %||% cfg$species
+  if (is.null(species) || !length(unlist(species, use.names = FALSE))) {
+    stop(
+      "echogo_run() requires researcher-selected enrichment contexts. Set ",
+      "species in config.yml or supply species = c(...).",
+      call. = FALSE
+    )
+  }
 
-  args <- utils::modifyList(
-    list(
-      input_dir    = input_dir,
-      species      = species,
-      orgdb        = orgdb,
-      outdir       = outdir,
-      make_report  = TRUE,
-      report_title = cfg$report_title %||% NULL
-    ),
-    list(...)
+  target_from_dots <- "target_context" %in% names(dots)
+  target_from_config <- "target_context" %in% names(cfg) && !is.null(cfg$target_context)
+  if (target_from_dots && is.null(dots$target_context)) {
+    stop(
+      "target_context = NULL is not an explicit current declaration. Use a ",
+      "queried context code/label or target_context = NA_character_ for no target.",
+      call. = FALSE
+    )
+  }
+  if (!target_from_dots && !target_from_config) {
+    stop(
+      "echogo_run() requires a target-context declaration. Supply a queried ",
+      "context code/label, or use target_context = NA_character_ in R / ",
+      "target_context: NO_TARGET in config.yml.",
+      call. = FALSE
+    )
+  }
+
+  context_metadata <- cfg$context_metadata
+  if (is.list(context_metadata) && !is.data.frame(context_metadata) && length(context_metadata)) {
+    context_metadata <- dplyr::bind_rows(lapply(context_metadata, as.data.frame))
+  }
+
+  base_args <- list(
+    input_dir    = input_dir,
+    species      = unlist(species, use.names = TRUE),
+    outdir       = outdir,
+    make_report  = TRUE,
+    report_title = cfg$report_title %||% NULL,
+    run_rrvgo = cfg$run_rrvgo %||% TRUE,
+    run_exploratory_default_domain = cfg$run_exploratory_default_domain %||% FALSE
   )
-
-  # Ensure OrgDb + GO.db are available in the active library.
-  echogo_require_orgdb(c("GO.db", args$orgdb), auto_install = TRUE)
+  if (target_from_config) base_args$target_context <- cfg$target_context
+  if (!is.null(context_metadata) && length(context_metadata)) {
+    base_args$context_metadata <- context_metadata
+  }
+  if (!is.null(cfg$semantic_reference_orgdb)) {
+    base_args$semantic_reference_orgdb <- cfg$semantic_reference_orgdb
+  }
+  if (!is.null(cfg$semantic_reference_role)) {
+    base_args$semantic_reference_role <- cfg$semantic_reference_role
+  }
+  if (!is.null(cfg$orgdb)) base_args$orgdb <- cfg$orgdb
+  args <- utils::modifyList(base_args, dots)
 
   do.call(run_full_echogo, args)
 }
 
 #' Open or inspect the shipped EchoGO demo data
 #'
-#' Prints the paths to the packaged demo inputs and frozen results,
+#' Prints the paths to the packaged demo inputs and the v0.1.4 demo snapshot,
 #' shows their contents, and, in an interactive R session, opens the folders in
 #' the system file browser (Windows Explorer, macOS Finder, or Linux xdg-open).
 #'
@@ -404,7 +533,7 @@ echogo_open_demo <- function() {
   cat("\nEchoGO demo inputs:\n  ", demo_in, "\n\n")
   print(list.files(demo_in, full.names = TRUE))
 
-  cat("\nEchoGO frozen demo results:\n  ", demo_out, "\n\n")
+  cat("\nEchoGO v0.1.4 demo snapshot:\n  ", demo_out, "\n\n")
   print(list.files(demo_out, full.names = TRUE))
 
   open_dir <- function(path) {
@@ -435,10 +564,10 @@ echogo_demo_path <- function() {
   system.file("extdata", "echogo_demo", package = "EchoGO")
 }
 
-#' Path to shipped demo results (frozen snapshot)
-#' @return A filesystem path to the versioned v0.1.3 frozen demo results.
+#' Path to shipped demo results (frozen v0.1.4 snapshot)
+#' @return A filesystem path to the v0.1.4 product-facing demo snapshot.
 #' @export
 echogo_demo_results_path <- function() {
-  versioned <- system.file("extdata", "echogo_demo_results_v0.1.3", package = "EchoGO")
+  versioned <- system.file("extdata", "echogo_demo_results_v0.1.4", package = "EchoGO")
   if (nzchar(versioned)) versioned else system.file("extdata", "echogo_demo_results", package = "EchoGO")
 }

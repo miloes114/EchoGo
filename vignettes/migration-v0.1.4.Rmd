@@ -1,0 +1,119 @@
+---
+title: "Migrating from EchoGO v0.1.3 to v0.1.4"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Migrating from EchoGO v0.1.3 to v0.1.4}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## What changed
+
+EchoGO v0.1.4 is a scoreless functional-interpretation layer. It retains the
+target experiment as the anchor, records source-local enrichment statistics, and
+uses researcher-selected annotation contexts to expose recovery and traceable
+follow-up hypotheses.
+
+The following v0.1.3 outputs are retired from the current interpretation model:
+
+- `consensus_score` and `consensus_score_all`;
+- cross-context or integrated significance claims;
+- best/minimum p-value selection across contexts;
+- `true_consensus` and `nobg` as public scientific labels.
+
+EchoGO does not provide a recipe to reproduce the retired scores. Historical
+compatibility files or helper names can remain for bounded migration support,
+but they are not the v0.1.4 scientific product.
+
+## Read the new exact-term evidence
+
+Use `consensus/term_evidence_exact.csv` as the primary machine-readable table.
+It assigns each term one of these evidence profiles:
+
+- `TARGET_ONLY`: qualifying target GOseq support only;
+- `TARGET_PLUS_CONTEXT`: target support plus recovery in selected alternative
+  contexts with the matched experimental background;
+- `ALTERNATIVE_CONTEXT`: a selected-context hypothesis without qualifying target
+  GOseq support;
+- `NO_PRIMARY_SUPPORT`: neither primary product.
+
+Source-specific adjusted p-values and fold enrichment remain in
+`consensus/term_source_provenance_long.csv`; they are not combined. Context
+recurrence is descriptive of recovery across the selected annotation panel, not
+a probability, conservation statistic, or replication result.
+
+## Declare biology explicitly
+
+Own-data workflows now require explicit researcher configuration:
+
+```r
+run_full_echogo(
+  input_dir = "my_inputs",
+  outdir = "my_results",
+  species = c(drerio = "zebrafish", strutta = "brown_trout"),
+  target_context = "drerio",
+  run_exploratory_default_domain = FALSE,
+  run_rrvgo = FALSE
+)
+```
+
+Use `target_context = NA_character_` if no target g:Profiler context is queried.
+The YAML scaffold spells this as `target_context: NO_TARGET`. In either case,
+target GOseq remains the experimental anchor.
+
+`context_metadata` can preserve researcher rationale for a selected context. It
+is interpretive provenance only and never changes inference, recurrence, or
+ordering.
+
+## Matched background and exploration
+
+The primary product uses the matched experimental background constructed from
+the tested universe. Default-domain g:Profiler results are now explicitly named
+**default-domain exploratory** evidence. They are opt-in with
+`run_exploratory_default_domain = TRUE` and remain outside primary evidence
+profiles, recurrence, primary networks/evaluation, and primary semantic maps.
+
+## RRvGO semantic summaries
+
+When `run_rrvgo = TRUE`, declare both fields:
+
+```r
+semantic_reference_orgdb = "org.Dr.eg.db"
+semantic_reference_role = "target_reference"
+```
+
+`semantic_reference_role` can be `target_reference` or `proxy`. The older
+`orgdb` argument remains a warning-bearing compatibility alias in v0.1.4;
+`semantic_reference_orgdb` is preferred. EchoGO does not infer either choice
+from taxonomy or the enrichment context panel.
+
+RRvGO remains fixed to `Rel` and creates two separate products:
+
+1. target-supported semantic themes (`TARGET_ONLY` + `TARGET_PLUS_CONTEXT`);
+2. alternative-context hypothesis semantic themes (`ALTERNATIVE_CONTEXT`).
+
+The semantic reference is provenance for semantic similarity only. It cannot
+change exact-term evidence.
+
+## Find the new outputs
+
+Start with the rendered biological HTML report. It links the experimental
+representability audit, target interpretation, context recovery, hypotheses,
+semantic products, and technical source provenance. Key paths are:
+
+- `gprofiler/submitted_vectors/mapping_table.csv` — resolver/representability;
+- `consensus/term_evidence_exact.csv` — primary exact-term evidence;
+- `consensus/term_source_provenance_long.csv` — source-local statistics;
+- `diagnostics/run_configuration.json` — declared configuration;
+- `rrvgo/` — separated semantic products when enabled.
+
+## Compatibility limits
+
+v0.1.4 accepts the legacy `orgdb` alias and a bounded omitted-target path with
+an actionable warning. It does not preserve implicit biological context panels,
+automatic semantic-reference choice, score interpretation, or cross-context
+significance. Update scripts and report citations accordingly.

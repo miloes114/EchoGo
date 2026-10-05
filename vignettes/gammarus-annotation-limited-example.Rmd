@@ -1,0 +1,61 @@
+---
+title: "Gammarus: annotation-limited functional interpretation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Gammarus: annotation-limited functional interpretation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+In an annotation-limited Gammarus analysis, target GOseq remains the
+experiment-specific anchor even when no target g:Profiler context is available.
+It is therefore valid to make an explicit no-target declaration for the
+g:Profiler panel:
+
+```r
+run_full_echogo(
+  input_dir = "gammarus_inputs",
+  outdir = "gammarus_results",
+  species = c(dmelanogaster = "drosophila", hsapiens = "human"),
+  target_context = NA_character_,
+  context_metadata = data.frame(
+    context_code = c("dmelanogaster", "hsapiens"),
+    context_rationale = c("Declared arthropod annotation context", "Selected broad annotation context")
+  ),
+  run_exploratory_default_domain = FALSE,
+  run_rrvgo = TRUE,
+  semantic_reference_orgdb = "org.Dm.eg.db",
+  semantic_reference_role = "proxy"
+)
+```
+
+The resolver/representability audit is part of the result: it reports the path
+from experimental tested entities to portable names and the submitted
+background. Unrepresentable entities are not evidence of absent function, and
+alternative contexts do not replace better upstream annotation.
+
+With an explicit no-target g:Profiler state, target GOseq still distinguishes
+target-supported terms from `ALTERNATIVE_CONTEXT` hypotheses. The latter are
+follow-up candidates with context, source-local statistic, contributing-gene,
+and annotation provenance—not a claim that the reference organism experienced
+the Gammarus response.
+
+When RRvGO is enabled, `org.Dm.eg.db` is labelled as a semantic proxy for GO
+similarity only. It is not an enrichment context and cannot change the
+exact-term evidence table.
+
+## What the frozen Gammarus exercises demonstrate
+
+The two curated, frozen Gammarus exercises both retain a target GOseq anchor
+and an explicit no-target g:Profiler declaration. GAM1 has 194 target GOseq
+terms and 178 `TARGET_ONLY`, 16 `TARGET_PLUS_CONTEXT`, and 19
+`ALTERNATIVE_CONTEXT` exact terms. GAM2 has 59 target GOseq terms and 34
+`TARGET_ONLY`, 25 `TARGET_PLUS_CONTEXT`, and 20 `ALTERNATIVE_CONTEXT` exact
+terms. These results demonstrate representability
+and annotation limitations alongside recovery and hypothesis provenance; they
+do not establish that better upstream annotation has been recreated.
+
+For both frozen exercises, RRvGO used `org.Dm.eg.db` with the `proxy` role and
+`Rel` similarity. Target-supported and alternative-context semantic products
+were kept separate. The proxy describes GO semantic similarity only and never
+changes term membership, source statistics, or the no-target declaration.

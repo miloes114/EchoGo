@@ -2,8 +2,13 @@
 #'
 #' Runs the canonical EchoGO pipeline end-to-end:
 #' GOseq enrichment loading/annotation -> multi-context g:Profiler enrichment ->
-#' consensus scoring (strict + optional exploratory) -> RRvGO reduction (if enabled) ->
+#' scoreless exact-term evidence assembly (primary + optional default-domain exploratory layer) -> RRvGO reduction (if enabled) ->
 #' GO-term networks (if enabled) -> optional evaluation and HTML report.
+#'
+#' Target GOseq provides the primary target evidence in the standard EchoGO
+#' evidence model. Supply its precomputed results explicitly or through the
+#' input-folder resolver. Declaring no target g:Profiler context does not
+#' remove this GOseq experimental anchor.
 #'
 #' EchoGO supports two common input styles:
 #'
@@ -12,14 +17,14 @@
 #'   \item a count matrix (e.g. \code{gene.counts.matrix.tsv})
 #'   \item one DE table per contrast (e.g. \code{DE_\\*.tsv})
 #'   \item a Trinotate report (e.g. \code{Trinotate.xls} or \code{Trinotate\\*.tsv})
-#'   \item (optional) a GOseq enrichment table if you already computed it
+#'   \item a precomputed target GOseq enrichment table (required target evidence)
 #' }
 #'
 #' \strong{2) Reference-based RNA-seq layout} (DESeq2 + GOseq precomputed)
 #' \itemize{
 #'   \item \code{allcounts_table.txt} (count matrix; required by current input resolver)
 #'   \item \code{dge_CONTRAST.csv} (DESeq2 table; required by current input resolver)
-#'   \item \code{CONTRAST.GOseq.enriched.tsv} (GOseq enriched categories; used when present)
+#'   \item \code{CONTRAST.GOseq.enriched.tsv} (required target GOseq evidence)
 #'   \item \code{Trinotate_for_EchoGO.tsv} or \code{<reference_label>_eggNOG_for_EchoGO.tsv} (annotation; required)
 #' }
 #'
@@ -29,8 +34,10 @@
 #'
 #' @param input_dir Optional. Folder containing inputs. If provided, EchoGO will attempt to
 #'   auto-detect required files using filename patterns.
-#' @param goseq_file Optional. Path to a GOseq enrichment file (e.g. \code{\\*GOseq\\*.tsv}).
-#'   If \code{input_dir} is provided, EchoGO will attempt to detect it.
+#' @param goseq_file Path to the required precomputed target GOseq enrichment
+#'   table (e.g. \code{\\*GOseq\\*.tsv}). The argument may be omitted when
+#'   \code{input_dir} enables detection of that table; the target GOseq evidence
+#'   itself is required for the standard workflow.
 #' @param trinotate_file Optional but typically required. Path to a Trinotate or Trinotate-like/EggNOG
 #'   annotation table used to resolve portable canonical names and annotate GOseq output.
 #' @param de_file Optional. Path to a differential expression table (classic mode: \code{DE_\\*.tsv};
@@ -38,12 +45,14 @@
 #'   EchoGO attempts to detect it.
 #' @param count_matrix_file Optional. Path to a count matrix file (classic or reference-based).
 #'   If \code{input_dir} is provided and \code{count_matrix_file} is NULL, EchoGO attempts to detect it.
-#' @param species Character vector of g:Profiler organism IDs (e.g. \code{"hsapiens"}, \code{"mmusculus"},
-#'   \code{"drerio"}). Validated via \code{echogo_preflight_species()}.
+#' @param species Researcher-selected character vector of g:Profiler organism
+#'   IDs (e.g. \code{"hsapiens"}, \code{"mmusculus"}, \code{"drerio"}).
+#'   Own-data runs have no built-in biological context panel. Values are
+#'   validated via \code{echogo_preflight_species()}.
 #' @param species_expr Optional. A tag/taxonomy expression resolved via \code{echogo_resolve()} into
 #'   g:Profiler organism IDs; merged with \code{species} when both are provided.
-#' @param orgdb Character scalar. Bioconductor OrgDb package name for semantic similarity steps
-#'   (e.g. \code{"org.Dr.eg.db"}, \code{"org.Mm.eg.db"}).
+#' @param orgdb Deprecated compatibility alias for
+#'   \code{semantic_reference_orgdb}. It is not an enrichment context.
 #' @param outdir Output directory for all EchoGO results.
 #' @param make_report Logical; if TRUE, render the HTML report into \code{outdir}.
 #' @param report_sections Character vector selecting report sections to include.
@@ -51,9 +60,22 @@
 #' @param report_theme Character; Bootswatch theme name for the report (passed to R Markdown).
 #' @param report_template Optional; path to a custom Rmd template for report rendering.
 #' @param report_title Optional report title. Defaults to the output-directory name.
-#' @param strict_only Logical; if TRUE, compute only the conservative/background-aware stream.
+#' @param strict_only Deprecated compatibility alias. TRUE disables the optional
+#'   default-domain exploratory layer.
+#' @param run_exploratory_default_domain Logical; run the optional default-domain
+#'   exploratory tier. Defaults to FALSE.
+#' @param target_context Researcher-declared target g:Profiler context code or
+#'   label. Use \code{NA_character_} to declare explicitly that no target
+#'   g:Profiler context is queried; target GOseq remains the experimental anchor.
+#' @param context_metadata Optional data frame of researcher-supplied context rationale
+#'   provenance. It is not used for statistical inference or ranking.
 #' @param run_rrvgo Logical; if TRUE (default), run RRvGO semantic reduction.
 #' @param run_evaluation Logical; if TRUE, run evaluation/diagnostic summaries (when enabled).
+#' @param semantic_reference_role Required when RRvGO is enabled: either
+#'   \code{"target_reference"} or \code{"proxy"}. EchoGO does not infer it.
+#' @param semantic_reference_orgdb Preferred Bioconductor OrgDb package name for
+#'   RRvGO semantic similarity. Required when RRvGO is enabled and independent
+#'   of the g:Profiler organism contexts.
 #' @param use_trinotate_universe Deprecated compatibility flag retained in run
 #'   metadata. It never redefines the experiment-derived tested universe or
 #'   permits raw transcript-ID fallback.
@@ -72,9 +94,28 @@
 #'
 #' @examples
 #' \dontrun{
-#' ## Classic scaffold workflow
+#' ## Scaffold workflow: populate the experimental input files first.
+#' ## Required: DE results, complete tested-feature background, annotation,
+#' ## and precomputed target GOseq. Replace these illustrative contexts.
 #' echogo_scaffold("my_project")
-#' echogo_run(input_dir = "my_project/input", outdir = "my_project/results")
+#' echogo_run(
+#'   input_dir = "my_project/input",
+#'   outdir = "my_project/results",
+#'   species = c("drerio", "omykiss"),
+#'   target_context = "drerio",
+#'   context_metadata = data.frame(
+#'     context_code = c("drerio", "omykiss"),
+#'     context_rationale = c("Target organism resource",
+#'                           "Comparative teleost resource for the study question")
+#'   ),
+#'   run_exploratory_default_domain = FALSE,
+#'   run_rrvgo = TRUE,
+#'   semantic_reference_orgdb = "org.Dr.eg.db",
+#'   semantic_reference_role = "target_reference"
+#' )
+#' ## If no queried context is the target, use target_context = NA_character_.
+#' ## Target GOseq is still required. Disable RRvGO with run_rrvgo = FALSE
+#' ## when no justified semantic reference is available.
 #'
 #' ## Reference-based RNA-seq (DESeq2 + GOseq precomputed)
 #' input_dir <- "path/to/reference_project/echogo_input"
@@ -85,9 +126,11 @@
 #' res <- run_full_echogo(
 #'   input_dir              = input_dir,
 #'   species                = fish_species,
-#'   orgdb                  = "org.Dr.eg.db",
+#'   target_context         = "drerio",
+#'   semantic_reference_orgdb = "org.Dr.eg.db",
+#'   semantic_reference_role = "target_reference",
 #'   outdir                 = outdir,
-#'   strict_only            = FALSE,
+#'   run_exploratory_default_domain = FALSE,
 #'   run_evaluation         = TRUE,
 #'   make_report            = TRUE,
 #'   verbose                = TRUE
@@ -108,9 +151,9 @@ run_full_echogo <- function(
     trinotate_file = NULL,
     de_file = NULL,
     count_matrix_file = NULL,
-    species = getOption("EchoGO.default_species", c("hsapiens","mmusculus","drerio")),
+    species = NULL,
     species_expr = NULL,   # allow tag/taxonomy expressions
-    orgdb   = getOption("EchoGO.default_orgdb", "org.Dr.eg.db"),
+    orgdb   = NULL,
     outdir  = "echogo_out",
     make_report = TRUE,
     report_sections = c("overview","goseq","gprofiler","consensus","rrvgo","networks"),
@@ -118,9 +161,13 @@ run_full_echogo <- function(
     report_theme = "flatly",
     report_template = NULL,
     report_title = NULL,
-    strict_only = FALSE,
+    strict_only = NULL,
+    run_exploratory_default_domain = FALSE,
+    target_context = NULL,
+    context_metadata = NULL,
     run_rrvgo = TRUE,
     run_evaluation = TRUE,
+    semantic_reference_role = NULL,
     use_trinotate_universe = FALSE,
     tested_gene_ids = NULL,
     de_id_column = NULL,
@@ -132,9 +179,12 @@ run_full_echogo <- function(
     padj_threshold = 0.05,
     log2fc_threshold = 1,
     de_table_significant_only = FALSE,
-    verbose = TRUE
+    verbose = TRUE,
+    semantic_reference_orgdb = NULL
 ) {
   `%||%` <- function(a,b) if (!is.null(a)) a else b
+  species_was_missing <- missing(species)
+  target_was_missing <- missing(target_context)
 
   # Keep compatibility mirrors disabled unless explicitly requested.
   if (is.null(getOption("EchoGO.legacy_aliases", NULL))) {
@@ -146,8 +196,9 @@ run_full_echogo <- function(
     expr_ids <- tryCatch(echogo_resolve(species_expr, refresh = FALSE),
                          error = function(e) character(0))
     if (length(expr_ids)) {
-      if (missing(species) || is.null(species) || !length(species)) {
+      if (species_was_missing || is.null(species) || !length(species)) {
         species <- expr_ids
+        species_was_missing <- FALSE
         if (isTRUE(verbose)) message("Resolved species_expr to ", paste(species, collapse = ", "))
       } else {
         species <- unique(c(as.character(species), expr_ids))
@@ -159,17 +210,37 @@ run_full_echogo <- function(
   }
 
   # ---- help users find & validate -------------------------------------------
-  if (missing(species) || is.null(species) || !length(species)) {
+  if (species_was_missing || is.null(species) || !length(species)) {
     if (interactive()) {
       message("No species provided. Opening interactive chooser...")
       try(echogo_pick_species(refresh = FALSE), silent = TRUE)
     }
-    stop("Please provide species=... (e.g., c('hsapiens','mmusculus')) or species_expr='...'. ",
-         "Use echogo_list_species(view=TRUE) or echogo_species_lookup('human') to discover IDs.", call. = FALSE)
   }
+
+  species <- .echogo_resolve_enrichment_contexts(
+    species,
+    argument_missing = species_was_missing,
+    caller = "run_full_echogo()"
+  )
 
   species <- echogo_preflight_species(species, refresh = FALSE, error_if_unknown = TRUE)
   if (isTRUE(verbose)) message("Using species: ", paste(species, collapse = ", "))
+
+  target_contract <- .echogo_resolve_target_declaration(
+    target_context,
+    argument_missing = target_was_missing,
+    caller = "run_full_echogo()"
+  )
+  semantic_contract <- .echogo_resolve_semantic_reference(
+    semantic_reference_orgdb = semantic_reference_orgdb,
+    orgdb = orgdb,
+    semantic_reference_role = semantic_reference_role,
+    run_rrvgo = run_rrvgo,
+    caller = "run_full_echogo()"
+  )
+  if (isTRUE(run_rrvgo)) {
+    .echogo_preflight_semantic_dependencies(semantic_contract$orgdb)
+  }
 
   # ---- resolve files if input_dir is used -----------------------------------
   if (!is.null(input_dir)) {
@@ -234,11 +305,15 @@ run_full_echogo <- function(
     de_file           = de_file,
     count_matrix_file = count_matrix_file,
     species           = species,
-    orgdb             = orgdb,
+    orgdb             = NULL,
     outdir            = outdir_norm,
     strict_only       = strict_only,
+    run_exploratory_default_domain = run_exploratory_default_domain,
+    target_context    = target_contract$configured_value,
+    context_metadata  = context_metadata,
     run_rrvgo         = run_rrvgo,
     run_evaluation    = run_evaluation,
+    semantic_reference_role = semantic_contract$role,
     use_trinotate_universe = use_trinotate_universe,
     tested_gene_ids = tested_gene_ids,
     de_id_column = de_id_column,
@@ -250,7 +325,8 @@ run_full_echogo <- function(
     padj_threshold = padj_threshold,
     log2fc_threshold = log2fc_threshold,
     de_table_significant_only = de_table_significant_only,
-    verbose           = verbose
+    verbose           = verbose,
+    semantic_reference_orgdb = semantic_contract$orgdb
   )
 
   # ---- render report ----
@@ -307,6 +383,15 @@ run_full_echogo <- function(
   res$files$report_html  <- if (is.character(report_html) && length(report_html) == 1 && nzchar(report_html)) {
     normalizePath(report_html, winslash = "/", mustWork = FALSE)
   } else NA_character_
+
+  if (isTRUE(verbose)) {
+    message("\nEchoGO completed. Start with the biological HTML report: ", res$files$report_html)
+    message("Exact-term evidence: ", res$files$exact_term_evidence)
+    message("Representability audit: ", res$files$mapping_table)
+    if (length(res$files$semantic_products) == 1L && !is.na(res$files$semantic_products)) {
+      message("Semantic products (if terms qualified): ", res$files$semantic_products)
+    }
+  }
 
   return(invisible(res))
 }

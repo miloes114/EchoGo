@@ -1,5 +1,0 @@
-"go","cluster","parent","score","size","term","parentTerm","termUniqueness","termUniquenessWithinCluster","termDispensability","origin"
-"GO:0008152",1,"GO:0008152",2,11667,"metabolic process","metabolic process",0.811,0.748,0,"GO terms - Consensus (with BG)"
-"GO:0009987",2,"GO:0009987",1.69897000433602,17654,"cellular process","cellular process",0.96675,1,0,"GO terms - Consensus (with BG)"
-"GO:0006397",1,"GO:0008152",1.48148606012211,508,"mRNA processing","metabolic process",0.7535,0.688333333333333,0.306,"GO terms - g:Profiler only (with BG)"
-"GO:0006355",1,"GO:0008152",1.39794000867204,3302,"regulation of DNA-templated transcription","metabolic process",0.70975,0.640333333333333,0.45,"GO terms - Consensus (with BG)"

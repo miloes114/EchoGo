@@ -66,6 +66,26 @@ params:
     return(NA_character_)
   }
 
+  # Stage the report stylesheet and official logo beside the temporary Rmd so
+  # self-contained rendering is independent of the installed package path.
+  css_src <- file.path(dirname(tpl_src), "echogo_report.css")
+  css_staged <- file.path(base_dir, "echogo_report.css")
+  if (file.exists(css_src)) {
+    file.copy(css_src, css_staged, overwrite = TRUE, copy.date = TRUE)
+  }
+  logo_source <- tryCatch(.echogo_logo_source_path(), error = function(e) NA_character_)
+  logo_staged <- tryCatch(
+    .echogo_stage_report_logo(base_dir, logo_source),
+    error = function(e) NA_character_
+  )
+  if (is.na(logo_staged) || !file.exists(logo_staged)) {
+    warning("Official EchoGO logo was not found; rendering without branding asset.")
+  }
+  on.exit({
+    if (file.exists(css_staged)) unlink(css_staged, force = TRUE)
+    if (file.exists(file.path(base_dir, "echogo-logo.png"))) unlink(file.path(base_dir, "echogo-logo.png"), force = TRUE)
+  }, add = TRUE)
+
   # --- Params for the Rmd; tell it where the FINAL report dir will be
   render_params <- params %||% list()
   render_params$dirs <- render_params$dirs %||% list()
@@ -140,6 +160,15 @@ params:
   # --- Move artifacts into report/, then clean root
   dir.create(report_dir, recursive = TRUE, showWarnings = FALSE)
 
+  # Keep canonical presentation assets beside the saved Rmd even when a
+  # renderer or filesystem refuses to rename the staged temporary files.
+  if (file.exists(css_src)) {
+    file.copy(css_src, file.path(report_dir, "echogo_report.css"), overwrite = TRUE, copy.date = TRUE)
+  }
+  if (!is.na(logo_source) && file.exists(logo_source)) {
+    file.copy(logo_source, file.path(report_dir, "echogo-logo.png"), overwrite = TRUE, copy.date = TRUE)
+  }
+
   # Move HTML
   final_html <- file.path(report_dir, basename(res_path))
   if (!file.rename(res_path, final_html)) {
@@ -153,6 +182,11 @@ params:
     file.copy(stable_rmd, final_rmd, overwrite = TRUE)
     unlink(stable_rmd, force = TRUE)
   }
+
+  # Keep the stylesheet/logo beside the user-visible Rmd for reproducible
+  # re-knitting while the HTML itself remains self-contained.
+  if (file.exists(css_staged)) file.copy(css_staged, file.path(report_dir, "echogo_report.css"), overwrite = TRUE, copy.date = TRUE)
+  if (!is.na(logo_staged) && file.exists(logo_staged)) file.copy(logo_staged, file.path(report_dir, "echogo-logo.png"), overwrite = TRUE, copy.date = TRUE)
 
   # Copy index into report/ but KEEP the authoritative index in base_dir
   root_index <- file.path(base_dir, "__file_index.csv")

@@ -1,445 +1,268 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21475836.svg)](https://doi.org/10.5281/zenodo.21475836)
+# EchoGO
 
-# 🧬 EchoGO
+<img src="man/figures/echogo-logo.png" alt="EchoGO logo" width="190" align="right">
 
-### Cross-Species Consensus Enrichment for Non-Model Organisms
+### Annotation-context-aware functional interpretation of transcriptomic data
 
-**EchoGO** is a modular, end-to-end functional enrichment pipeline designed for **de novo transcriptomes**
-(Trinity → Trinotate → GOseq) and **reference-based RNA-seq workflows** (e.g., HISAT2/STAR + featureCounts + DESeq2),
-as long as you provide the expected input bundle.
+[![R](https://img.shields.io/badge/R-%E2%89%A54.1-276DC3)](https://www.r-project.org/)
+[![Software license: GPL-3](https://img.shields.io/badge/software-GPL--3-1294A5)](https://www.gnu.org/licenses/gpl-3.0.html)
 
-It provides:
+Understand what your experiment supports, how annotation context shapes that interpretation, and which additional functions deserve follow-up.
 
--   Independent **g:Profiler organism-context analyses** using one matched resolved gene set
--   Integration of **GOseq** and **g:Profiler** into **conservative** and **exploratory** results
--   Semantic similarity reduction using **RRvGO**
--   GO term overlap **network analysis**
--   Optional fully rendered **HTML reports**
-------------------------------------------------------------------------
+EchoGO is an R framework for **functional interpretation and hypothesis generation after differential-expression analysis**. It keeps the target GOseq analysis central, examines the same transcriptomic response through researcher-selected organism annotation resources, and retains the source of every GO-term result. It does not combine evidence into a new significance statistic.
 
-## 📥 Installation
+**Start here:** [Offline demo](#try-the-full-offline-demonstration) · [Your own experiment](#bring-your-own-experiment) · [Interpretation](#read-the-evidence-not-a-composite-score) · [Validation](#three-complementary-validation-exercises)
 
-### 1) Linux users — install required system libraries
+<br clear="right">
 
-(Windows and macOS users can skip this step.)
+## Why annotation context matters
 
-``` bash
-sudo apt-get update
-sudo apt-get install -y \
-  libcurl4-openssl-dev libssl-dev libxml2-dev \
-  libfontconfig1-dev libfreetype6-dev libharfbuzz-dev \
-  libfribidi-dev libpng-dev libtiff5-dev libjpeg-dev
-```
+An experiment can measure many features yet connect only a small portion of them to functional annotation. This is especially important for de novo transcriptomes and non-model organisms, where unresolved identifiers and uneven annotation can obscure biological responses. Even in a reference-rich system, different organism resources can expose different parts of the same response.
 
-### 2) Install base R helpers
+EchoGO makes this dependence visible. Researchers choose annotation contexts for biological reasons—such as taxonomic proximity, relevant physiology or annotation coverage—and inspect what those choices recover. The contexts are **alternative resources for interpreting one experiment**, not additional experiments or independent biological replicates. EchoGO does not select a universally best reference organism.
 
-``` r
-install.packages(c("remotes", "BiocManager"))
-```
+### Three kinds of evidence, one experimental anchor
 
-### 3) Install EchoGO
+| Evidence category | Biological reading |
+|:--|:--|
+| **Target only** | Supported by target GOseq, without qualifying recovery in an alternative annotation context. Lack of recovery elsewhere does not negate the target result. |
+| **Target + context** | Supported by target GOseq and recovered in at least one alternative annotation context. Additional recovery describes annotation-context support, not stronger combined significance. |
+| **Context-derived hypotheses** | Recovered in an alternative annotation context without qualifying target GOseq support. These are traceable leads for biological follow-up. |
 
-``` r
-remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE)
-library(EchoGO)
-echogo_help()
-```
+A queried target-organism g:Profiler context is recorded separately from alternative contexts. It does not count as alternative-context recurrence. GO terms without primary qualifying support do not become hypotheses simply because they appear in an exploratory result.
 
-For a faster installation without locally registered vignettes, set
+## From experiment to interpretation
 
-`build_vignettes = FALSE`.
-**Windows note**: If installation warns about curl.dll “Permission denied”, close all R/RStudio sessions and delete the 00LOCK folder in your user library, then reinstall curl and EchoGO.
+<p align="center">
+  <img src="man/figures/echogo-workflow.svg" width="620" alt="The experimental feature space branches into supplied target GOseq evidence and identifier resolution followed by contextual enrichment. Both routes converge at GO-term evidence assembly and functional synthesis.">
+</p>
 
-If you want `browseVignettes("EchoGO")` and `vignette("EchoGO_workflow")` to work after installation, install EchoGO from a **built package tarball**:
+The main workflow starts with completed differential-expression and target GOseq analyses. GOseq supplies the target experimental anchor; g:Profiler evaluates the resolved experimental foreground against its matched tested-feature background in selected annotation contexts. These routes meet at **GO-term evidence assembly**, not at p-value aggregation. Semantic reduction, networks and reports then help interpret that evidence while retaining its provenance.
 
-- `remotes::install_github(..., build_vignettes = TRUE)` works because it builds the package first.
-- A release asset such as `EchoGO_0.1.3.tar.gz` also works.
-- A raw repository snapshot ZIP from GitHub/Zenodo is **not** the same thing as a built R package and does **not** include the installed vignette metadata that `browseVignettes()` uses.
+## Install EchoGO v0.1.4
 
-In short: if you install directly from a source snapshot folder with `R CMD INSTALL <folder>`, the package can still work, but the vignettes will usually not be registered.
+Use the **built `EchoGO_0.1.4.tar.gz` package** attached to the authorized public release when available. The public release identity and software archive DOI are pending; this documentation does not designate the current default GitHub branch as the v0.1.4 release.
 
-### 4) Install the OrgDb needed for RRvGO
+EchoGO declares R ≥ 4.1; the release candidate was verified with R 4.4.3. Use a compatible Bioconductor release for your R installation. Installing source dependencies may require system build tools: on Windows, use the Rtools version matching your R version. HTML reports require Pandoc, normally supplied by RStudio.
 
-Recommended automatic method:
+In a fresh RStudio session:
 
-``` r
-EchoGO::echogo_install_orgdb("org.Mm.eg.db")
-```
-
-`GO.db` and `rrvgo` are installed with EchoGO. An organism-specific OrgDb,
-such as `org.Mm.eg.db`, is still needed when RRvGO semantic reduction runs.
-
-### 5) Optional: Dependencies for HTML report generation
-
-``` r
-install.packages(c(
-  "rmarkdown", "knitr", "DT", "gt",
-  "patchwork", "ggforce", "plotly",
-  "visNetwork", "ggtext"
-))
-```
-
-HTML reports and vignettes require Pandoc. RStudio includes it; when using R
-from another terminal, confirm that `rmarkdown::pandoc_available()` returns
-`TRUE` and install Quarto or Pandoc if it does not.
-
-### 6) Test your installation
-
-``` r
-library(EchoGO)
-EchoGO::echogo_quickstart(run_demo = TRUE)
-```
-
-This is a deterministic offline validation using cached demonstration responses
-and the conservative/background-aware stream. It does not need an internet
-connection. Use `echogo_quickstart(run_demo = FALSE)` to copy and inspect only
-the inputs. Use `echogo_quickstart(run_demo = TRUE, live_gprofiler = TRUE)` for
-an optional live integration test. To exercise every exploratory, RRvGO, and evaluation stage,
-run `echogo_quickstart(run_demo = TRUE, full = TRUE)`; the full run can take
-several minutes.
-
-------------------------------------------------------------------------
-
-## 🏁 Quickstart
-
-``` r
-# 1) Install one annotation database for RRvGO
-EchoGO::echogo_install_orgdb("org.Mm.eg.db")
-
-# 2) Validate species
-species <- echogo_preflight_species(c("hsapiens", "mmusculus", "drerio"))
-
-# 3) Create project scaffold
-echogo_scaffold("my_project")
-
-# 4) Place your input files into my_project/input/
-#    De novo mode:
-#      - gene.counts.matrix.tsv
-#      - DE_*.tsv
-#      - Trinotate.xls
-#    Reference-based mode:
-#      - allcounts_table.txt
-#      - dge_<CONTRAST>.csv
-#      - dge_<CONTRAST>.GOseq.enriched.tsv
-#      - Trinotate_for_EchoGO.tsv
-#      - <reference_label>_eggNOG_for_EchoGO.tsv
-#    Generate these with echogo_prepare_reference_inputs().
-#    See: doc/reference-based-inputs.html
-
-# 5) Run the pipeline
-echogo_run("my_project/input", "my_project/results")
-
-# 6) Inspect consensus tables & plots in my_project/results/
-```
-
-------------------------------------------------------------------------
-
-## 📚 Documentation
-
-### Online (GitHub)
-- Workflow vignette: [EchoGO_workflow](doc/EchoGO_workflow.html)
-- Interpretation guide: [EchoGO_interpretation](doc/EchoGO_interpretation.html)
-- Reference-based RNA-seq inputs: [reference-based-inputs](doc/reference-based-inputs.html)
-
-### In R (after installation)
 ```r
+install.packages(c("remotes", "BiocManager", "rmarkdown", "knitr",
+                   "htmlwidgets", "DT", "visNetwork", "svglite", "cli"))
+BiocManager::install("org.Dr.eg.db", ask = FALSE, update = FALSE)
+
+archive <- file.choose()  # Select the built EchoGO_0.1.4.tar.gz
+remotes::install_local(
+  archive, build = FALSE, dependencies = NA, upgrade = "never",
+  repos = BiocManager::repositories()
+)
+
+library(EchoGO)
+packageVersion("EchoGO")
+find.package("EchoGO")
 browseVignettes("EchoGO")
-vignette("EchoGO_workflow")
-vignette("EchoGO_interpretation")
-vignette("reference-based-inputs")
 ```
 
-These commands require an installation that includes built vignette metadata. If they do not appear after install, reinstall from GitHub with:
+Dependency installation needs internet access; the subsequent demonstration does not need live g:Profiler requests. `org.Dr.eg.db` is the zebrafish semantic reference used by the full demo, not a universal requirement for every study.
+
+> **Choose the package, not the evidence archive.** A GitHub “Source code (zip)” snapshot and the validation-bundle ZIP are not the built R package. The built tarball includes rendered vignettes. If the reference-based guide is missing, check the installed version and library path above, then restart R and install the intended built package.
+
+## Try the full offline demonstration
 
 ```r
-remotes::install_github("miloes114/EchoGo", build_vignettes = TRUE, force = TRUE)
-```
-------------------------------------------------------------------------
+library(EchoGO)
 
-## ⚙️ Configuration
-
-### Set default annotation database
-
-``` r
-options(EchoGO.default_orgdb = "org.Mm.eg.db")
-```
-
-For multi-species enrichment:
-
-``` r
-options(EchoGO.default_orgdb = c("org.Hs.eg.db", "org.Mm.eg.db", "org.Dr.eg.db"))
-```
-
-Check which OrgDb packages are installed:
-
-``` r
-EchoGO::echogo_list_orgdb()
-```
-
-------------------------------------------------------------------------
-
-## 🔎 Species Selection
-
-EchoGO provides tools to browse, search, validate, and programmatically select supported g:Profiler species.
-
-### List supported organisms (interactive if DT is available)
-
-``` r
-echogo_list_species(view = TRUE)
-```
-
-### Search by name or NCBI ID
-
-``` r
-echogo_species_lookup(c("human", "mouse", "9606"))
-```
-
-### Fuzzy guessing
-
-``` r
-echogo_species_lookup(c("H. sapiens", "rat", "zebra fish"))
-```
-
-### Validate selected IDs
-
-``` r
-species <- echogo_preflight_species(c("hsapiens", "mmusculus", "drerio"))
-```
-
-### Filter by taxonomy & tags
-
-``` r
-# Interactive browsing
-echogo_list_species(view = TRUE)
-
-# Programmatic filter
-ids <- echogo_resolve("tag:AnimalModels OR order:Perciformes")
-```
-
-------------------------------------------------------------------------
-
-## 📂 Expected Inputs
-
-If you create a scaffold:
-
-``` r
-echogo_scaffold("my_project")
-```
-
-Place these files under `my_project/input/`:
-
-| File | Description |
-|------------------------|------------------------------------------------|
-| `gene.counts.matrix.tsv` | TSV format: first column = transcript/gene ID, remaining columns = sample counts |
-| `DE_*.tsv` | One or more DE tables with columns: `id`, `log2FC`, `pvalue`, `padj` |
-| `Trinotate.xls` | Standard Trinotate report with GO & KEGG annotation |
-
-These correspond to the standard Trinity/Trinotate/GOseq workflow:\
-<https://github.com/trinityrnaseq/trinityrnaseq/wiki>
-
-### Reference-based RNA-seq (HISAT2/STAR + featureCounts + DESeq2)
-
-EchoGO can build the reference-based bundle from a count matrix, DESeq2 CSV
-files, the matching GFF3/GTF, and the matching protein FASTA. The preparation
-helper is resumable around the external eggNOG-mapper step:
-
-``` r
-prep <- EchoGO::echogo_prepare_reference_inputs(
-  root = "path/to/reference_project",
-  gff_file = "genome.gff3.gz",
-  protein_fasta = "proteins.faa.gz",
-  reference_label = "MySpecies",
-  orgdb = NULL
-)
-
-# Run the command stored in prep$emapper_command, then repeat the same call.
-stopifnot(prep$status %in% c("awaiting_emapper", "complete"))
-```
-
-### Scientific gene-set contract (v0.1.3)
-
-For each contrast, EchoGO derives the g:Profiler foreground from significant
-genes in the DE table and the custom background from the genes tested in that
-same experiment. The default threshold rule is `padj <= 0.05` and
-`abs(log2FoldChange) >= 1`; an explicit logical `significant` column takes
-precedence when present. Missing adjusted p-values do not pass the threshold.
-
-The tested-universe precedence is: an explicit tested-gene list, all rows of a
-full DE table, then the matching count matrix when the DE file is explicitly
-declared significant-only. Foreground and background pass through the same
-deterministic portable canonical-name resolver. Its fixed priority is a genuine
-SwissProt-derived gene symbol, then `EggNM.Preferred_name`, then a portable
-native symbol. Raw transcript, contig, seed-ortholog, species-prefixed Ensembl
-protein, and arbitrary accession IDs are never submitted to g:Profiler; they
-remain in `mapping_table.csv` with the reason `no portable canonical name`.
-Blank values are ignored and duplicate portable names collapse by stable first
-occurrence. Taxonomy labels are retained as provenance but do not numerically
-filter this resolver. After mapping,
-the foreground must be a proper non-degenerate subset of the background or the
-run stops with a diagnostic.
-
-The same resolved vectors are submitted independently under every selected
-g:Profiler organism code. This is organism-context enrichment in a shared
-identifier space, not construction of species-specific ortholog gene sets.
-Exact vectors, the mapping table, per-run response metadata, effective sizes,
-and hashes are saved under `gprofiler/`.
-
-Use a species-native OrgDb, such as `org.Dr.eg.db`, in `orgdb` when one is
-available. Otherwise, leave it `NULL` and GOseq uses eggNOG GO terms. The full
-two-stage walkthrough and troubleshooting guide is here:
-
--   **Reference-based input preparation tutorial:** [reference-based-inputs](doc/reference-based-inputs.html)
-
-Place these files under `my_project/input/`:
-
-| File | Description |
-|------------------------|------------------------------------------------|
-| **allcounts_table.txt** | featureCounts gene count matrix (first column = gene ID, remaining columns = sample counts) |
-| `dge_<CONTRAST>.csv` | One DESeq2 results table per contrast (e.g., `dge_Treatment_vs_Control.csv`) |
-| `dge_<CONTRAST>.GOseq.enriched.tsv` | GOseq terms passing adjusted FDR 0.05 |
-| `dge_<CONTRAST>.GOseq.depleted.tsv` | Optional: GOseq depleted table from a custom preparation workflow |
-| **Trinotate_for_EchoGO.tsv** | Minimal Trinotate-like table used by EchoGO (created from eggNOG output) |
-| `<reference_label>_eggNOG_for_EchoGO.tsv` | Species-labeled eggNOG table used by EchoGO (created from eggNOG output) |
-
-At the end, your input folder should look like this:
-
-```   text
-my_project/input/
-├── allcounts_table.txt
-├── dge_<CONTRAST>.csv
-├── dge_<CONTRAST>.GOseq.enriched.tsv
-├── dge_<CONTRAST>.GOseq.depleted.tsv        (optional)
-├── Trinotate_for_EchoGO.tsv
-├── <reference_label>_eggNOG_for_EchoGO.tsv
-```  
-
-## ▶️ Running the Pipeline
-
-### Basic scaffolded workflow
-``` r
-echogo_scaffold("my_project")
-
-echogo_run(
-  input_dir = "my_project/input",
-  outdir = "my_project/results"
+demo <- echogo_quickstart(
+  run_demo = TRUE,
+  full = TRUE,
+  live_gprofiler = FALSE,
+  outdir = "echogo_demo_run"
 )
 ```
 
-### Full explicit call
+This copies the packaged example, uses cached g:Profiler results, and runs the richer interpretation workflow: exact-term evidence, recognition diagnostics, eligible RRvGO summaries, networks, evaluation and a styled HTML report. The full demo also illustrates the **separate optional default-domain exploratory layer**. It is an illustration of the workflow, not a reanalysis of the three manuscript validation cases.
 
-``` r
-run_full_echogo(
-  input_dir = "my_project/input",
-  goseq_file = "my_project/input/dge_Treatment_vs_Control.GOseq.enriched.tsv",
-  trinotate_file = "my_project/input/Trinotate_for_EchoGO.tsv",
-  de_file = "my_project/input/dge_Treatment_vs_Control.csv",
-  count_matrix_file = "my_project/input/allcounts_table.txt",
-  species   = species,      # or species_expr = "..."
-  orgdb     = "org.Mm.eg.db",
-  outdir    = "my_project/results",
+The report opens automatically in an interactive session. Its path is returned with the results:
+
+```r
+demo$files$report_html
+browseURL(demo$files$report_html)
+```
+
+Look in `echogo_demo_run/echogo_demo/results/report/`. Keep the report's companion assets and the surrounding result tree together when moving or sharing it. A semantic product may legitimately be skipped when too few eligible terms can be compared; the report records that condition rather than inventing a summary.
+
+For a lighter first run without RRvGO or evaluation:
+
+```r
+echogo_quickstart(
+  run_demo = TRUE, full = FALSE, live_gprofiler = FALSE,
+  outdir = "echogo_demo_light"
+)
+```
+
+Use a dedicated demo directory: the default `clean = TRUE` replaces that demo's previous results on rerun. Never point it at a directory containing your own analysis results.
+
+## Bring your own experiment
+
+### Prepare the biological inputs
+
+EchoGO supports reference-based and de novo studies. Your upstream software and directory names need not match the demonstration; explicit file paths are the clearest starting point.
+
+| Input | What it must represent |
+|:--|:--|
+| Differential-expression results | Feature IDs and the experiment's DE decision, or adjusted p-values and log2 fold changes from which to derive it. A full tested-feature table is preferable to a significant-only export. |
+| Tested-feature background | All features available for DE testing, not just significant features and not every entry in an annotation database. Supply an explicit vector when the DE table alone does not establish it. |
+| Annotation / identifier mapping | A compatible Trinotate or prepared eggNOG-derived table linking experimental IDs to supported name fields. Preserve unmapped and many-to-one mappings for interpretation. |
+| Target GOseq results | Precomputed target enrichment with `category`, `term`, `ontology`, `numDEInCat`, `numInCat`, `over_represented_FDR` and `gene_ids` columns. These provide the primary evidence. |
+| Annotation contexts | g:Profiler organism codes chosen for the biological question, an explicit target-context declaration, and a rationale for alternatives. |
+| Semantic reference, if using RRvGO | An installed OrgDb and its declared role as `target_reference` or `proxy`. This choice controls semantic summarization, not exact-term support. |
+
+Existing DE significance flags are honored. Otherwise, the default foreground rule is adjusted p-value ≤ 0.05 and absolute log2 fold change ≥ 1; configure these arguments to match your experimental analysis. Do not silently substitute those defaults for a different pre-specified DE rule.
+
+An explicit `tested_gene_ids` vector takes precedence over background inference. A full DE table can supply the tested universe; a matching count matrix is a fallback when a significant-only DE table is explicitly declared. Use `de_table_significant_only = TRUE` in that situation. Do not supply a significant-only table as though it were the tested universe.
+
+### Choose and declare annotation contexts
+
+The following is an **illustrative zebrafish configuration**, not the manuscript's validation panel and not a recommended panel for all organisms. Replace the paths, column names, contexts and rationales with those appropriate to your experiment.
+
+```r
+contexts <- c("drerio", "omykiss", "hsapiens")
+context_info <- data.frame(
+  context_code = contexts,
+  context_rationale = c(
+    "Target organism's annotation resource",
+    "Comparative teleost resource relevant to the study question",
+    "Well-annotated vertebrate resource for broader functional comparison"
+  )
+)
+
+# A headered table with one row per DE-tested experimental feature.
+tested <- read.delim("inputs/tested_features.tsv", stringsAsFactors = FALSE)
+
+result <- run_full_echogo(
+  de_file = "inputs/de_results.csv",
+  goseq_file = "inputs/target_goseq.tsv",
+  trinotate_file = "inputs/annotation_for_EchoGO.tsv",
+  tested_gene_ids = tested$gene_id,
+  de_id_column = "gene_id",
+  de_padj_column = "padj",
+  de_lfc_column = "log2FoldChange",
+  annotation_id_column = "transcript_id",
+  species = contexts,
+  target_context = "drerio",
+  context_metadata = context_info,
+  run_exploratory_default_domain = FALSE,
+  run_rrvgo = TRUE,
+  semantic_reference_orgdb = "org.Dr.eg.db",
+  semantic_reference_role = "target_reference",
+  run_evaluation = TRUE,
   make_report = TRUE,
-  verbose     = TRUE
+  outdir = "results/my_experiment"
 )
 ```
 
-### Using species expression
+**This own-data call uses g:Profiler's online service.** The demo's `live_gprofiler` argument is not an argument to `run_full_echogo()`. Preserve the resulting caches, submitted vectors and metadata with your results. Availability and annotation content of live resources can change.
 
-``` r
-run_full_echogo(
-  input_dir = "my_project/input",
-  species_expr = "tag:AnimalModels OR order:Perciformes",
-  outdir = "my_project/results",
-  make_report = TRUE
-)
+If none of the selected contexts represents the target organism, explicitly use `target_context = NA_character_`. Target GOseq remains the experimental anchor. For a proxy semantic reference, declare `semantic_reference_role = "proxy"` and document why it is appropriate. If semantic reduction is not justified or not wanted, use `run_rrvgo = FALSE` and omit the semantic-reference arguments.
+
+### Helpers and preparation guides
+
+```r
+echogo_scaffold("my_project")  # Create a template, not biological inputs
+echogo_pick_species()         # Browse available annotation contexts
+echogo_help()
+vignette("reference-based-inputs", package = "EchoGO")
 ```
 
-### Multiple OrgDb databases
+The scaffold documents supported layouts; automatic `input_dir` discovery is a convenience, not a scientific requirement. Its standard layout includes a count matrix. Use explicit paths and a tested-feature vector, as above, when your inputs are organized differently.
 
-``` r
-run_full_echogo(
-  input_dir = "my_project/input",
-  species = species,
-  orgdb   = c("org.Mm.eg.db", "org.Dr.eg.db"),
-  outdir  = "my_project/results"
-)
+For reference-based studies, `echogo_prepare_reference_inputs()` provides a staged GFF/GTF, protein FASTA and annotation-mapping workflow, including GOseq preparation. External annotation steps and dependencies are described in the [reference-based guide](vignettes/reference-based-inputs.Rmd). For de novo/Trinotate inputs, begin with the [workflow guide](vignettes/EchoGO_workflow.Rmd). These preparation routes feed the same downstream evidence model.
+
+## Why the background matters
+
+The foreground and background must describe the **same experiment**. EchoGO resolves the DE foreground and complete tested-feature background using the same identifier procedure, then submits the same portable foreground and background vectors to every selected context.
+
+Resolution prioritizes supported SwissProt gene symbols, then eggNOG preferred names, then portable native symbols. Raw contig/transcript identifiers or seed-ortholog accessions are not substitutes for portable submitted names. Several experimental features can collapse to one name, and others may remain unresolved.
+
+Each annotation context may recognize a different subset of those submitted names. Its **effective query and statistical domain can therefore differ**, even though the submitted vectors are identical. EchoGO records mapping and recognition information so these differences can be inspected. This is context-specific recognition—not construction of species-specific ortholog vectors and not explicit orthology filtering.
+
+Do not replace the experiment-specific background with an entire organism database to increase apparent coverage. The optional default-domain analysis asks a different exploratory question and stays separate from the primary evidence model.
+
+## What you receive
+
+Paths below are relative to your analysis output directory. Available plots depend on eligible terms and the options selected.
+
+| Product | Where to look | What it tells you |
+|:--|:--|:--|
+| Biological HTML report | `report/` | Key findings, evidence landscape, recognition diagnostics, semantic products and networks, with links to underlying results. |
+| Target evidence | `goseq/` | The supplied target functional analysis and its source-local evidence. |
+| Contextual enrichment | `gprofiler/` | Per-context results, cached responses, effective query/domain metadata and run provenance. |
+| Identifier audit | `gprofiler/submitted_vectors/` | Original and resolved foreground/background, `mapping_table.csv` and `gene_set_contract.json`. |
+| Exact-term evidence | `consensus/term_evidence_exact.csv` | GO-term membership, evidence profiles and descriptive alternative-context recurrence. |
+| Source provenance | `consensus/term_source_provenance_long.csv` and `consensus/context_configuration.csv` | Which analysis/context supports each term, with source-local statistics and declared context roles. |
+| Semantic summaries | `rrvgo/` | Separate target-supported and context-derived-hypothesis products using `Rel` similarity; representative terms and semantic-reference provenance. |
+| Gene-sharing networks | `networks/` | Relationships between terms through associated genes; an interpretation aid, not new enrichment evidence. |
+| Evaluation / diagnostics | `evaluation/` | Descriptive comparisons and diagnostics, not a ground-truth performance score or combined significance test. |
+| Optional exploratory layer | Separately labelled result/report sections | Default-domain g:Profiler evidence, excluded from primary profiles, recurrence and primary downstream products. |
+
+## Read the evidence, not a composite score
+
+1. **Start with target-supported biology.** Read Target only and Target + context together as the target GOseq result, then ask what additional annotation-context recovery clarifies.
+2. **Inspect where each result came from.** Adjusted p-values and fold enrichment belong to the GOseq or g:Profiler analysis that generated them. They are not pooled, maximized or minimized into a new significance measure.
+3. **Treat recurrence as description.** Recovery in several alternative resources records annotation-context recurrence. It is neither independent replication nor evidence of functional conservation; resources can share annotation history.
+4. **Follow hypotheses back to their genes and mappings.** Context-derived hypotheses are candidates for biological investigation. Absence of qualifying evidence can reflect recognition or annotation limits, not biological absence.
+5. **Use summaries to navigate, not to redefine support.** RRvGO reduces redundancy within separate evidence products. Its OrgDb is semantic provenance only; networks and reports do not change exact-term evidence membership.
+
+## Three complementary validation exercises
+
+The manuscript pairs a reference-rich zebrafish exposure contrast (**ZEB**) with two field contrasts in the annotation-limited de novo *Gammarus* transcriptome (**GAM1**, **GAM2**). ZEB illustrates context dependence despite a well-annotated target. The Gammarus contrasts illustrate how limited portable-name representation constrains accessible functional information.
+
+| Case | Target GOseq terms | Target only | Target + context | Context-derived hypotheses |
+|:--|--:|--:|--:|--:|
+| ZEB | 44 | 2 | 42 | 180 |
+| GAM1 | 194 | 178 | 16 | 19 |
+| GAM2 | 59 | 34 | 25 | 20 |
+
+Target GOseq terms equal Target only plus Target + context. Hypotheses are additional context-derived terms, **not a measure of superior performance**. The cases demonstrate biological interpretation under different annotation conditions, not a benchmark with known truth labels.
+
+The revised validation compendium preserves **historical source enrichment** separately from **current v0.1.4 interpretation**, with case reports, submitted vectors, provenance, semantic products and the reproducible Figure 2 evidence landscape. Historical g:Profiler enrichment was reused, not rerun simply to relabel it v0.1.4. The revised validation DOI is pending; its README will be the entry point for reproducibility and audit boundaries.
+
+## Scope and limitations
+
+EchoGO can only interpret the functional information accessible through the input annotation, identifier resolution and chosen resources. Uneven annotation gives well-characterized and broadly conserved functions more opportunities to be represented; lineage-specific or sparsely annotated functions may remain inaccessible. Context choice consequently shapes the interpretation.
+
+Improving upstream annotation can expand the accessible functional space. Additional contexts are useful when biologically justified, but they cannot repair missing experimental information or guarantee that an unresolved function is absent. Keep the experimental design, feature unit, tested universe and mapping limitations alongside every interpretation.
+
+## Guides, citation and support
+
+| Guide | Start here |
+|:--|:--|
+| End-to-end workflow | [Workflow guide](vignettes/EchoGO_workflow.Rmd) |
+| Reading evidence and reports | [Interpretation guide](vignettes/EchoGO_interpretation.Rmd) |
+| Reference-based input preparation | [Reference-based inputs](vignettes/reference-based-inputs.Rmd) |
+| Reference-rich example | [Zebrafish](vignettes/zebrafish-reference-rich-example.Rmd) |
+| Annotation-limited example | [Gammarus](vignettes/gammarus-annotation-limited-example.Rmd) |
+| Moving from v0.1.3 | [Migration guide](vignettes/migration-v0.1.4.Rmd) |
+| Changes | [NEWS](NEWS.md) |
+
+The links above open guide sources on GitHub; use `browseVignettes("EchoGO")` for the rendered installed guides.
+
+```r
+citation("EchoGO")
 ```
 
-RRvGO and network modules will automatically use whichever annotation database is available.
+Use [CITATION.cff](CITATION.cff) for the software authors and version. Cite the MethodsX manuscript and validation dataset separately when using their methods or examples. Final manuscript publication identity, v0.1.4 software DOI and revised validation DOI will be added when assigned; no earlier DOI is presented as a new release DOI here.
 
-------------------------------------------------------------------------
+| Publication resource | Availability |
+|:--|:--|
+| Software packages and release notes | [GitHub releases](https://github.com/miloes114/EchoGo/releases); the authorized v0.1.4 release identity and software DOI are pending. |
+| Revised validation compendium | Final archive link and DOI pending; it includes case reports, Figure 2, provenance and reproduction instructions. |
+| MethodsX manuscript | Revised publication identity pending. |
+| Historical validation source | [Zenodo record 21476746](https://zenodo.org/records/21476746), version 1.0.0; an earlier source deposit, not the revised v0.1.4 compendium. |
 
-## 📤 Outputs
+Report reproducible problems through the [issue tracker](https://github.com/miloes114/EchoGo/issues). Include the EchoGO/R versions, relevant options, error message and a minimal non-sensitive example. For maintainer contact, see [DESCRIPTION](DESCRIPTION).
 
-After running, the results directory includes:
+**Licensing:** EchoGO software is [GPL-3](https://www.gnu.org/licenses/gpl-3.0.html). Original research materials in the revised validation bundle are **CC BY 4.0**; software and third-party components retain their own licences, as detailed in that archive. These are separate artifacts.
 
-```         
-my_project/results/
-├── consensus/
-│   ├── consensus_enrichment_results_with_and_without_bg.xlsx
-│   ├── plots_strict/
-│   └── plots_exploratory/
-├── diagnostics/
-├── evaluation/
-├── goseq/
-├── gprofiler/
-│   ├── run_manifest.json
-│   ├── submitted_vectors/
-│   ├── with_custom_background/
-│   └── no_background_genome_wide/
-├── rrvgo/
-│   ├── rrvgo_true_consensus_with_bg/
-│   └── rrvgo_exploratory_all_significant/
-├── networks/
-│   ├── with_bg/
-│   └── with_bg_and_nobg/
-└── report/
-    └── (HTML report if make_report = TRUE)
-```
-
-`rrvgo_true_consensus_with_bg/` is a compatibility-only legacy folder name;
-in v0.1.3 it contains the background-aware RRvGO stream.
-
-------------------------------------------------------------------------
-
-## 📘 Demo Datasets
-
-EchoGO ships with frozen demo inputs and results.
-
-``` r
-# View demo paths
-echogo_demo_path()            # demo inputs
-echogo_demo_results_path()    # demo results
-
-# Run small demo pipeline
-echogo_quickstart(run_demo = TRUE)
-
-# Open demo folders
-echogo_open_demo()
-```
-
-------------------------------------------------------------------------
-
-## 📑 Citation
-
-If you use EchoGO in publications, please cite:
-
-> Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026).  
-> **EchoGO: A Cross-Species Consensus Framework for Functional Enrichment in Non-Model Organisms (v0.1.3).**  
-> Zenodo. DOI: <https://doi.org/10.5281/zenodo.17658714>
-
-The full citation entry is included in `inst/CITATION`.
-
-------------------------------------------------------------------------
-
-## 🐛 Issues & Support
-
-Please report bugs, suggestions, or feature requests at:\
-[**https://github.com/miloes114/EchoGo/issues**](https://github.com/miloes114/EchoGo/issues){.uri}
-
-For general questions, contact the maintainers.
-
-------------------------------------------------------------------------
-
-## 💬 Acknowledgements
-
-EchoGO was developed by **Camilo Escobar-Sierra**, **Felix Langschied**, **Angelina Miller**, and **Pedro A. Inostroza**, with additional input from collaborators and the community.
+**Compatibility note:** some exported functions and output paths retain historical `consensus` names. v0.1.4 uses scoreless exact-term evidence and does not recreate the retired composite scores.

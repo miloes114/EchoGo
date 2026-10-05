@@ -10,7 +10,8 @@ run_gprofiler_cross_species(
   species = c("hsapiens", "mmusculus", "rnorvegicus", "ggallus", "drerio",
     "dmelanogaster", "celegans"),
   outdir = "cross_species_gprofiler",
-  do_no_bg = TRUE,
+  run_exploratory_default_domain = FALSE,
+  do_no_bg = NULL,
   sources = c("GO:BP", "GO:MF", "GO:CC", "KEGG"),
   user_threshold = 0.05,
   correction_method = "fdr",
@@ -20,7 +21,9 @@ run_gprofiler_cross_species(
   verbose = TRUE,
   go_obo = NULL,
   significance_rule = NULL,
-  resolver_definition = NULL
+  resolver_definition = NULL,
+  target_context = NULL,
+  context_metadata = NULL
 )
 }
 \arguments{
@@ -33,7 +36,11 @@ Named vector allowed for pretty labels (names = codes, values = labels). If unna
 
 \item{outdir}{Output directory root.}
 
-\item{do_no_bg}{logical; if TRUE, also run no-background (genome-wide) analyses.}
+\item{run_exploratory_default_domain}{logical; if TRUE, run the optional
+default-domain exploratory tier. It is FALSE by default.}
+
+\item{do_no_bg}{Deprecated compatibility alias for
+`run_exploratory_default_domain`.}
 
 \item{sources}{g:Profiler sources to query.}
 
@@ -49,11 +56,19 @@ Named vector allowed for pretty labels (names = codes, values = labels). If unna
 
 \item{verbose}{logical; print progress.}
 
-\item{go_obo}{Optional path to a GO OBO file; if NULL, EchoGO caches one per session.}
+\item{go_obo}{Optional path to a GO OBO file; if NULL, EchoGO caches one per session.
+Set to FALSE to omit optional GO-depth metadata (depth is never used for
+evidence classification or ranking).}
 
 \item{significance_rule}{DE significance rule saved in run metadata.}
 
 \item{resolver_definition}{Shared canonical resolver saved in run metadata.}
+
+\item{target_context}{Optional researcher-designated target g:Profiler context.}
+
+\item{context_metadata}{Optional researcher-supplied rationale provenance for queried contexts.
+It is recorded only; it does not affect enrichment, recurrence, evidence profiles,
+ordering, RRvGO, networks, or evaluation.}
 }
 \value{
 list with per-run data.frames and a `$paths` list of written files.

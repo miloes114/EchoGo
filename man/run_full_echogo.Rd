@@ -10,9 +10,9 @@ run_full_echogo(
   trinotate_file = NULL,
   de_file = NULL,
   count_matrix_file = NULL,
-  species = getOption("EchoGO.default_species", c("hsapiens", "mmusculus", "drerio")),
+  species = NULL,
   species_expr = NULL,
-  orgdb = getOption("EchoGO.default_orgdb", "org.Dr.eg.db"),
+  orgdb = NULL,
   outdir = "echogo_out",
   make_report = TRUE,
   report_sections = c("overview", "goseq", "gprofiler", "consensus", "rrvgo", "networks"),
@@ -20,9 +20,13 @@ run_full_echogo(
   report_theme = "flatly",
   report_template = NULL,
   report_title = NULL,
-  strict_only = FALSE,
+  strict_only = NULL,
+  run_exploratory_default_domain = FALSE,
+  target_context = NULL,
+  context_metadata = NULL,
   run_rrvgo = TRUE,
   run_evaluation = TRUE,
+  semantic_reference_role = NULL,
   use_trinotate_universe = FALSE,
   tested_gene_ids = NULL,
   de_id_column = NULL,
@@ -34,15 +38,18 @@ run_full_echogo(
   padj_threshold = 0.05,
   log2fc_threshold = 1,
   de_table_significant_only = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  semantic_reference_orgdb = NULL
 )
 }
 \arguments{
 \item{input_dir}{Optional. Folder containing inputs. If provided, EchoGO will attempt to
 auto-detect required files using filename patterns.}
 
-\item{goseq_file}{Optional. Path to a GOseq enrichment file (e.g. \code{\\*GOseq\\*.tsv}).
-If \code{input_dir} is provided, EchoGO will attempt to detect it.}
+\item{goseq_file}{Path to the required precomputed target GOseq enrichment
+table (e.g. \code{\\*GOseq\\*.tsv}). The argument may be omitted when
+\code{input_dir} enables detection of that table; the target GOseq evidence
+itself is required for the standard workflow.}
 
 \item{trinotate_file}{Optional but typically required. Path to a Trinotate or Trinotate-like/EggNOG
 annotation table used to resolve portable canonical names and annotate GOseq output.}
@@ -54,14 +61,16 @@ EchoGO attempts to detect it.}
 \item{count_matrix_file}{Optional. Path to a count matrix file (classic or reference-based).
 If \code{input_dir} is provided and \code{count_matrix_file} is NULL, EchoGO attempts to detect it.}
 
-\item{species}{Character vector of g:Profiler organism IDs (e.g. \code{"hsapiens"}, \code{"mmusculus"},
-\code{"drerio"}). Validated via \code{echogo_preflight_species()}.}
+\item{species}{Researcher-selected character vector of g:Profiler organism
+IDs (e.g. \code{"hsapiens"}, \code{"mmusculus"}, \code{"drerio"}).
+Own-data runs have no built-in biological context panel. Values are
+validated via \code{echogo_preflight_species()}.}
 
 \item{species_expr}{Optional. A tag/taxonomy expression resolved via \code{echogo_resolve()} into
 g:Profiler organism IDs; merged with \code{species} when both are provided.}
 
-\item{orgdb}{Character scalar. Bioconductor OrgDb package name for semantic similarity steps
-(e.g. \code{"org.Dr.eg.db"}, \code{"org.Mm.eg.db"}).}
+\item{orgdb}{Deprecated compatibility alias for
+\code{semantic_reference_orgdb}. It is not an enrichment context.}
 
 \item{outdir}{Output directory for all EchoGO results.}
 
@@ -77,11 +86,25 @@ g:Profiler organism IDs; merged with \code{species} when both are provided.}
 
 \item{report_title}{Optional report title. Defaults to the output-directory name.}
 
-\item{strict_only}{Logical; if TRUE, compute only the conservative/background-aware stream.}
+\item{strict_only}{Deprecated compatibility alias. TRUE disables the optional
+default-domain exploratory layer.}
+
+\item{run_exploratory_default_domain}{Logical; run the optional default-domain
+exploratory tier. Defaults to FALSE.}
+
+\item{target_context}{Researcher-declared target g:Profiler context code or
+label. Use \code{NA_character_} to declare explicitly that no target
+g:Profiler context is queried; target GOseq remains the experimental anchor.}
+
+\item{context_metadata}{Optional data frame of researcher-supplied context rationale
+provenance. It is not used for statistical inference or ranking.}
 
 \item{run_rrvgo}{Logical; if TRUE (default), run RRvGO semantic reduction.}
 
 \item{run_evaluation}{Logical; if TRUE, run evaluation/diagnostic summaries (when enabled).}
+
+\item{semantic_reference_role}{Required when RRvGO is enabled: either
+\code{"target_reference"} or \code{"proxy"}. EchoGO does not infer it.}
 
 \item{use_trinotate_universe}{Deprecated compatibility flag retained in run
 metadata. It never redefines the experiment-derived tested universe or
@@ -98,6 +121,10 @@ permits raw transcript-ID fallback.}
 \item{de_table_significant_only}{Declare that the DE table contains significant rows only.}
 
 \item{verbose}{Logical; if TRUE, print progress messages.}
+
+\item{semantic_reference_orgdb}{Preferred Bioconductor OrgDb package name for
+RRvGO semantic similarity. Required when RRvGO is enabled and independent
+of the g:Profiler organism contexts.}
 }
 \value{
 An (invisible) list returned by \code{run_echogo_pipeline()}, augmented with:
@@ -109,10 +136,15 @@ An (invisible) list returned by \code{run_echogo_pipeline()}, augmented with:
 \description{
 Runs the canonical EchoGO pipeline end-to-end:
 GOseq enrichment loading/annotation -> multi-context g:Profiler enrichment ->
-consensus scoring (strict + optional exploratory) -> RRvGO reduction (if enabled) ->
+scoreless exact-term evidence assembly (primary + optional default-domain exploratory layer) -> RRvGO reduction (if enabled) ->
 GO-term networks (if enabled) -> optional evaluation and HTML report.
 }
 \details{
+Target GOseq provides the primary target evidence in the standard EchoGO
+evidence model. Supply its precomputed results explicitly or through the
+input-folder resolver. Declaring no target g:Profiler context does not
+remove this GOseq experimental anchor.
+
 EchoGO supports two common input styles:
 
 \strong{1) Classic / de novo transcriptome layout} (Trinity/Trinotate-style)
@@ -120,14 +152,14 @@ EchoGO supports two common input styles:
   \item a count matrix (e.g. \code{gene.counts.matrix.tsv})
   \item one DE table per contrast (e.g. \code{DE_\\*.tsv})
   \item a Trinotate report (e.g. \code{Trinotate.xls} or \code{Trinotate\\*.tsv})
-  \item (optional) a GOseq enrichment table if you already computed it
+  \item a precomputed target GOseq enrichment table (required target evidence)
 }
 
 \strong{2) Reference-based RNA-seq layout} (DESeq2 + GOseq precomputed)
 \itemize{
   \item \code{allcounts_table.txt} (count matrix; required by current input resolver)
   \item \code{dge_CONTRAST.csv} (DESeq2 table; required by current input resolver)
-  \item \code{CONTRAST.GOseq.enriched.tsv} (GOseq enriched categories; used when present)
+  \item \code{CONTRAST.GOseq.enriched.tsv} (required target GOseq evidence)
   \item \code{Trinotate_for_EchoGO.tsv} or \code{<reference_label>_eggNOG_for_EchoGO.tsv} (annotation; required)
 }
 
@@ -137,9 +169,28 @@ vectors still pass through the portable canonical-name resolver.
 }
 \examples{
 \dontrun{
-## Classic scaffold workflow
+## Scaffold workflow: populate the experimental input files first.
+## Required: DE results, complete tested-feature background, annotation,
+## and precomputed target GOseq. Replace these illustrative contexts.
 echogo_scaffold("my_project")
-echogo_run(input_dir = "my_project/input", outdir = "my_project/results")
+echogo_run(
+  input_dir = "my_project/input",
+  outdir = "my_project/results",
+  species = c("drerio", "omykiss"),
+  target_context = "drerio",
+  context_metadata = data.frame(
+    context_code = c("drerio", "omykiss"),
+    context_rationale = c("Target organism resource",
+                          "Comparative teleost resource for the study question")
+  ),
+  run_exploratory_default_domain = FALSE,
+  run_rrvgo = TRUE,
+  semantic_reference_orgdb = "org.Dr.eg.db",
+  semantic_reference_role = "target_reference"
+)
+## If no queried context is the target, use target_context = NA_character_.
+## Target GOseq is still required. Disable RRvGO with run_rrvgo = FALSE
+## when no justified semantic reference is available.
 
 ## Reference-based RNA-seq (DESeq2 + GOseq precomputed)
 input_dir <- "path/to/reference_project/echogo_input"
@@ -150,9 +201,11 @@ fish_species <- c("drerio","strutta","gaculeatus","olatipes","trubripes","amexic
 res <- run_full_echogo(
   input_dir              = input_dir,
   species                = fish_species,
-  orgdb                  = "org.Dr.eg.db",
+  target_context         = "drerio",
+  semantic_reference_orgdb = "org.Dr.eg.db",
+  semantic_reference_role = "target_reference",
   outdir                 = outdir,
-  strict_only            = FALSE,
+  run_exploratory_default_domain = FALSE,
   run_evaluation         = TRUE,
   make_report            = TRUE,
   verbose                = TRUE

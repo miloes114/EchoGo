@@ -15,7 +15,10 @@
 #' @param species character vector of g:Profiler organism codes (e.g., "hsapiens"). Unlimited.
 #'                 Named vector allowed for pretty labels (names = codes, values = labels). If unnamed, labels=codes.
 #' @param outdir Output directory root.
-#' @param do_no_bg logical; if TRUE, also run no-background (genome-wide) analyses.
+#' @param run_exploratory_default_domain logical; if TRUE, run the optional
+#'   default-domain exploratory tier. It is FALSE by default.
+#' @param do_no_bg Deprecated compatibility alias for
+#'   `run_exploratory_default_domain`.
 #' @param sources g:Profiler sources to query.
 #' @param user_threshold numeric p-value threshold.
 #' @param correction_method FDR method ("fdr","gSCS","bonferroni").
@@ -24,8 +27,14 @@
 #' @param sleep_sec seconds to pause between species to avoid throttling.
 #' @param verbose logical; print progress.
 #' @param go_obo Optional path to a GO OBO file; if NULL, EchoGO caches one per session.
+#'   Set to FALSE to omit optional GO-depth metadata (depth is never used for
+#'   evidence classification or ranking).
 #' @param significance_rule DE significance rule saved in run metadata.
 #' @param resolver_definition Shared canonical resolver saved in run metadata.
+#' @param target_context Optional researcher-designated target g:Profiler context.
+#' @param context_metadata Optional researcher-supplied rationale provenance for queried contexts.
+#'   It is recorded only; it does not affect enrichment, recurrence, evidence profiles,
+#'   ordering, RRvGO, networks, or evaluation.
 #' @return list with per-run data.frames and a `$paths` list of written files.
 #' @export
 run_gprofiler_cross_species <- function(
@@ -33,7 +42,8 @@ run_gprofiler_cross_species <- function(
     bg_genes = NULL,
     species = c("hsapiens","mmusculus","rnorvegicus","ggallus","drerio","dmelanogaster","celegans"),
     outdir = "cross_species_gprofiler",
-    do_no_bg = TRUE,
+    run_exploratory_default_domain = FALSE,
+    do_no_bg = NULL,
     sources = c("GO:BP","GO:MF","GO:CC","KEGG"),
     user_threshold = 0.05,
     correction_method = "fdr",
@@ -43,8 +53,14 @@ run_gprofiler_cross_species <- function(
     verbose = TRUE,
     go_obo = NULL,
     significance_rule = NULL,
-    resolver_definition = NULL
+    resolver_definition = NULL,
+    target_context = NULL,
+    context_metadata = NULL
 ) {
+  if (!is.null(do_no_bg)) {
+    warning("do_no_bg is deprecated; use run_exploratory_default_domain.", call. = FALSE)
+    run_exploratory_default_domain <- isTRUE(do_no_bg)
+  }
   stopifnot(is.character(de_genes), length(de_genes) > 0)
   if (is.null(bg_genes) || !is.character(bg_genes) || !length(bg_genes)) {
     stop("A non-empty custom background is required for the background-aware run.", call. = FALSE)
@@ -71,7 +87,7 @@ run_gprofiler_cross_species <- function(
     if (have_cached) {
       if (!file.exists(file.path(outdir, "run_manifest.json"))) {
         stop(
-          "Cached g:Profiler CSVs were found without a v0.1.3 run manifest. ",
+          "Cached g:Profiler CSVs were found without a run manifest. ",
           "Historical response metadata cannot be reconstructed. Use a new output directory ",
           "or force a new run explicitly.",
           call. = FALSE
@@ -87,9 +103,11 @@ run_gprofiler_cross_species <- function(
   # Normalize & prepare output dirs (canonical substructure)
   outdir   <- normalizePath(outdir, winslash = "/", mustWork = FALSE)
   dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
-  nobg_dir <- file.path(outdir, "no_background_genome_wide")
-  bg_dir   <- file.path(outdir, "with_custom_background")
-  dir.create(nobg_dir, showWarnings = FALSE, recursive = TRUE)
+  exploratory_dir <- file.path(outdir, "default_domain_exploratory")
+  bg_dir   <- file.path(outdir, "custom_experimental_background")
+  if (isTRUE(run_exploratory_default_domain)) {
+    dir.create(exploratory_dir, showWarnings = FALSE, recursive = TRUE)
+  }
   dir.create(bg_dir,   showWarnings = FALSE, recursive = TRUE)
 
   # --- species labels: support named vector (names=codes, values=labels) or plain vector ---
@@ -101,10 +119,17 @@ run_gprofiler_cross_species <- function(
     sp_labels <- as.character(unname(species))
   }
 
+  contexts <- .echogo_context_configuration(
+    stats::setNames(sp_labels, sp_codes), target_context, context_metadata
+  )
+
   # --- Prepare GO depth function (prefer GO.db if installed, else cached OBO) ---
   depth_fun <- NULL
   depth_backend <- NA_character_
-  if (requireNamespace("GO.db", quietly = TRUE) && requireNamespace("AnnotationDbi", quietly = TRUE)) {
+  if (isFALSE(go_obo)) {
+    depth_backend <- "disabled"
+    depth_fun <- function(term_ids) rep(NA_integer_, length(term_ids))
+  } else if (requireNamespace("GO.db", quietly = TRUE) && requireNamespace("AnnotationDbi", quietly = TRUE)) {
     if (verbose) message("Using GO.db for depth...")
     depth_backend <- "GO.db"
     depth_fun <- function(term_ids) {
@@ -163,12 +188,12 @@ run_gprofiler_cross_species <- function(
   results_list <- list()
   paths <- list(written = character(0),
                 with_bg_dir = bg_dir,
-                nobg_dir    = nobg_dir,
+                exploratory_dir = exploratory_dir,
                 outdir      = outdir,
                 depth_backend = depth_backend)
   summary_log <- data.frame(
     species_code = character(), species_label = character(),
-    mode = character(), n_sig = integer(),
+    mode = character(), n_sig = integer(), exploratory_terms_returned = integer(),
     stringsAsFactors = FALSE
   )
   manifest_runs <- list()
@@ -184,11 +209,11 @@ run_gprofiler_cross_species <- function(
     if (!length(x)) return(NULL)
     if (length(x) == 1L) unname(x[[1]]) else unname(x)
   }
-  record_run <- function(response, organism, label, mode, directory, background) {
-    suffix <- if (identical(mode, "custom_background")) "with_bg" else "nobg"
+  record_run <- function(response, organism, label, mode, directory, background, domain_scope) {
+    suffix <- if (identical(mode, "custom_experimental_background")) "with_bg" else "nobg"
     stem <- file.path(directory, paste0("gprofiler_", label, "_", suffix))
     query_file <- paste0(stem, "_query.txt")
-    background_file <- if (identical(mode, "custom_background")) paste0(stem, "_background.txt") else NULL
+    background_file <- if (identical(mode, "custom_experimental_background")) paste0(stem, "_background.txt") else NULL
     metadata_file <- paste0(stem, "_metadata.json")
     result_file <- paste0(stem, ".csv")
     if (!file.exists(result_file)) result_file <- NULL
@@ -213,7 +238,7 @@ run_gprofiler_cross_species <- function(
       run_timestamp = run_timestamp,
       timezone = Sys.timezone(),
       r_version = R.version.string,
-      gprofiler2_version = as.character(utils::packageVersion("gprofiler2")),
+      gprofiler2_version = tryCatch(as.character(utils::packageVersion("gprofiler2")), error = function(e) NA_character_),
       execution = "live",
       organism_code = organism,
       organism_label = label,
@@ -224,6 +249,8 @@ run_gprofiler_cross_species <- function(
       ordered_query = FALSE,
       multi_query = FALSE,
       background_mode = mode,
+      domain_scope = domain_scope,
+      context_role = contexts$context_role[match(organism, contexts$context_code)],
       submitted_foreground_count = length(de_genes),
       submitted_background_count = if (is.null(background)) NULL else length(background),
       effective_query_size = effective_query,
@@ -238,7 +265,7 @@ run_gprofiler_cross_species <- function(
     jsonlite::write_json(metadata, metadata_file, auto_unbox = TRUE, pretty = TRUE, na = "null")
     entry <- c(
       metadata[c(
-        "organism_code", "organism_label", "background_mode",
+        "organism_code", "organism_label", "context_role", "background_mode", "domain_scope",
         "submitted_foreground_count", "submitted_background_count",
         "effective_query_size", "effective_domain_size", "query_hash",
         "background_hash", "status"
@@ -254,7 +281,7 @@ run_gprofiler_cross_species <- function(
   }
 
   # helper to run a single gost call safely
-  .run_gost <- function(query, organism, custom_bg, mode_label) {
+  .run_gost <- function(query, organism, custom_bg, mode_label, domain_scope) {
     if (verbose) message("  - ", organism, " [", mode_label, "]")
     request_failed <- FALSE
     res <- tryCatch(
@@ -262,6 +289,7 @@ run_gprofiler_cross_species <- function(
         query = query,
         organism = organism,
         custom_bg = custom_bg,
+        domain_scope = domain_scope,
         sources = sources,
         correction_method = correction_method,
         user_threshold = user_threshold,
@@ -294,7 +322,7 @@ run_gprofiler_cross_species <- function(
     if (verbose) message(">> g:Profiler for ", sp, " (", lab, ")")
 
     # --- WITH custom background ---
-    res_bg <- .run_gost(de_genes, sp, custom_bg = bg_genes, mode_label = "with_bg")
+    res_bg <- .run_gost(de_genes, sp, custom_bg = bg_genes, mode_label = "custom_experimental_background", domain_scope = "custom")
     out_subdir <- bg_dir
     if (!is.null(res_bg) && nrow(res_bg$result) > 0) {
       tbl <- res_bg$result
@@ -309,26 +337,28 @@ run_gprofiler_cross_species <- function(
       results_list[[paste0(lab, "_with_bg")]] <- tbl
       paths$written <- c(paths$written, csv, xlsx)
       summary_log <- rbind(summary_log, data.frame(
-        species_code = sp, species_label = lab, mode = "with_bg",
-        n_sig = sum(!is.na(tbl$p_value) & tbl$p_value <= user_threshold)
+        species_code = sp, species_label = lab, mode = "custom_experimental_background",
+        n_sig = sum(!is.na(tbl$p_value) & tbl$p_value <= user_threshold),
+        exploratory_terms_returned = NA_integer_
       ))
     } else {
       file.create(file.path(out_subdir, paste0("gprofiler_", lab, "_with_bg_NO_RESULTS.txt")))
       results_list[[paste0(lab, "_with_bg")]] <- NULL
       summary_log <- rbind(summary_log, data.frame(
-        species_code = sp, species_label = lab, mode = "with_bg", n_sig = 0
+        species_code = sp, species_label = lab, mode = "custom_experimental_background",
+        n_sig = 0, exploratory_terms_returned = NA_integer_
       ))
     }
     recorded <- record_run(
-      res_bg, sp, lab, "custom_background", bg_dir, bg_genes
+      res_bg, sp, lab, "custom_experimental_background", bg_dir, bg_genes, "custom"
     )
     manifest_runs[[length(manifest_runs) + 1L]] <- recorded$entry
     paths$written <- c(paths$written, recorded$files)
 
-    # --- NO background (genome-wide) ---
-    if (isTRUE(do_no_bg)) {
-      res_nb <- .run_gost(de_genes, sp, custom_bg = NULL, mode_label = "nobg")
-      out_subdir <- nobg_dir
+    # --- Optional default-domain exploratory tier ---
+    if (isTRUE(run_exploratory_default_domain)) {
+      res_nb <- .run_gost(de_genes, sp, custom_bg = NULL, mode_label = "default_domain_exploratory", domain_scope = "annotated")
+      out_subdir <- exploratory_dir
       if (!is.null(res_nb) && nrow(res_nb$result) > 0) {
         tbl <- res_nb$result
         tbl$fold_enrichment <- (tbl$intersection_size / tbl$query_size) / (tbl$term_size / tbl$effective_domain_size)
@@ -342,18 +372,19 @@ run_gprofiler_cross_species <- function(
         results_list[[paste0(lab, "_nobg")]] <- tbl
         paths$written <- c(paths$written, csv, xlsx)
         summary_log <- rbind(summary_log, data.frame(
-          species_code = sp, species_label = lab, mode = "nobg",
-          n_sig = sum(!is.na(tbl$p_value) & tbl$p_value <= user_threshold)
+          species_code = sp, species_label = lab, mode = "default_domain_exploratory",
+          n_sig = NA_integer_, exploratory_terms_returned = nrow(tbl)
         ))
       } else {
         file.create(file.path(out_subdir, paste0("gprofiler_", lab, "_nobg_NO_RESULTS.txt")))
         results_list[[paste0(lab, "_nobg")]] <- NULL
         summary_log <- rbind(summary_log, data.frame(
-          species_code = sp, species_label = lab, mode = "nobg", n_sig = 0
+          species_code = sp, species_label = lab, mode = "default_domain_exploratory",
+          n_sig = NA_integer_, exploratory_terms_returned = 0L
         ))
       }
       recorded <- record_run(
-        res_nb, sp, lab, "no_background_genome_wide", nobg_dir, NULL
+        res_nb, sp, lab, "default_domain_exploratory", exploratory_dir, NULL, "annotated"
       )
       manifest_runs[[length(manifest_runs) + 1L]] <- recorded$entry
       paths$written <- c(paths$written, recorded$files)
@@ -366,7 +397,7 @@ run_gprofiler_cross_species <- function(
   readr::write_csv(summary_log, summary_file)
   manifest_file <- file.path(outdir, "run_manifest.json")
   run_manifest <- list(
-    schema_version = "1.0",
+    schema_version = "1.2",
     echogo_version = tryCatch(as.character(utils::packageVersion("EchoGO")), error = function(e) NA_character_),
     echogo_git_commit = .echogo_git_commit(),
     generated = run_timestamp,
@@ -376,6 +407,8 @@ run_gprofiler_cross_species <- function(
     explicit_species_specific_ortholog_mapping = FALSE,
     submitted_foreground_count = length(de_genes),
     submitted_background_count = length(bg_genes),
+    context_configuration = contexts,
+    run_exploratory_default_domain = isTRUE(run_exploratory_default_domain),
     significance_rule = significance_rule,
     resolver_definition = resolver_definition,
     historical_cached_output_limitation = paste(

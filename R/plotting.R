@@ -12,11 +12,12 @@ NULL
 
 #' Generic lollipop plot for enrichment results
 #'
-#' Creates a lollipop plot of top ranked GO terms or KEGG pathways using fold enrichment or
-#' consensus scores, colored and sized by optional variables (e.g., -log10(p), origin).
+#' Creates a generic lollipop plot using a supplied display column. Canonical
+#' v0.1.4 evidence landscapes use evidence profile, recurrence and deterministic
+#' display order rather than a composite score.
 #'
 #' @param df A data frame of enrichment results.
-#' @param score_col Name of the column used for ranking (e.g. "fold_enrichment", "consensus_score").
+#' @param score_col Name of the display column used for ranking (e.g. "fold_enrichment").
 #' @param label Plot title.
 #' @param output_path File path to save the plot.
 #' @param top_n Number of top terms to show.
@@ -115,13 +116,18 @@ plot_lollipop <- function(df, score_col, label, output_path, top_n = 50,
   invisible(p)
 }
 
-#' Density plot of EQI or enrichment values by method and ontology
+#' Deprecated legacy density plot
+#'
+#' This compatibility utility can display historical EQI columns but EQI is not
+#' a v0.1.4 evidence measure or ranking score. Canonical v0.1.4 displays use
+#' evidence profile, recurrence, and deterministic display order.
 #'
 #' @param df A long-format data frame with columns:
-#'   - \code{metric} column (\code{"EQI"} or \code{"enrichment"}) present by name
-#'   - \code{method} (e.g., "GOseq", "Consensus")
+#'   - \code{metric} column (historical \code{"EQI"} or \code{"enrichment"}) present by name
+#'   - \code{method} (e.g., "GOseq", historical legacy output)
 #'   - \code{ontology} (BP/MF/CC)
-#' @param metric One of \code{"EQI"} or \code{"enrichment"} (default: "EQI").
+#' @param metric One of \code{"EQI"} or \code{"enrichment"}; \code{"EQI"}
+#'   is accepted only for legacy-file compatibility.
 #' @param output_path File path to save the PDF.
 #'
 #' @return (Invisibly) the ggplot object; writes the PDF.

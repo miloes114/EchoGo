@@ -2,7 +2,7 @@
 % Please edit documentation in R/rarefaction_benchmark.R
 \name{run_rarefaction_benchmark}
 \alias{run_rarefaction_benchmark}
-\title{Rarefaction benchmark (exploratory/consensus) with priority ordering & plateau}
+\title{Deprecated legacy rarefaction benchmark}
 \usage{
 run_rarefaction_benchmark(
   consensus_file,
@@ -27,8 +27,9 @@ run_rarefaction_benchmark(
 (e.g., \code{c("hsapiens","mmusculus","rnorvegicus","drerio","dmelanogaster","celegans","ggallus","xtropicalis")}).
 Labels must match the column suffixes used in the consensus (e.g., \code{in_<label>_nobg}).}
 
-\item{use_modes}{Character vector of modes to build. Any of \code{c("true_consensus","exploratory")}.
-Default \code{"exploratory"}.}
+\item{use_modes}{Historical input-mode labels from a pre-v0.1.4 table.
+Default \code{"exploratory"}; these labels are retained only for
+compatibility with legacy files.}
 
 \item{min_steps}{Minimum steps before testing plateau (default 5).}
 
@@ -47,6 +48,11 @@ Invisibly returns a list with:
   \item{paths}{written artifact paths}
 }
 \description{
+This compatibility utility consumes pre-v0.1.4 score-era tables. It is not
+part of the canonical v0.1.4 evidence workflow and does not define current
+support, recurrence, or semantic-product outputs.
+}
+\details{
 Builds the same cumulative and permutation rarefaction curves as
 \code{run_rarefaction_curves()}, but:
 \itemize{
@@ -56,8 +62,7 @@ Builds the same cumulative and permutation rarefaction curves as
   \item writes \code{species_order_final_*.csv} and \code{plateau_detection_summary_*.csv},
         and draws a dashed vertical line at the suggested stop in each panel.
 }
-}
-\details{
+
 It \emph{does not} re-run g:Profiler; it consumes your already-computed consensus table
 (and gracefully handles species with zero results by treating missing columns as 0/FALSE).
 }

@@ -72,15 +72,20 @@ echogo_install_orgdb <- function(
 #' missing and `auto_install = TRUE`, it calls [echogo_install_orgdb()] to
 #' install them into the active library.
 #'
-#' @param pkgs Character vector of OrgDb names. If NULL, uses
-#'   getOption(\"EchoGO.default_orgdb\", \"org.Mm.eg.db\").
-#' @param auto_install Logical; if TRUE, will attempt installation
-#'   for missing packages.
+#' @param pkgs Character vector of researcher-selected OrgDb names. Required;
+#'   EchoGO does not choose a semantic reference.
+#' @param auto_install Logical; if TRUE, explicitly authorize installation for
+#'   missing packages. Defaults to FALSE.
 #' @return Character vector of packages that are loadable now (possibly a subset of `pkgs`).
 #' @export
-echogo_require_orgdb <- function(pkgs = NULL, auto_install = TRUE) {
+echogo_require_orgdb <- function(pkgs = NULL, auto_install = FALSE) {
   if (is.null(pkgs)) {
-    pkgs <- getOption("EchoGO.default_orgdb", "org.Mm.eg.db")
+    stop(
+      "Supply the researcher-selected OrgDb package name(s), for example ",
+      "echogo_require_orgdb(c('GO.db', 'org.Dr.eg.db')). EchoGO does not ",
+      "choose a semantic reference.",
+      call. = FALSE
+    )
   }
 
   pkgs <- as.character(pkgs)

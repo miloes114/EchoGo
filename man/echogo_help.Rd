@@ -7,5 +7,10 @@
 echogo_help()
 }
 \description{
-EchoGO - Quickstart help
+Prints offline-demo and own-data guidance. The standard workflow requires
+precomputed target GOseq as its primary target evidence, DE results,
+a complete tested-feature background and compatible annotation. Own-data
+runs require researcher-selected annotation contexts and an explicit target
+or no-target g:Profiler declaration; that declaration does not remove GOseq.
+When RRvGO is enabled, declare its semantic reference and reference role.
 }

@@ -218,6 +218,43 @@ test_that("portable native symbols support reference-based routes", {
   expect_true(all(sets$mapping_table$portable_name_source == "native_symbol"))
 })
 
+test_that("available eggNOG fields are retained as provenance, not resolver scores", {
+  de <- data.frame(gene_id = c("tx1", "tx2"), significant = c(TRUE, FALSE))
+  annotation <- data.frame(
+    transcript_id = de$gene_id,
+    EggNM.Preferred_name = c("GENEA", "GENEB"),
+    EggNM.seed_ortholog = c("seedA", "seedB"),
+    EggNM.seed_evalue = c("1e-20", "2e-10"),
+    EggNM.seed_score = c("200", "100"),
+    EggNM.OGs = c("COG0001", "COG0002"),
+    EggNM.GOs = c("GO:0000001", "GO:0000002")
+  )
+  sets <- prepare_gprofiler_gene_sets(de, annotation = annotation)
+  row <- sets$mapping_table[sets$mapping_table$original_id == "tx1", ]
+  expect_identical(row$eggnog_seed_ortholog, "seedA")
+  expect_identical(row$eggnog_seed_evalue, "1e-20")
+  expect_identical(row$eggnog_ogs, "COG0001")
+  expect_false(any(grepl("score|confidence", names(sets$mapping_table), ignore.case = TRUE) &
+                   names(sets$mapping_table) %in% c("consensus_score", "confidence_score")))
+})
+
+test_that("Gammarus-like sparse annotation preserves the experimental bottleneck", {
+  de <- data.frame(
+    gene_id = c("TRINITY_DN1_c0_g1", "TRINITY_DN2_c0_g1", "TRINITY_DN3_c0_g1", "TRINITY_DN4_c0_g1"),
+    significant = c(TRUE, FALSE, FALSE, FALSE)
+  )
+  annotation <- data.frame(
+    transcript_id = c("TRINITY_DN1_c0_g1", "TRINITY_DN2_c0_g1"),
+    EggNM.Preferred_name = c("GENEA", "GENEB")
+  )
+  sets <- prepare_gprofiler_gene_sets(de, annotation = annotation)
+  expect_identical(sets$foreground_original, "TRINITY_DN1_c0_g1")
+  expect_identical(sets$background_original, de$gene_id)
+  expect_identical(sets$foreground_resolved, "GENEA")
+  expect_identical(sets$background_resolved, c("GENEA", "GENEB"))
+  expect_identical(sets$background_unmapped, c("TRINITY_DN3_c0_g1", "TRINITY_DN4_c0_g1"))
+})
+
 test_that("logical significance columns reject ambiguous values", {
   f <- gene_set_fixture()
   f$de$significant <- c("yes", "no", "maybe", "no", "no", "no")

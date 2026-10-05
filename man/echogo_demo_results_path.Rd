@@ -2,13 +2,13 @@
 % Please edit documentation in R/ux_helpers.R
 \name{echogo_demo_results_path}
 \alias{echogo_demo_results_path}
-\title{Path to shipped demo results (frozen snapshot)}
+\title{Path to shipped demo results (frozen v0.1.4 snapshot)}
 \usage{
 echogo_demo_results_path()
 }
 \value{
-A filesystem path to the versioned v0.1.3 frozen demo results.
+A filesystem path to the v0.1.4 product-facing demo snapshot.
 }
 \description{
-Path to shipped demo results (frozen snapshot)
+Path to shipped demo results (frozen v0.1.4 snapshot)
 }
