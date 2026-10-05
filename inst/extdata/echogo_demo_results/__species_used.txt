@@ -1,6 +1,0 @@
-# EchoGO species used
-# Generated: 2026-01-12 20:19:31
-
-drerio
-hsapiens
-mmusculus

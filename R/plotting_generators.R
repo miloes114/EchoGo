@@ -3,7 +3,7 @@
 #' Makers that write the standard EchoGO lollipop figures to disk. These are not exported;
 #' they are called by the pipeline to populate the canonical layout:
 #' - goseq/                                    (GOseq)
-#' - gprofiler/{with_custom_background,no_background_genome_wide}  (g:Profiler)
+#' - gprofiler/{bg,nobg} or the long-form mode directories (g:Profiler)
 #' - consensus/{plots_strict,plots_exploratory} (Consensus lollipops)
 #'
 #' Functions in this file:
@@ -272,18 +272,26 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
 
 
 # ------------------------------------------------------------------------------
-#  B) g:Profiler lollipops (per species; with background & no background)
+#  B) g:Profiler lollipops (per species; primary and optional exploratory)
 # ------------------------------------------------------------------------------
 
 # helper (internal)
 .gp_find_species_csv <- function(base_dir, mode, sp_label) {
-  # Either written as gprofiler_<label>_<mode>.csv or ..._enrichment.csv
-  subdir <- if (mode == "with_bg") "with_custom_background" else "no_background_genome_wide"
-  root   <- file.path(base_dir, subdir)
-  cands  <- c(
-    file.path(root, sprintf("gprofiler_%s_%s.csv",           sp_label, if (mode=="with_bg") "with_bg" else "nobg")),
-    file.path(root, sprintf("gprofiler_%s_%s_enrichment.csv", sp_label, if (mode=="with_bg") "with_bg" else "nobg"))
-  )
+  custom <- identical(mode, "custom_experimental_background") || identical(mode, "with_bg")
+  # Input suffixes remain compatible with historical g:Profiler result files.
+  subdirs <- if (custom) {
+    c("custom_experimental_background", "bg", "with_custom_background")
+  } else {
+    c("default_domain_exploratory", "nobg", "no_background_genome_wide")
+  }
+  suffix <- if (custom) "with_bg" else "nobg"
+  cands <- unlist(lapply(subdirs, function(subdir) {
+    root <- file.path(base_dir, subdir)
+    c(
+      file.path(root, sprintf("gprofiler_%s_%s.csv", sp_label, suffix)),
+      file.path(root, sprintf("gprofiler_%s_%s_enrichment.csv", sp_label, suffix))
+    )
+  }), use.names = FALSE)
   hit <- cands[file.exists(cands)][1]
   if (length(hit)) hit else NA_character_
 }
@@ -292,14 +300,20 @@ goseq_make_lollipops <- function(goseq_csv, outdir_goseq, fdr_thr = 0.05) {
 #' @keywords internal
 #' @noRd
 #' @param gprof_base_dir Base directory containing g:Profiler outputs
-#'   (expects subfolders: with_custom_background/ and no_background_genome_wide/).
+#'   (expects canonical custom_experimental_background/ and optional
+#'   default_domain_exploratory/ subfolders; legacy folders are accepted).
 #' @param species_map Named character vector mapping species codes to labels,
 #'   e.g. c(hsapiens="human", mmusculus="mouse", drerio="zebrafish").
 gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
   ont_tags <- c("GO:BP","GO:MF","GO:CC")
 
-  for (mode in c("with_bg","nobg")) {
-    subdir <- if (mode == "with_bg") "with_custom_background" else "no_background_genome_wide"
+  for (mode in c("custom_experimental_background", "default_domain_exploratory")) {
+    custom <- identical(mode, "custom_experimental_background")
+    subdir <- mode
+    has_results <- any(vapply(unname(species_map), function(label) {
+      !is.na(.gp_find_species_csv(gprof_base_dir, mode, label))
+    }, logical(1)))
+    if (!has_results) next
     outdir <- .make_dir(gprof_base_dir, subdir)
 
     for (sp_code in names(species_map)) {
@@ -311,14 +325,21 @@ gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
       req <- c("term_id","term_name","source","fold_enrichment","p_value","intersection_size")
       if (!all(req %in% names(df))) next
 
-      # mirror Rmd: plot only significant terms if present; otherwise create a note file
-      sig_tbl <- df |> dplyr::filter(!is.na(.data$p_value) & .data$p_value <= 0.05)
-      if (!nrow(sig_tbl)) {
-        file.create(file.path(outdir, paste0("gprofiler_", sp_label, "_NO_SIGNIFICANT_RESULTS.txt")))
+      # The primary matched-background view is thresholded as source-local
+      # enrichment evidence. Exploratory results remain inspectable without
+      # turning the threshold into an EchoGO support classification.
+      plot_tbl <- if (custom) {
+        df |> dplyr::filter(!is.na(.data$p_value) & .data$p_value <= 0.05)
+      } else {
+        df
+      }
+      if (!nrow(plot_tbl)) {
+        suffix <- if (custom) "NO_SIGNIFICANT_RESULTS" else "NO_EXPLORATORY_RESULTS"
+        file.create(file.path(outdir, paste0("gprofiler_", sp_label, "_", suffix, ".txt")))
         next
       }
 
-      dff <- dplyr::mutate(sig_tbl, negLogP = -log10(pmax(.data$p_value, .Machine$double.xmin)))
+      dff <- dplyr::mutate(plot_tbl, negLogP = -log10(pmax(.data$p_value, .Machine$double.xmin)))
 
       for (ont in ont_tags) {
         ont_short <- sub("^GO:", "", ont)
@@ -330,12 +351,19 @@ gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
           dplyr::slice_head(n = 50)
         if (!nrow(dd)) next
 
+        plot_title <- if (custom) {
+          sprintf("g:Profiler custom-background source results for %s (%s) - top 50 significant terms",
+                  tools::toTitleCase(sp_label), ont)
+        } else {
+          sprintf("Default-domain exploratory g:Profiler results for %s (%s) - top 50 for inspection",
+                  tools::toTitleCase(sp_label), ont)
+        }
         .plot_lollipop_core(
           df = dd,
           y_col = "fold_enrichment",
-          title = sprintf("g:Profiler (%s) - %s Top 50 Enriched Terms", tools::toTitleCase(sp_label), ont),
+          title = plot_title,
           outfile = file.path(outdir, sprintf("gprofiler_%s_%s_%s_lollipop.pdf",
-                                              sp_label, if (mode=="with_bg") "with_bg" else "nobg",
+                                              sp_label, mode,
                                               gsub(":", "_", ont))),
           x_lab = "Term",
           y_lab = "Fold Enrichment",
@@ -353,6 +381,43 @@ gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
 # ------------------------------------------------------------------------------
 #  C) Consensus lollipops - background-aware vs exploratory
 # ------------------------------------------------------------------------------
+.echogo_make_scoreless_evidence_lollipops <- function(evidence, base_outdir, top_n = 50) {
+  out_primary <- .make_dir(base_outdir, "plots_primary")
+  primary <- evidence[evidence$primary_evidence %in% TRUE & evidence$ontology %in% c("BP", "MF", "CC"), , drop = FALSE]
+  for (ont in c("BP", "MF", "CC")) {
+    d <- primary[primary$ontology == ont, , drop = FALSE]
+    if (!nrow(d)) next
+    d <- d[order(d$display_order, d$term_id), , drop = FALSE]
+    d <- utils::head(d, top_n)
+    # These are provenance/recurrence encodings, not cross-context statistics.
+    d$plot_support_n <- d$alternative_context_support_n
+    d$plot_support_fraction <- d$alternative_context_support_fraction
+    .plot_lollipop_core(
+      df = d,
+      y_col = "plot_support_n",
+      title = sprintf("Primary Term Evidence Landscape - %s", ont),
+      outfile = file.path(out_primary, sprintf("term_evidence_landscape_top%d_%s.pdf", top_n, ont)),
+      x_lab = "Term",
+      y_lab = "Alternative-context support N",
+      colour_col = "plot_support_fraction",
+      size_col = "gprof_custom_context_support_n",
+      high_colour = .echogo_onto_col(ont),
+      label_width = 35,
+      subtitle_text = "Deterministic display order; colour and size encode context recurrence, not p-values or confidence.",
+      legend_color_title = "Alternative-context support fraction",
+      legend_size_title = "Custom-context support N",
+      low_colour_override = "gray"
+    )
+  }
+  if (any(evidence$default_domain_exploratory_context_support_n > 0, na.rm = TRUE)) {
+    readr::write_csv(
+      evidence[evidence$default_domain_exploratory_context_support_n > 0, , drop = FALSE],
+      file.path(base_outdir, "default_domain_exploratory_terms_separate.csv")
+    )
+  }
+  invisible(NULL)
+}
+
 #' Plot EchoGO consensus lollipops (background-aware and exploratory) to mirror Rmd
 #' @rdname echogo_plot_generators
 #' @keywords internal
@@ -365,6 +430,10 @@ gprofiler_make_lollipops <- function(gprof_base_dir, species_map) {
 consensus_make_lollipops <- function(consensus_df, base_outdir, top_n = 50, legacy_root = NULL) {
   if (!is.data.frame(consensus_df) || !nrow(consensus_df)) {
     warning("consensus_make_lollipops(): empty consensus_df")
+    return(invisible(NULL))
+  }
+  if ("evidence_profile" %in% names(consensus_df)) {
+    .echogo_make_scoreless_evidence_lollipops(consensus_df, base_outdir, top_n)
     return(invisible(NULL))
   }
 

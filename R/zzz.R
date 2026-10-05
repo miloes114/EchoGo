@@ -1,34 +1,52 @@
 .onAttach <- function(libname, pkgname) {
+  version <- tryCatch(
+    as.character(utils::packageVersion(pkgname)),
+    error = function(e) ""
+  )
+  version_label <- if (nzchar(version)) paste0(" v", version) else ""
+  # Let cli detect console colour support (including NO_COLOR). In monochrome
+  # sessions, and when this optional dependency is absent, keep the same layout.
+  bold <- teal <- amber <- identity
+  if (requireNamespace("cli", quietly = TRUE)) {
+    bold <- cli::style_bold
+    teal <- cli::make_ansi_style("#1294A5")
+    amber <- cli::make_ansi_style("#C67500")
+  }
+  rule <- paste0("  ", strrep("-", 74L))
 
-  banner <- "
-EchoGO - matched organism-context enrichment
-  "
-
-  packageStartupMessage(
-    paste0(
-      banner,
-      "\nWelcome to EchoGO, a toolkit for background-aware and exploratory functional enrichment.",
-      "\nHow to cite: citation('EchoGO')",
-      "\nQuick start: echogo_help(); echogo_quickstart(run_demo = TRUE)",
-      "\nPick species interactively: echogo_pick_species()",
-      "\nMore documentation: vignette('EchoGO_workflow'), vignette('EchoGO_interpretation')",
-      "\nTo silence this message: suppressPackageStartupMessages(library(EchoGO))\n"
-    )
+  startup <- c(
+    "",
+    paste0("  ", bold(paste0("Echo", teal("GO"))), version_label),
+    "  Functional interpretation across annotation contexts",
+    teal(rule),
+    "",
+    "  Explore how annotation context shapes functional interpretation.",
+    "  Target GOseq stays primary; every GO term retains its source and context.",
+    "",
+    paste0("  ", bold(teal("EVIDENCE"))),
+    "  Target only | Target + context | Context-derived hypotheses",
+    "",
+    paste0("  ", bold(amber("FULL OFFLINE DEMO"))),
+    "    echogo_quickstart(run_demo = TRUE, full = TRUE)",
+    "    Cached g:Profiler; builds semantic summaries, networks and HTML report.",
+    "",
+    paste0("  ", bold(teal("YOUR EXPERIMENT"))),
+    sprintf("    %-30s # %s", 'echogo_scaffold("my_project")', "Create an input template"),
+    sprintf("    %-30s # %s", "echogo_pick_species()", "Browse annotation contexts"),
+    "    Inputs: DE results, tested-feature background, annotation and target GOseq.",
+    "",
+    paste0("  ", bold(teal("GUIDES"))),
+    sprintf("    %-30s # %s", "echogo_help()", "Workflow and commands"),
+    sprintf("    %-30s # %s", 'browseVignettes("EchoGO")', "Browse installed guides"),
+    '    vignette("reference-based-inputs")',
+    "",
+    "  Reports: results/report/ inside your demo or analysis folder",
+    '  Cite:    citation("EchoGO")',
+    "  Quiet:   suppressPackageStartupMessages(library(EchoGO))",
+    teal(rule)
   )
 
-  # Show default OrgDb & species
-  try({
-    active_orgdb   <- getOption("EchoGO.default_orgdb", "org.Mm.eg.db")
-    active_species <- getOption("EchoGO.default_species")
-
-    packageStartupMessage(
-      paste0(
-        "\nDefault OrgDb: ", paste(active_orgdb, collapse = ", "),
-        "\nDefault organism contexts: ", paste(active_species, collapse = ", "),
-        "\nTip: change with options(EchoGO.default_orgdb=...), options(EchoGO.default_species=...)\n"
-      )
-    )
-  }, silent = TRUE)
+  packageStartupMessage(paste(startup, collapse = "\n"))
 
   # Offline indicator (optional but helpful)
   if (!getOption("EchoGO.taxonomy_online", TRUE)) {
@@ -52,9 +70,6 @@ EchoGO - matched organism-context enrichment
   op.echogo <- list(
     # ---- defaults ----
     EchoGO.legacy_aliases      = FALSE,
-    EchoGO.default_species     = c("hsapiens","mmusculus","drerio","btaurus","rnorvegicus","dmelanogaster","ggallus"),
-    EchoGO.default_orgdb       = "org.Mm.eg.db",
-
     # ---- online/offline knobs ----
     EchoGO.gprofiler_base      = "https://biit.cs.ut.ee/gprofiler",
     EchoGO.species_autoupdate  = TRUE,

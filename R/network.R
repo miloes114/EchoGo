@@ -1,18 +1,59 @@
+.echogo_run_scoreless_primary_networks <- function(evidence, outdir, min_shared_genes = 2,
+                                                   min_gene_count = 3, sep_regex = "[,;]") {
+  root <- file.path(outdir, "networks", "primary_custom_evidence")
+  dir.create(root, recursive = TRUE, showWarnings = FALSE)
+  summary <- list()
+  for (ont in c("BP", "MF", "CC")) {
+    nodes <- evidence[
+      evidence$ontology == ont & evidence$primary_evidence %in% TRUE &
+        !is.na(evidence$contributing_genes) & nzchar(evidence$contributing_genes),
+      c("term_id", "term_name", "evidence_profile", "alternative_context_support_n",
+        "alternative_context_support_fraction", "display_order", "contributing_genes"),
+      drop = FALSE
+    ]
+    if (nrow(nodes)) {
+      nodes$gene_count <- vapply(nodes$contributing_genes, function(x) {
+        values <- unique(trimws(unlist(strsplit(x, sep_regex))))
+        sum(nzchar(values))
+      }, integer(1))
+      nodes <- nodes[nodes$gene_count >= min_gene_count, , drop = FALSE]
+    }
+    edges <- tibble::tibble(from = character(), to = character(), shared_gene_n = integer())
+    if (nrow(nodes) >= 2L) {
+      pairs <- utils::combn(seq_len(nrow(nodes)), 2L, simplify = FALSE)
+      edges <- dplyr::bind_rows(lapply(pairs, function(pair) {
+        left <- unique(trimws(unlist(strsplit(nodes$contributing_genes[[pair[[1]]]], sep_regex))))
+        right <- unique(trimws(unlist(strsplit(nodes$contributing_genes[[pair[[2]]]], sep_regex))))
+        shared <- length(intersect(left[nzchar(left)], right[nzchar(right)]))
+        if (shared >= min_shared_genes) tibble::tibble(
+          from = nodes$term_id[[pair[[1]]]], to = nodes$term_id[[pair[[2]]]], shared_gene_n = shared
+        ) else NULL
+      }))
+    }
+    readr::write_csv(nodes, file.path(root, paste0("primary_network_nodes_", ont, ".csv")))
+    readr::write_csv(edges, file.path(root, paste0("primary_network_edges_", ont, ".csv")))
+    if (requireNamespace("igraph", quietly = TRUE) && nrow(nodes)) {
+      graph <- igraph::graph_from_data_frame(edges, vertices = nodes, directed = FALSE)
+      igraph::write_graph(graph, file.path(root, paste0("primary_network_", ont, ".graphml")), format = "graphml")
+    }
+    summary[[ont]] <- tibble::tibble(ontology = ont, nodes = nrow(nodes), edges = nrow(edges))
+  }
+  readr::write_csv(dplyr::bind_rows(summary), file.path(root, "primary_network_summary.csv"))
+  invisible(root)
+}
+
 #' @name run_all_networks
 #' @title Run GO Term Network Construction for EchoGO Results (bulletproof)
 #' @description
-#' Builds two network modes from the consensus table:
-#' \itemize{
-#'   \item \strong{with_bg (conservative/background-aware)} = GOseq plus custom-background g:Profiler evidence
-#'   \item \strong{with_bg_and_nobg (Exploratory)} = all of the above \emph{plus} the no-background sources
-#' }
-#' Then constructs per-ontology (BP, MF, CC) GO-term overlap networks.
+#' For canonical v0.1.4 evidence, builds primary custom-background GO-term
+#' overlap networks whose nodes expose evidence profile, annotation-context
+#' recurrence and contributing genes. Default-domain-only rows are excluded.
+#' Historical score-oriented network construction remains a compatibility path.
 #'
-#' @param consensus_df Data frame from \code{build_consensus_table()} (must include
-#'   \code{term_id}, \code{term_name}, \code{ontology}, \code{all_genes}, \code{origin},
-#'   \code{significant_in_any}; optionally \code{consensus_score}, \code{consensus_score_all}, \code{in_goseq}, and GOseq p-values).
+#' @param consensus_df Canonical scoreless exact-term evidence from
+#'   \code{build_consensus_table()}.
 #' @param min_shared_genes Minimum shared genes to draw an edge when \code{edge_metric="shared"}. Default \code{2}.
-#' @param size_by Node size: \code{"gene_count"} (default) or \code{"consensus_score"}.
+#' @param size_by Node size for historical tables; canonical networks use gene counts.
 #' @param outdir Base output directory (writes under \code{outdir/networks}).
 #' @param sep_regex Regex used to split \code{all_genes}. Default \code{"[,;]"}.
 #' @param min_gene_count Drop terms with < this many genes before building. Default \code{3}.
@@ -75,6 +116,15 @@ run_all_networks <- function(consensus_df,
   }
 
   legacy_on <- isTRUE(getOption("EchoGO.legacy_aliases", FALSE))
+
+  if ("evidence_profile" %in% names(consensus_df)) {
+    .echogo_run_scoreless_primary_networks(
+      consensus_df, outdir = outdir, min_shared_genes = min_shared_genes,
+      min_gene_count = min_gene_count, sep_regex = sep_regex
+    )
+    message("Primary scoreless evidence networks written; default-domain networks were not generated.")
+    return(invisible(NULL))
+  }
 
   # Ensure scores & non-empty
   if (!"consensus_score" %in% names(consensus_df)) {
@@ -200,15 +250,13 @@ run_all_networks <- function(consensus_df,
 #' @name build_go_networks
 #' @title Build Per-Ontology GO Term Networks (capped + scalable)
 #' @description
-#' Constructs GO-term overlap networks using a pre-capped set of terms per ontology,
-#' ranked fairly: \emph{Consensus/g:Profiler} terms by the relevant consensus score, and
-#' \emph{GOseq-only} terms by \code{-log10(p)} (auto-detected p column). Uses a
-#' sparse \code{Matrix::tcrossprod} path by default for speed.
+#' Legacy helper for historical wide score tables. Canonical v0.1.4 scoreless
+#' network construction uses the primary-evidence path in
+#' \code{run_all_networks()}.
 #'
-#' @param df Subset of consensus table (columns: \code{term_id}, \code{term_name}, \code{ontology}, \code{all_genes},
-#'   \code{origin}, \code{in_goseq}, \code{significant_in_any}, \code{consensus_score}, optionally \code{consensus_score_all} and a GOseq p-value column).
+#' @param df Historical wide consensus-table subset.
 #' @param label Output subfolder under \code{outdir/networks}. (Expected: "with_bg" or "with_bg_and_nobg")
-#' @param size_by \code{"gene_count"} (default) or \code{"consensus_score"} for node sizing.
+#' @param size_by Historical node-size setting.
 #' @param min_shared_genes Edge threshold when \code{edge_metric="shared"}. Default \code{2}.
 #' @param sep_regex Regex for splitting \code{all_genes}. Default \code{"[,;]"}.
 #' @param min_gene_count Drop terms with < this many genes before ranking. Default \code{3}.

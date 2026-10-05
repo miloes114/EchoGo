@@ -1,7 +1,0 @@
-mode,comparison,jaccard,n_goseq,n_consensus
-with_bg,top50_all,0,5,0
-with_bg,all_significant_BP,0,3,0
-with_bg,all_significant_MF,0,2,0
-with_bg,top50_depth0,0,1,0
-with_bg,top50_depth1,0,3,0
-with_bg,top50_depth31,0,1,0

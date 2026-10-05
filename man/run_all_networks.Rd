@@ -20,13 +20,12 @@ run_all_networks(
 )
 }
 \arguments{
-\item{consensus_df}{Data frame from \code{build_consensus_table()} (must include
-\code{term_id}, \code{term_name}, \code{ontology}, \code{all_genes}, \code{origin},
-\code{significant_in_any}; optionally \code{consensus_score}, \code{consensus_score_all}, \code{in_goseq}, and GOseq p-values).}
+\item{consensus_df}{Canonical scoreless exact-term evidence from
+\code{build_consensus_table()}.}
 
 \item{min_shared_genes}{Minimum shared genes to draw an edge when \code{edge_metric="shared"}. Default \code{2}.}
 
-\item{size_by}{Node size: \code{"gene_count"} (default) or \code{"consensus_score"}.}
+\item{size_by}{Node size for historical tables; canonical networks use gene counts.}
 
 \item{outdir}{Base output directory (writes under \code{outdir/networks}).}
 
@@ -50,10 +49,8 @@ run_all_networks(
 Writes GraphML, PDF/SVG, HTML and summary CSVs; invisibly returns \code{NULL}.
 }
 \description{
-Builds two network modes from the consensus table:
-\itemize{
-  \item \strong{with_bg (conservative/background-aware)} = GOseq plus custom-background g:Profiler evidence
-  \item \strong{with_bg_and_nobg (Exploratory)} = all of the above \emph{plus} the no-background sources
-}
-Then constructs per-ontology (BP, MF, CC) GO-term overlap networks.
+For canonical v0.1.4 evidence, builds primary custom-background GO-term
+overlap networks whose nodes expose evidence profile, annotation-context
+recurrence and contributing genes. Default-domain-only rows are excluded.
+Historical score-oriented network construction remains a compatibility path.
 }

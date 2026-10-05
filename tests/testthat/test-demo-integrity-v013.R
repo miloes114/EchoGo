@@ -41,7 +41,7 @@ test_that("packaged demo is a valid matched-universe scientific fixture", {
 test_that("packaged demo cache is explicit, complete, and offline", {
   demo <- system.file("extdata", "echogo_demo", package = "EchoGO")
   expect_true(nzchar(demo))
-  cache <- file.path(demo, "cached_gprofiler_v0.1.3")
+  cache <- file.path(demo, "cache")
   manifest <- jsonlite::read_json(file.path(cache, "run_manifest.json"), simplifyVector = FALSE)
   expect_identical(manifest$execution, "cached_demo_fixture")
   expect_identical(manifest$vector_contract, "shared_portable_canonical_organism_context")
@@ -55,4 +55,23 @@ test_that("packaged demo cache is explicit, complete, and offline", {
       expect_true(file.exists(file.path(cache, entry$background_file)))
     }
   }
+
+  expect_length(
+    .echogo_find_gprofiler_result_file(cache, "custom_experimental_background", "hsapiens"),
+    1L
+  )
+  expect_true(file.exists(.echogo_find_gprofiler_result_file(
+    cache, "default_domain_exploratory", "drerio"
+  )))
+  expect_false(is.na(.gp_find_species_csv(
+    cache, "custom_experimental_background", "hsapiens"
+  )))
+  expect_false(is.na(.gp_find_species_csv(
+    cache, "default_domain_exploratory", "drerio"
+  )))
+  cached_vectors <- .echogo_find_cached_gprofiler_vectors(
+    cache, "custom_experimental_background"
+  )
+  expect_length(cached_vectors$queries, 3L)
+  expect_length(cached_vectors$backgrounds, 3L)
 })

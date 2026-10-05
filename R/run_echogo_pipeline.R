@@ -1,8 +1,8 @@
 #' @name run_echogo_pipeline
-#' @title Run the full EchoGO enrichment pipeline
+#' @title Run the EchoGO evidence and interpretation pipeline
 #' @description Loads and processes enrichment results using GOseq and g:Profiler,
-#' integrates them into a consensus table, and generates semantic, network, and
-#' evaluation outputs.
+#' assembles provenance-linked exact-term evidence, and generates semantic,
+#' gene-sharing network, and evaluation outputs.
 #' @param goseq_file Path to GOseq enrichment results
 #' @param trinotate_file Path to Trinotate annotation file
 #' @param de_file Path to the full contrast-specific DE results table.
@@ -10,11 +10,25 @@
 #' @param species Character vector of g:Profiler organism codes (unlimited). You may pass
 #'   a named vector like c(hsapiens="human", mmusculus="mouse"); if unnamed, labels default
 #'   to the codes themselves.
-#' @param orgdb Character|OrgDb|list for RRvGO (optional; passed through if supported)
+#' @param orgdb Deprecated compatibility alias for
+#'   `semantic_reference_orgdb`. It is not an enrichment context.
 #' @param outdir Base output directory (standard layout will be created here)
-#' @param strict_only If TRUE, skip exploratory no-background runs.
+#' @param strict_only Deprecated compatibility alias. TRUE disables optional
+#'   default-domain exploration; use `run_exploratory_default_domain` for new work.
+#' @param run_exploratory_default_domain If TRUE, run the optional
+#'   default-domain exploratory g:Profiler layer. Defaults to FALSE.
+#' @param target_context Researcher-declared target g:Profiler context code or
+#'   label. Use `NA_character_` for an explicit no-target declaration.
+#' @param context_metadata Optional data frame identifying queried contexts by
+#'   `context_code` and/or `context_label` with optional `context_rationale` and
+#'   `selection_basis`. This is interpretive provenance only and never affects
+#'   enrichment, recurrence, evidence profiles, ordering, RRvGO, networks or evaluation.
 #' @param run_rrvgo Whether to run RRvGO semantic reduction (default: TRUE)
 #' @param run_evaluation Whether to run enrichment evaluation (default: TRUE)
+#' @param semantic_reference_role Required when RRvGO is enabled: either
+#'   `target_reference` or `proxy`.
+#' @param semantic_reference_orgdb Preferred OrgDb package used only for RRvGO
+#'   semantic similarity. Required when RRvGO is enabled.
 #' @param verbose Print progress
 #' @param use_trinotate_universe Deprecated compatibility flag retained in run
 #'   metadata. It does not intersect or redefine the tested experiment universe.
@@ -32,12 +46,16 @@ run_echogo_pipeline <- function(
     trinotate_file,
     de_file,
     count_matrix_file,
-    species = getOption("EchoGO.default_species", c("hsapiens","mmusculus","drerio")),
-    orgdb   = getOption("EchoGO.default_orgdb", "org.Dr.eg.db"),
+    species = NULL,
+    orgdb   = NULL,
     outdir  = "echogo_out",
-    strict_only = FALSE,
+    strict_only = NULL,
+    run_exploratory_default_domain = FALSE,
+    target_context = NULL,
+    context_metadata = NULL,
     run_rrvgo = TRUE,
     run_evaluation = TRUE,
+    semantic_reference_role = NULL,
     use_trinotate_universe = FALSE,
     tested_gene_ids = NULL,
     de_id_column = NULL,
@@ -49,8 +67,37 @@ run_echogo_pipeline <- function(
     padj_threshold = 0.05,
     log2fc_threshold = 1,
     de_table_significant_only = FALSE,
-    verbose = TRUE
+    verbose = TRUE,
+    semantic_reference_orgdb = NULL
 ) {
+  species_was_missing <- missing(species)
+  target_was_missing <- missing(target_context)
+  species <- .echogo_resolve_enrichment_contexts(
+    species,
+    argument_missing = species_was_missing,
+    caller = "run_echogo_pipeline()"
+  )
+  target_contract <- .echogo_resolve_target_declaration(
+    target_context,
+    argument_missing = target_was_missing,
+    caller = "run_echogo_pipeline()"
+  )
+  target_context <- target_contract$value
+  semantic_contract <- .echogo_resolve_semantic_reference(
+    semantic_reference_orgdb = semantic_reference_orgdb,
+    orgdb = orgdb,
+    semantic_reference_role = semantic_reference_role,
+    run_rrvgo = run_rrvgo,
+    caller = "run_echogo_pipeline()"
+  )
+  if (isTRUE(run_rrvgo)) {
+    .echogo_preflight_semantic_dependencies(semantic_contract$orgdb)
+  }
+
+  if (!is.null(strict_only)) {
+    warning("strict_only is deprecated; use run_exploratory_default_domain.", call. = FALSE)
+    if (isTRUE(strict_only)) run_exploratory_default_domain <- FALSE
+  }
   `%||%` <- function(a,b) if (!is.null(a)) a else b
   .mk <- function(...) { p <- file.path(...); dir.create(p, recursive = TRUE, showWarnings = FALSE); p }
   .mirror_tree <- function(src, dest) {
@@ -87,8 +134,8 @@ run_echogo_pipeline <- function(
     report      = .mk(outdir, "report")
   )
   # canonical consensus plot subfolders
-  dirs$consensus_strict_plots <- .mk(dirs$consensus, "plots_strict")
-  dirs$consensus_all_plots    <- .mk(dirs$consensus, "plots_exploratory")
+  dirs$consensus_primary_plots <- .mk(dirs$consensus, "plots_primary")
+  dirs$consensus_exploratory_plots <- .mk(dirs$consensus, "plots_default_domain_exploratory")
 
   # expose active results root so relative writers (e.g., RRvGO) can anchor themselves
   options(EchoGO.active_results_dir = dirs$base)
@@ -114,6 +161,27 @@ run_echogo_pipeline <- function(
   } else {
     stats::setNames(as.character(species), as.character(species))
   }
+
+  run_configuration_file <- file.path(dirs$diagnostics, "run_configuration.json")
+  jsonlite::write_json(
+    list(
+      schema_version = "1.0",
+      enrichment_contexts = as.list(species_map),
+      target_context = target_contract$configured_value,
+      target_context_state = target_contract$state,
+      context_metadata = context_metadata,
+      run_exploratory_default_domain = isTRUE(run_exploratory_default_domain),
+      run_rrvgo = isTRUE(run_rrvgo),
+      semantic_reference_orgdb = semantic_contract$orgdb,
+      semantic_reference_role = semantic_contract$role,
+      semantic_reference_configuration_source = semantic_contract$source,
+      semantic_method = if (isTRUE(run_rrvgo)) "Rel" else NULL
+    ),
+    run_configuration_file,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    na = "null"
+  )
 
   gene_sets <- prepare_gprofiler_gene_sets(
     de_results = de_file,
@@ -229,12 +297,16 @@ run_echogo_pipeline <- function(
       )
     }
     if (have_cached && !isTRUE(getOption("EchoGO.force_rerun_gprofiler", FALSE))) {
+      cached_primary_dir <- .echogo_gprofiler_mode_paths(
+        dirs$gprof, "custom_experimental_background"
+      )
+      cached_primary_dir <- cached_primary_dir[dir.exists(cached_primary_dir)][1]
       cached_queries <- list.files(
-        file.path(dirs$gprof, "with_custom_background"),
+        cached_primary_dir,
         pattern = "_query\\.txt$", full.names = TRUE
       )
       cached_backgrounds <- list.files(
-        file.path(dirs$gprof, "with_custom_background"),
+        cached_primary_dir,
         pattern = "_background\\.txt$", full.names = TRUE
       )
       if (!length(cached_queries) || !length(cached_backgrounds)) {
@@ -264,9 +336,11 @@ run_echogo_pipeline <- function(
         bg_genes = bg_eggnog_filtered,
         species  = species_map,
         outdir   = dirs$gprof,
-        do_no_bg = !strict_only,
+        run_exploratory_default_domain = run_exploratory_default_domain,
         significance_rule = gene_sets$significance_rule,
         resolver_definition = gene_sets$resolver_definition,
+        target_context = target_context,
+        context_metadata = context_metadata,
         verbose  = verbose
       )
     } else {
@@ -283,22 +357,21 @@ run_echogo_pipeline <- function(
   # mirror canonical to legacy (only if enabled)
   if (legacy_on) .mirror_tree(dirs$gprof, file.path(outdir, "cross_species_gprofiler"))
 
-  # ---- Step 4: Build consensus table (canonical consensus/) ----
+  # ---- Step 4: Assemble exact-term evidence (retained consensus/ path) ----
   if (verbose) message("Building consensus enrichment table...")
   consensus_df <- tryCatch({
     build_consensus_table(
       goseq_file    = goseq_output,
       gprofiler_dir = dirs$gprof,
       species_map   = species_map,
-      output_dir    = dirs$consensus
+      output_dir    = dirs$consensus,
+      target_context = target_context,
+      context_metadata = context_metadata,
+      annotation_provenance = gene_sets$mapping_table
     )
   }, error = function(e) stop("build_consensus_table() failed: ", e$message))
 
-  if (!"consensus_score" %in% names(consensus_df)) {
-    consensus_df <- .echogo_add_consensus_scores(consensus_df)
-  }
-
-  # Consensus lollipops to canonical subfolders
+  # Evidence-landscape plots use transparent display order, never a score.
   if (exists("consensus_make_lollipops")) {
     try(consensus_make_lollipops(
       consensus_df = consensus_df,
@@ -308,48 +381,69 @@ run_echogo_pipeline <- function(
   }
   if (legacy_on) {
     .mirror_tree(dirs$consensus, file.path(outdir, "consensus_enrichment"))
-    .mirror_tree(dirs$consensus_strict_plots, file.path(outdir, "consensus_plots_strict_true_consensus"))
-    .mirror_tree(dirs$consensus_all_plots,    file.path(outdir, "consensus_plots_all_exploratory"))
+    .mirror_tree(dirs$consensus_primary_plots, file.path(outdir, "consensus_plots_primary"))
+    .mirror_tree(dirs$consensus_exploratory_plots, file.path(outdir, "consensus_plots_default_domain_exploratory"))
   }
 
   # ---- Step 5: RRvGO semantic clustering (canonical rrvgo/, plus optional legacy mirror) ----
   if (isTRUE(run_rrvgo) && verbose) message("Running semantic clustering (RRVGO)...")
   rr_fun <- if (exists("run_rrvgo_consensus_analysis")) run_rrvgo_consensus_analysis else NULL
   if (isTRUE(run_rrvgo) && !is.null(rr_fun)) {
-    true_consensus_df <- consensus_df %>%
-      dplyr::filter(
-        significant_in_any == TRUE,
-        ontology %in% c("BP", "MF", "CC"),
-        in_goseq == TRUE |
-          origin %in% c("GO terms - g:Profiler only (with BG)", "GO terms - Consensus (with BG)")
+    rr_inputs <- if (exists(".echogo_rrvgo_partition_inputs", mode = "function")) {
+      .echogo_rrvgo_partition_inputs(consensus_df)
+    } else {
+      list(
+        target_supported = consensus_df %>% dplyr::filter(
+          .data$primary_evidence == TRUE,
+          .data$evidence_profile %in% c("TARGET_ONLY", "TARGET_PLUS_CONTEXT"),
+          .data$ontology %in% c("BP", "MF", "CC")
+        ),
+        alternative_context_hypothesis = consensus_df %>% dplyr::filter(
+          .data$primary_evidence == TRUE,
+          .data$evidence_profile == "ALTERNATIVE_CONTEXT",
+          .data$ontology %in% c("BP", "MF", "CC")
+        )
       )
+    }
 
     rr_formals <- names(formals(rr_fun))
-    rr_call <- list(
-      df_input = true_consensus_df,
-      label    = "true_consensus_with_bg"
-    )
-    if ("orgdb" %in% rr_formals)       rr_call$orgdb       <- orgdb
-    if ("output_base" %in% rr_formals) rr_call$output_base <- dirs$rrvgo
-    if ("outdir" %in% rr_formals)      rr_call$outdir      <- file.path(dirs$rrvgo, "true_consensus_with_bg")
-    do.call(rr_fun, rr_call)
-
-    extra_terms <- setdiff(
-      subset(consensus_df, significant_in_any)$term_id,
-      subset(consensus_df, origin %in% c("GO terms - GOseq only",
-                                         "GO terms - g:Profiler only (with BG)",
-                                         "GO terms - Consensus (with BG)"))$term_id
-    )
-    if (length(extra_terms) > 0) {
-      rr2_call <- list(
-        df_input = subset(consensus_df, significant_in_any),
-        label    = "exploratory_all_significant"
+    rr_calls <- list(
+      list(
+        df_input = rr_inputs$target_supported,
+        label = "target_supported",
+        semantic_product = "target_supported"
+      ),
+      list(
+        df_input = rr_inputs$alternative_context_hypothesis,
+        label = "alternative_context_hypothesis",
+        semantic_product = "alternative_context_hypothesis"
       )
-      if ("orgdb" %in% rr_formals)       rr2_call$orgdb       <- orgdb
-      if ("output_base" %in% rr_formals) rr2_call$output_base <- dirs$rrvgo
-      if ("outdir" %in% rr_formals)      rr2_call$outdir      <- file.path(dirs$rrvgo, "exploratory_all_significant")
-      do.call(rr_fun, rr2_call)
+    )
+    for (rr_call in rr_calls) {
+      # The report-output wrapper deliberately exposes `...` while preserving
+      # the base RRvGO interface.  Treat that forwarding contract like the
+      # explicit formals here; otherwise the semantic reference silently drops
+      # before the base function validates it.
+      if ("..." %in% rr_formals || "semantic_reference_orgdb" %in% rr_formals) {
+        rr_call$semantic_reference_orgdb <- semantic_contract$orgdb
+      } else if ("orgdb" %in% rr_formals) {
+        rr_call$orgdb <- semantic_contract$orgdb
+      }
+      if ("..." %in% rr_formals || "output_base" %in% rr_formals) rr_call$output_base <- dirs$rrvgo
+      # The forwarding wrapper consumes `output_base`; its underlying RRvGO
+      # implementation has no `outdir` parameter.  Pass `outdir` only when a
+      # concrete implementation explicitly declares it.
+      if ("outdir" %in% rr_formals) {
+        rr_call$outdir <- file.path(dirs$rrvgo, rr_call$label)
+      }
+      if ("..." %in% rr_formals || "semantic_reference_role" %in% rr_formals) {
+        rr_call$semantic_reference_role <- semantic_contract$role
+      }
+      do.call(rr_fun, rr_call)
     }
+
+    # Default-domain semantic reduction is intentionally a separate optional
+    # product and is never created from the primary pipeline path.
     if (legacy_on) .mirror_tree(dirs$rrvgo, file.path(outdir, "Similarity_based_consensus"))
   } else if (isTRUE(run_rrvgo)) {
     warning("run_rrvgo_consensus_analysis() not found; skipping RRvGO.")
@@ -357,17 +451,25 @@ run_echogo_pipeline <- function(
     message("Skipping RRvGO semantic clustering (run_rrvgo = FALSE).")
   }
 
-  # ---- Step 6: GO networks (writes into canonical networks/; optional legacy mirror) ----
+  # ---- Step 6: GO networks (canonical scoreless pipeline products) ----
   if (verbose) message("Building GO term networks...")
-  if (exists("run_all_networks")) {
-    run_all_networks(consensus_df, outdir = dirs$base)  # keep call as-is
+  if (exists(".echogo_write_scoreless_network_products")) {
+    .echogo_write_scoreless_network_products(
+      evidence = consensus_df,
+      outdir = dirs$base,
+      min_shared_genes = 2L,
+      min_gene_count = 2L
+    )
     if (legacy_on) {
       legacy_net <- file.path(outdir, "Network_analysis")
-      if (dir.exists(legacy_net)) .mirror_tree(legacy_net, dirs$network)
       .mirror_tree(dirs$network, legacy_net)
     }
+  } else if (exists("run_all_networks")) {
+    # Compatibility fallback for source trees that predate the canonical
+    # product writer.  Current v0.1.4 always loads the writer above.
+    run_all_networks(consensus_df, outdir = dirs$base)
   } else {
-    warning("run_all_networks() not found; skipping networks.")
+    warning("No network product writer found; skipping networks.")
   }
 
   # ---- Step 7: Optional evaluation (canonical evaluation/) ----
@@ -395,16 +497,31 @@ run_echogo_pipeline <- function(
       de_file           = de_file,
       count_matrix_file = count_matrix_file,
       species           = species_map,
-      orgdb             = orgdb
+      semantic_reference_orgdb = semantic_contract$orgdb,
+      semantic_reference_role = semantic_contract$role,
+      semantic_reference_source = semantic_contract$source,
+      target_context    = target_contract$configured_value,
+      target_context_state = target_contract$state,
+      context_metadata  = context_metadata,
+      run_exploratory_default_domain = run_exploratory_default_domain
     ),
     dirs    = dirs,
     objects = list(
       goseq_df     = goseq_df,
       consensus_df = consensus_df,
+      source_provenance = attr(consensus_df, "source_provenance"),
+      context_configuration = attr(consensus_df, "context_configuration"),
       gprofiler    = gprof_results,
       gene_sets    = gene_sets
     ),
     files   = list(
+      run_configuration = run_configuration_file,
+      exact_term_evidence = file.path(dirs$consensus, "term_evidence_exact.csv"),
+      source_provenance = file.path(dirs$consensus, "term_source_provenance_long.csv"),
+      context_configuration = file.path(dirs$consensus, "context_configuration.csv"),
+      mapping_table = file.path(dirs$gprof, "submitted_vectors", "mapping_table.csv"),
+      representability_contract = file.path(dirs$gprof, "submitted_vectors", "gene_set_contract.json"),
+      semantic_products = if (isTRUE(run_rrvgo)) dirs$rrvgo else NA_character_,
       consensus_xlsx = file.path(
         dirs$consensus,
         "consensus_enrichment_results_with_and_without_bg.xlsx"

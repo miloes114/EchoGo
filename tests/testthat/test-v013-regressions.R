@@ -133,55 +133,33 @@ test_that("quickstart passes explicit demo files and cleans stale results", {
   expect_identical(basename(captured$trinotate_file), "Trinotate_demo.tsv")
   expect_identical(basename(captured$de_file), "DE_results_demo.tsv")
   expect_identical(basename(captured$count_matrix_file), "counts_demo.tsv")
+  expect_identical(captured$target_context, "drerio")
+  expect_identical(captured$semantic_reference_orgdb, "org.Dr.eg.db")
+  expect_identical(captured$semantic_reference_role, "target_reference")
+  expect_false(captured$run_exploratory_default_domain)
 })
 
-test_that("frozen demo outputs remain non-empty and include an HTML report", {
+test_that("packaged demo snapshot identifies the v0.1.4 offline product", {
   frozen <- echogo_demo_results_path()
-  consensus_file <- file.path(
-    frozen,
-    "consensus",
-    "consensus_enrichment_results_with_and_without_bg.xlsx"
-  )
-  reports <- list.files(
-    file.path(frozen, "report"),
-    pattern = "\\.html$",
-    full.names = TRUE
-  )
-
-  expect_true(file.exists(consensus_file))
-  expect_gt(nrow(openxlsx::read.xlsx(consensus_file)), 0L)
-  expect_true(length(reports) > 0L)
-  expect_true(all(file.info(reports)$size > 0))
-
-  report_html <- paste(
-    readLines(reports[[1]], warn = FALSE, encoding = "UTF-8"),
-    collapse = "\n"
-  )
-  asset_tags <- regmatches(
-    report_html,
-    gregexpr(
-      "(?:src|href|data)=[\"']assets/[^\"']+[\"']",
-      report_html,
-      perl = TRUE,
-      ignore.case = TRUE
-    )
-  )[[1]]
-  asset_refs <- sub(
-    "^(?:src|href|data)=[\"']",
-    "",
-    asset_tags,
-    perl = TRUE,
-    ignore.case = TRUE
-  )
-  asset_refs <- unique(utils::URLdecode(sub("[\"']$", "", asset_refs)))
-
-  expect_gt(length(asset_refs), 0L)
-  asset_paths <- file.path(dirname(reports[[1]]), asset_refs)
-  missing_assets <- asset_refs[!file.exists(asset_paths)]
-  expect_length(missing_assets, 0L)
+  readme <- file.path(frozen, "README.txt")
+  expect_true(file.exists(readme))
+  text <- paste(readLines(readme, warn = FALSE), collapse = "\n")
+  expect_match(text, "v0.1.4")
+  expect_false(grepl("consensus_score|true_consensus|no-background", text, ignore.case = TRUE))
 })
 
-test_that("offline quickstart produces consensus without network access", {
+test_that("offline basic quickstart produces consensus without an optional OrgDb", {
+  orgdb_checked <- FALSE
+  cache <- tempfile("echogo-species-cache-")
+  dir.create(cache)
+  testthat::local_mocked_bindings(
+    echogo_require_orgdb = function(...) {
+      orgdb_checked <<- TRUE
+      stop("basic quickstart must not enter semantic OrgDb preparation")
+    },
+    .echogo_cache_dir = function() cache,
+    .package = "EchoGO"
+  )
   res <- echogo_quickstart(
     run_demo = TRUE,
     outdir = tempfile("echogo-live-"),
@@ -190,13 +168,149 @@ test_that("offline quickstart produces consensus without network access", {
     live_gprofiler = FALSE
   )
 
-  expect_true(file.exists(res$files$consensus_xlsx))
-  expect_gt(nrow(openxlsx::read.xlsx(res$files$consensus_xlsx)), 0L)
+  expect_true(file.exists(res$files$exact_term_evidence))
+  expect_gt(nrow(readr::read_csv(res$files$exact_term_evidence, show_col_types = FALSE)), 0L)
+  expect_false(orgdb_checked)
 })
 
-test_that("GO depth preserves rows with mixed identifier types", {
+test_that("offline quickstart never calls the species network fetcher with an empty cache", {
+  cache <- tempfile("echogo-species-empty-")
+  dir.create(cache, recursive = TRUE)
+  network_called <- FALSE
+  testthat::local_mocked_bindings(
+    .echogo_cache_dir = function() cache,
+    .echogo_fetch_species_online = function(...) {
+      network_called <<- TRUE
+      stop("NETWORK SHOULD NOT BE CALLED")
+    },
+    .package = "EchoGO"
+  )
+  old <- options(EchoGO.species_autoupdate = TRUE, EchoGO.taxonomy_online = TRUE)
+  on.exit(options(old), add = TRUE)
+  res <- echogo_quickstart(
+    run_demo = TRUE, outdir = tempfile("echogo-empty-cache-"),
+    make_report = FALSE, full = FALSE, live_gprofiler = FALSE
+  )
+  expect_true(file.exists(res$files$consensus_xlsx))
+  expect_false(network_called)
+})
+
+test_that("offline quickstart never refreshes a stale species cache", {
+  cache <- tempfile("echogo-species-stale-")
+  dir.create(cache, recursive = TRUE)
+  fallback <- EchoGO:::.echogo_species_fallback()
+  readr::write_csv(fallback, file.path(cache, "gprofiler_species.csv"))
+  jsonlite::write_json(
+    list(source = "api", timestamp = 0, ok = TRUE, version = "0.1.4"),
+    file.path(cache, "gprofiler_species_meta.json"), auto_unbox = TRUE
+  )
+  network_called <- FALSE
+  testthat::local_mocked_bindings(
+    .echogo_cache_dir = function() cache,
+    .echogo_fetch_species_online = function(...) {
+      network_called <<- TRUE
+      stop("NETWORK SHOULD NOT BE CALLED")
+    },
+    .package = "EchoGO"
+  )
+  old <- options(EchoGO.species_autoupdate = TRUE, EchoGO.taxonomy_online = TRUE)
+  on.exit(options(old), add = TRUE)
+  res <- echogo_quickstart(
+    run_demo = TRUE, outdir = tempfile("echogo-stale-cache-"),
+    make_report = FALSE, full = FALSE, live_gprofiler = FALSE
+  )
+  expect_true(file.exists(res$files$consensus_xlsx))
+  expect_false(network_called)
+})
+
+test_that("offline quickstart restores species and taxonomy options on success and error", {
+  cache <- tempfile("echogo-species-restore-")
+  dir.create(cache, recursive = TRUE)
+  testthat::local_mocked_bindings(
+    .echogo_cache_dir = function() cache,
+    .echogo_fetch_species_online = function(...) stop("NETWORK SHOULD NOT BE CALLED"),
+    .package = "EchoGO"
+  )
+  old <- options(EchoGO.species_autoupdate = "before-auto", EchoGO.taxonomy_online = "before-tax")
+  on.exit(options(old), add = TRUE)
+  expect_no_error(echogo_quickstart(
+    run_demo = TRUE, outdir = tempfile("echogo-restore-ok-"),
+    make_report = FALSE, full = FALSE, live_gprofiler = FALSE
+  ))
+  expect_identical(getOption("EchoGO.species_autoupdate"), "before-auto")
+  expect_identical(getOption("EchoGO.taxonomy_online"), "before-tax")
+
+  testthat::local_mocked_bindings(
+    run_full_echogo = function(...) stop("intentional downstream failure"),
+    .validate_quickstart_result = function(...) invisible(TRUE),
+    .package = "EchoGO"
+  )
+  expect_error(echogo_quickstart(
+    run_demo = TRUE, outdir = tempfile("echogo-restore-error-"),
+    make_report = FALSE, full = FALSE, live_gprofiler = FALSE
+  ), "intentional downstream failure")
+  expect_identical(getOption("EchoGO.species_autoupdate"), "before-auto")
+  expect_identical(getOption("EchoGO.taxonomy_online"), "before-tax")
+})
+
+test_that("live quickstart mode does not apply the offline species guard", {
+  captured <- NULL
+  testthat::local_mocked_bindings(
+    run_full_echogo = function(...) {
+      captured <<- list(
+        species_autoupdate = getOption("EchoGO.species_autoupdate"),
+        taxonomy_online = getOption("EchoGO.taxonomy_online")
+      )
+      list(files = list())
+    },
+    .validate_quickstart_result = function(...) invisible(TRUE),
+    .package = "EchoGO"
+  )
+  old <- options(EchoGO.species_autoupdate = TRUE, EchoGO.taxonomy_online = TRUE)
+  on.exit(options(old), add = TRUE)
+  echogo_quickstart(
+    run_demo = TRUE, outdir = tempfile("echogo-live-mode-"),
+    make_report = FALSE, full = FALSE, live_gprofiler = TRUE
+  )
+  expect_true(captured$species_autoupdate)
+  expect_true(captured$taxonomy_online)
+})
+
+test_that("full quickstart passes an explicit demo semantic reference without installing", {
+  run_args <- NULL
+  testthat::local_mocked_bindings(
+    echogo_require_orgdb = function(...) stop("quickstart must not install dependencies"),
+    run_full_echogo = function(...) {
+      run_args <<- list(...)
+      list(files = list())
+    },
+    .validate_quickstart_result = function(...) invisible(TRUE),
+    .package = "EchoGO"
+  )
+
+  echogo_quickstart(
+    run_demo = TRUE,
+    outdir = tempfile("echogo-full-"),
+    make_report = FALSE,
+    clean = TRUE,
+    full = TRUE,
+    live_gprofiler = FALSE
+  )
+
+  expect_true(run_args$run_rrvgo)
+  expect_true(run_args$run_evaluation)
+  expect_true(run_args$run_exploratory_default_domain)
+  expect_identical(run_args$semantic_reference_orgdb, "org.Dr.eg.db")
+  expect_identical(run_args$semantic_reference_role, "target_reference")
+  expect_identical(run_args$target_context, "drerio")
+})
+
+test_that("GO depth preserves mixed-ID row alignment", {
   input <- tibble::tibble(
-    term_id = c("GO:0008150", "KEGG:04010", NA_character_, "prefix GO:0003674 suffix")
+    term_id = c(
+      "GO:0008150", "prefix GO:0003674 suffix", "KEGG:04010",
+      "not_a_go_identifier", NA_character_, ""
+    )
   )
 
   expect_warning(
@@ -205,8 +319,12 @@ test_that("GO depth preserves rows with mixed identifier types", {
   )
   expect_equal(nrow(result), nrow(input))
   expect_length(result$depth, nrow(input))
-  expect_true(is.na(result$depth[[2]]))
-  expect_true(is.na(result$depth[[3]]))
+  expect_type(result$depth, "integer")
+  expect_true(all(is.na(result$depth[c(3, 4, 5, 6)])))
+  if (requireNamespace("GO.db", quietly = TRUE) &&
+      requireNamespace("AnnotationDbi", quietly = TRUE)) {
+    expect_false(anyNA(result$depth[c(1, 2)]))
+  }
 })
 
 test_that("echogo_run accepts overrides and uses the configured report title", {
@@ -226,7 +344,8 @@ test_that("echogo_run accepts overrides and uses the configured report title", {
   writeLines(
     c(
       "species: [hsapiens, mmusculus]",
-      "orgdb: org.Mm.eg.db",
+      "target_context: NO_TARGET",
+      "run_rrvgo: false",
       "report_title: Configured report"
     ),
     file.path(input_dir, "config.yml")

@@ -1,8 +1,8 @@
 Package: EchoGO
 Type: Package
-Title: Background-Aware Multi-Context Enrichment for Non-Model Organisms
-Version: 0.1.3
-Date: 2026-07-16
+Title: Traceable Functional Interpretation Across Annotation Contexts
+Version: 0.1.4
+Date: 2026-08-27
 Authors@R: c(
     person("Camilo", "Escobar-Sierra",
            email = "camilo.escobar-sierra@rwth-aachen.de",
@@ -13,14 +13,19 @@ Authors@R: c(
            email = "pedro.inostroza@rwth-aachen.de",
            role  = "aut")
   )
-Description: A modular framework for functional enrichment analysis
-    in non-model organisms. It integrates bias-aware GOseq enrichment with
-    matched experiment-derived gene sets evaluated across multiple g:Profiler
-    organism contexts, builds
-    consensus scores, performs semantic similarity reduction with RRvGO, and
-    generates curated visual outputs including lollipop plots, rarefaction
-    curves, enrichment networks, and HTML reports. It is especially suited
-    for transcriptomic studies with de novo assemblies or sparse annotations.
+Description: A traceable functional-interpretation and hypothesis-generation
+    layer after transcriptomic analysis. Target-specific GOseq enrichment
+    remains the experimental anchor while the same experiment-matched portable
+    foreground and tested background are evaluated across researcher-selected
+    g:Profiler organism annotation contexts. Scoreless, provenance-linked
+    evidence profiles describe target support, annotation-context recurrence,
+    alternative-context hypotheses, identifier representability, and
+    context-effective recognition. Optional RRvGO semantic summarization keeps
+    target-supported and hypothesis terms separate. Source-specific statistics
+    are never combined across contexts. The framework supports both
+    reference-rich and annotation-limited studies, including de novo
+    transcriptomes, without claiming orthology, conservation, or integrated
+    significance.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -54,6 +59,7 @@ Imports:
     ggvenn,
     patchwork
 Suggests:
+    cli,
     Biostrings,
     rtracklayer,
     GenomicRanges,
@@ -83,5 +89,5 @@ Suggests:
 VignetteBuilder: knitr
 URL: https://github.com/miloes114/EchoGo
 BugReports: https://github.com/miloes114/EchoGo/issues
-RoxygenNote: 7.3.3
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0

@@ -2,30 +2,20 @@
 % Please edit documentation in R/consensus.R
 \name{score_consensus_terms}
 \alias{score_consensus_terms}
-\title{Score and classify consensus enrichment terms}
+\title{Deprecated score adapter}
 \usage{
-score_consensus_terms(
-  df,
-  P_CAP = 6,
-  FOLD_CAP = 8,
-  W_STRICT = list(w_goseq = 1, w_bgprev = 0.8, w_foldbg = 0.4, w_foldgs = 0.4, w_p = 0.4),
-  W_ALL = list(w_goseq = 1, w_bgprev = 0.7, w_nbprev = 0.3, w_foldbg = 0.35, w_foldnb =
-    0.25, w_foldgs = 0.35, w_p = 0.35)
-)
+score_consensus_terms(df, ...)
 }
 \arguments{
-\item{df}{Data frame output from `merge_enrichment_sources()`.}
+\item{df}{Legacy wide consensus table.}
 
-\item{P_CAP, FOLD_CAP}{Positive caps applied to transformed p-values and folds.}
-
-\item{W_STRICT, W_ALL}{Named weight lists for the background-aware and
-exploratory formulas.}
+\item{...}{Ignored retired score parameters.}
 }
 \value{
-Scored consensus enrichment table.
+A legacy-compatible scoreless evidence view without score columns.
 }
 \description{
-Applies the documented heuristic background-aware and exploratory scoring
-formulas to a merged enrichment table. Scores are prioritisation aids, not
-probabilities, effect sizes, or universally calibrated confidence measures.
+`consensus_score` and `consensus_score_all` were retired in EchoGO v0.1.4.
+This adapter provides evidence profiles for legacy wide tables but deliberately
+does not recreate either rejected composite score.
 }

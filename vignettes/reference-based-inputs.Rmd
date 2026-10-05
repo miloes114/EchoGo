@@ -232,7 +232,9 @@ result <- run_full_echogo(
   de_file = file.path(input_dir, "dge_Treated_vs_Control.csv"),
   count_matrix_file = file.path(input_dir, "allcounts_table.txt"),
   species = c("hsapiens", "mmusculus", "drerio"),
-  orgdb = "org.Mm.eg.db",
+  target_context = "drerio",
+  semantic_reference_orgdb = "org.Dr.eg.db",
+  semantic_reference_role = "target_reference",
   outdir = "path/to/reference_project/echogo_results",
   run_rrvgo = TRUE,
   make_report = TRUE,
@@ -240,9 +242,11 @@ result <- run_full_echogo(
 )
 ```
 
-The `orgdb` passed to `run_full_echogo()` controls RRvGO semantic
-similarity. It is separate from the optional species-native `orgdb` used
-during input preparation.
+The `semantic_reference_orgdb` passed to `run_full_echogo()` controls RRvGO
+semantic similarity only. It is conceptually separate from the optional
+species-native `orgdb` used during input preparation, even when the same target
+OrgDb package is appropriate for both purposes. `orgdb` remains a deprecated
+v0.1.4 compatibility alias for the RRvGO argument.
 
 # Troubleshooting
 
@@ -288,5 +292,5 @@ Do not switch from adjusted FDR to raw p-values to force results.
 # Next steps
 
 See `vignette("EchoGO_workflow")` for the complete pipeline and
-`vignette("EchoGO_interpretation")` for consensus, RRvGO, and network
+`vignette("EchoGO_interpretation")` for exact-term evidence, RRvGO, and network
 interpretation. Use `citation("EchoGO")` for the package citation.

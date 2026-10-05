@@ -17,7 +17,7 @@ plot_lollipop(
 \arguments{
 \item{df}{A data frame of enrichment results.}
 
-\item{score_col}{Name of the column used for ranking (e.g. "fold_enrichment", "consensus_score").}
+\item{score_col}{Name of the display column used for ranking (e.g. "fold_enrichment").}
 
 \item{label}{Plot title.}
 
@@ -30,6 +30,7 @@ plot_lollipop(
 \item{size_by}{Column name to use for point size (e.g. "intersection_size").}
 }
 \description{
-Creates a lollipop plot of top ranked GO terms or KEGG pathways using fold enrichment or
-consensus scores, colored and sized by optional variables (e.g., -log10(p), origin).
+Creates a generic lollipop plot using a supplied display column. Canonical
+v0.1.4 evidence landscapes use evidence profile, recurrence and deterministic
+display order rather than a composite score.
 }

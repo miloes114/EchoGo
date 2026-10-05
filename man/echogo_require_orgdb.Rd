@@ -4,14 +4,14 @@
 \alias{echogo_require_orgdb}
 \title{Ensure OrgDb packages are available (install if missing)}
 \usage{
-echogo_require_orgdb(pkgs = NULL, auto_install = TRUE)
+echogo_require_orgdb(pkgs = NULL, auto_install = FALSE)
 }
 \arguments{
-\item{pkgs}{Character vector of OrgDb names. If NULL, uses
-getOption(\"EchoGO.default_orgdb\", \"org.Mm.eg.db\").}
+\item{pkgs}{Character vector of researcher-selected OrgDb names. Required;
+EchoGO does not choose a semantic reference.}
 
-\item{auto_install}{Logical; if TRUE, will attempt installation
-for missing packages.}
+\item{auto_install}{Logical; if TRUE, explicitly authorize installation for
+missing packages. Defaults to FALSE.}
 }
 \value{
 Character vector of packages that are loadable now (possibly a subset of `pkgs`).

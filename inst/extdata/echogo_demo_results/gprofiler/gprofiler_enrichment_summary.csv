@@ -1,7 +1,0 @@
-species_code,species_label,mode,n_sig
-drerio,drerio,with_bg,19
-drerio,drerio,nobg,309
-hsapiens,hsapiens,with_bg,5
-hsapiens,hsapiens,nobg,973
-mmusculus,mmusculus,with_bg,0
-mmusculus,mmusculus,nobg,1230

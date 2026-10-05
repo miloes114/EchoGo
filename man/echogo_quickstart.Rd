@@ -34,7 +34,9 @@ demonstration responses. Set `TRUE` for an optional live integration test.}
 \description{
 Copies files from the package's `inst/extdata/echogo_demo` into `outdir/echogo_demo`.
 If `run_demo = TRUE`, it runs `run_full_echogo(input_dir = <that folder>)`
-using a small 3-species set (hsapiens, mmusculus, drerio) and OrgDb org.Mm.eg.db.
+using a small fixed set of researcher-declared annotation contexts. The target
+context is zebrafish (`drerio`); the full demonstration uses `org.Dr.eg.db`
+as an explicitly declared target semantic reference.
 The default is a light installation check. Set `full = TRUE` to include the
 exploratory stream, RRvGO, and evaluation outputs.
 }

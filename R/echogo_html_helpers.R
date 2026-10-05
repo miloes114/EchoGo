@@ -9,6 +9,15 @@
   )
 }
 
+.echogo_escape_html <- function(x) {
+  x <- as.character(x)
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  x <- gsub(">", "&gt;", x, fixed = TRUE)
+  x <- gsub('"', "&quot;", x, fixed = TRUE)
+  x
+}
+
 #' Convert an output path to a browser-friendly URL
 #' If target and report_dir share the same base_dir, return a relative URL.
 #' Otherwise return a file:/// URL.
@@ -26,7 +35,6 @@
   rd <- norm(report_dir)
   bd <- norm(base_dir)
 
-  # Windows: compare case-insensitively
   p_key  <- if (.Platform$OS.type == "windows") tolower(p)  else p
   rd_key <- if (.Platform$OS.type == "windows") tolower(rd) else rd
   bd_key <- if (.Platform$OS.type == "windows") tolower(bd) else bd
@@ -46,7 +54,6 @@
   paste0("file:///", p)
 }
 
-
 #' Embed a PDF with a collapsible toggle
 #' @param title  Title shown in the toggle summary
 #' @param path   Absolute path to the PDF
@@ -56,18 +63,16 @@
 #' @return HTML string (to be cat()'d with results='asis')
 #' @export
 echogo_embed_pdf_toggle <- function(title, path, report_dir, base_dir, height = "650px") {
-
-  # Validate the source before staging it.
   if (is.null(path) || is.na(path) || !nzchar(path)) {
     return(.echogo_html_details(title, "<em>Missing file:</em> (no path)"))
   }
   if (!file.exists(path)) {
-    return(.echogo_html_details(title, sprintf("<em>Missing file:</em> %s", path)))
+    return(.echogo_html_details(title, sprintf("<em>Missing file:</em> %s", .echogo_escape_html(path))))
   }
 
   url <- .echogo_stage_asset(path, report_dir = report_dir, base_dir = base_dir)
   if (is.na(url)) {
-    return(.echogo_html_details(title, sprintf("<em>Failed to stage file:</em> %s", path)))
+    return(.echogo_html_details(title, sprintf("<em>Failed to stage file:</em> %s", .echogo_escape_html(path))))
   }
 
   inner <- sprintf("<object data='%s' type='application/pdf' width='100%%' height='%s'>", url, height)
@@ -80,7 +85,6 @@ echogo_embed_pdf_toggle <- function(title, path, report_dir, base_dir, height = 
   .echogo_html_details(title, inner)
 }
 
-
 #' Embed an HTML file (iframe) with a collapsible toggle
 #' @param title Title shown in the toggle summary
 #' @param path_abs Absolute path to the HTML file
@@ -90,8 +94,6 @@ echogo_embed_pdf_toggle <- function(title, path, report_dir, base_dir, height = 
 #' @return HTML string (to be cat()'d with results='asis')
 #' @export
 embed_html_toggle_external_plus <- function(title, path_abs, report_dir, base_dir, height = "650px") {
-
-  # Validate the source before staging it.
   if (is.null(path_abs) || is.na(path_abs) || !nzchar(path_abs)) {
     return(.echogo_html_details(title, "<em>Missing HTML:</em> (no path)"))
   }
@@ -101,7 +103,7 @@ embed_html_toggle_external_plus <- function(title, path_abs, report_dir, base_di
 
   url <- .echogo_stage_asset(path_abs, report_dir = report_dir, base_dir = base_dir)
   if (is.na(url)) {
-    return(.echogo_html_details(title, sprintf("<em>Failed to stage HTML:</em> %s", path_abs)))
+    return(.echogo_html_details(title, sprintf("<em>Failed to stage HTML:</em> %s", .echogo_escape_html(path_abs))))
   }
 
   iframe <- sprintf(
@@ -144,8 +146,6 @@ echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height =
   )
 }
 
-# Copy an htmlwidgets companion directory beside a staged HTML file.
-# htmlwidgets uses `<widget>_files/` when a widget is not self-contained.
 .echogo_stage_html_dependencies <- function(path_abs, dst) {
   if (!identical(tolower(tools::file_ext(path_abs)), "html")) {
     return(invisible(TRUE))
@@ -185,9 +185,6 @@ echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height =
 }
 
 #' Stage a report asset and return its relative URL
-#' - If file is under base_dir, preserve its relative subpath under assets/
-#' - Otherwise stage into assets/external/
-#' - For HTML widgets, also stage a sibling `<name>_files/` directory
 #' @keywords internal
 .echogo_stage_asset <- function(path_abs, report_dir, base_dir) {
   if (is.null(path_abs) || is.na(path_abs) || !nzchar(path_abs)) return(NA_character_)
@@ -205,7 +202,6 @@ echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height =
   p  <- norm(path_abs)
   bd <- norm(base_dir)
 
-  # Windows: compare case-insensitively
   p_key  <- if (.Platform$OS.type == "windows") tolower(p)  else p
   bd_key <- if (.Platform$OS.type == "windows") tolower(bd) else bd
 
@@ -228,3 +224,112 @@ echogo_embed_html_toggle <- function(title, path, report_dir, base_dir, height =
   gsub("\\\\", "/", file.path("assets", "external", basename(path_abs)))
 }
 
+# Biological-report helpers --------------------------------------------------
+
+.echogo_report_metric_cards <- function(cards) {
+  if (!is.data.frame(cards) || !all(c("value", "label") %in% names(cards))) {
+    stop("cards must contain value and label columns", call. = FALSE)
+  }
+  items <- vapply(seq_len(nrow(cards)), function(i) {
+    value <- cards$value[[i]]
+    value <- if (is.numeric(value) && length(value) == 1L && is.finite(value)) {
+      format(value, big.mark = ",", scientific = FALSE, trim = TRUE)
+    } else {
+      as.character(value)
+    }
+    paste0(
+      "<div class='metric-card'>",
+      "<div class='value'>", .echogo_escape_html(value), "</div>",
+      "<div class='label'>", .echogo_escape_html(cards$label[[i]]), "</div>",
+      "</div>"
+    )
+  }, character(1))
+  paste0("<div class='metric-grid'>", paste(items, collapse = ""), "</div>")
+}
+
+.echogo_report_callout <- function(kind = c("how-to-read", "takeaway", "meaning", "caution", "method-note"),
+                                   title, body) {
+  kind <- match.arg(kind)
+  paste0(
+    "<div class='", kind, "'><strong>", .echogo_escape_html(title),
+    "</strong>", body, "</div>"
+  )
+}
+
+.echogo_report_figure_card <- function(title, png, caption,
+                                       report_dir, base_dir,
+                                       pdf = NULL, svg = NULL,
+                                       alt = title) {
+  if (is.null(png) || is.na(png) || !nzchar(png) || !file.exists(png)) {
+    return(.echogo_html_details(title, "<em>This figure was not generated for this run.</em>"))
+  }
+
+  png_url <- .echogo_stage_asset(png, report_dir = report_dir, base_dir = base_dir)
+  if (is.na(png_url)) {
+    return(.echogo_html_details(title, "<em>The figure was generated but could not be staged into the report.</em>"))
+  }
+
+  make_link <- function(path, label) {
+    if (is.null(path) || is.na(path) || !nzchar(path) || !file.exists(path)) return("")
+    u <- .echogo_stage_asset(path, report_dir = report_dir, base_dir = base_dir)
+    if (is.na(u)) return("")
+    paste0("<a href='", u, "' target='_blank' rel='noopener'>", label, "</a>")
+  }
+
+  links <- c(
+    make_link(png, "PNG"),
+    make_link(pdf, "PDF"),
+    make_link(svg, "SVG")
+  )
+  links <- links[nzchar(links)]
+
+  paste0(
+    "<div class='figure-card'>",
+    "<img src='", png_url, "' alt='", .echogo_escape_html(alt), "'/>",
+    "<div class='figure-caption'><strong>", .echogo_escape_html(title), ".</strong> ", caption, "</div>",
+    if (length(links)) paste0(
+      "<div class='download-bar'><strong>Full-resolution figure:</strong> ",
+      paste(links, collapse = " "), "</div>"
+    ) else "",
+    "</div>"
+  )
+}
+
+.echogo_report_table_details <- function(title, data, href = NULL, preview_rows = 12L) {
+  if (is.null(data) || !is.data.frame(data) || !nrow(data)) {
+    return(.echogo_html_details(title, "<em>No corresponding output was generated.</em>"))
+  }
+
+  preview <- utils::head(data, preview_rows)
+  tab <- paste(
+    capture.output(knitr::kable(preview, format = "html", escape = TRUE, digits = 4)),
+    collapse = "\n"
+  )
+
+  dl <- if (!is.null(href) && !is.na(href) && nzchar(href)) {
+    paste0(
+      "<div class='table-download'><a href='", href,
+      "' target='_blank'>Open complete table</a> - ",
+      format(nrow(data), big.mark = ","), " rows.</div>"
+    )
+  } else {
+    paste0(
+      "<div class='table-download'>", format(nrow(data), big.mark = ","),
+      " rows; preview shown.</div>"
+    )
+  }
+
+  .echogo_html_details(title, paste0(dl, tab))
+}
+
+.echogo_report_semantic_badge <- function(orgdb, role, method = "Rel") {
+  if (is.null(orgdb) || is.na(orgdb) || !nzchar(orgdb)) return("")
+  role <- as.character(role %||% "")
+  class_name <- if (identical(role, "proxy")) "proxy" else "target-reference"
+  role_label <- if (identical(role, "proxy")) "proxy" else "target reference"
+  paste0(
+    "<span class='semantic-badge ", class_name, "'>Semantic reference: ",
+    .echogo_escape_html(orgdb), " | role: ", role_label,
+    " | method: ", .echogo_escape_html(method), "</span>"
+  )
+}

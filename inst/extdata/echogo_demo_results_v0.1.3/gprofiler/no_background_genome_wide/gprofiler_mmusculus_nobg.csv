@@ -1,7 +1,0 @@
-term_id,term_name,source,p_value,intersection,intersection_size,query_size,term_size,effective_domain_size,depth,species_code,species_label,fold_enrichment
-GO:0003674,molecular function,GO:BP,0.0012,"ISY1,BUD13,SF3B6,U2AF2,SF3B1,DDX46,SF3A2,DDX42,PUF60,SF3B3",10,22,18,20000,1,mmusculus,mmusculus,505.050505050505
-GO:0005488,binding,GO:BP,0.0048,"ISY1,BUD13,SF3B6,U2AF2,SF3B1,DDX46,SF3A2,DDX42",8,22,22,20000,2,mmusculus,mmusculus,330.5785123966942
-GO:0008152,metabolic process,GO:BP,0.012,"ISY1,BUD13,SF3B6,U2AF2,SF3B1,DDX46",6,22,30,20000,3,mmusculus,mmusculus,181.8181818181818
-GO:0009987,cellular process,GO:BP,0.024,"ISY1,BUD13,SF3B6,U2AF2",4,22,25,20000,4,mmusculus,mmusculus,145.45454545454547
-GO:0006355,regulation of DNA-templated transcription,GO:BP,0.048,"ISY1,BUD13",2,22,40,20000,7,mmusculus,mmusculus,45.45454545454545
-GO:0006397,mRNA processing,GO:BP,0.036,"ISY1,BUD13,SF3B6,U2AF2,SF3B1",5,22,16,20000,8,mmusculus,mmusculus,284.09090909090907

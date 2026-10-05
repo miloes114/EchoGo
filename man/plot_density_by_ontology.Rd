@@ -2,17 +2,18 @@
 % Please edit documentation in R/plotting.R
 \name{plot_density_by_ontology}
 \alias{plot_density_by_ontology}
-\title{Density plot of EQI or enrichment values by method and ontology}
+\title{Deprecated legacy density plot}
 \usage{
 plot_density_by_ontology(df, metric = "EQI", output_path)
 }
 \arguments{
 \item{df}{A long-format data frame with columns:
-- \code{metric} column (\code{"EQI"} or \code{"enrichment"}) present by name
-- \code{method} (e.g., "GOseq", "Consensus")
+- \code{metric} column (historical \code{"EQI"} or \code{"enrichment"}) present by name
+- \code{method} (e.g., "GOseq", historical legacy output)
 - \code{ontology} (BP/MF/CC)}
 
-\item{metric}{One of \code{"EQI"} or \code{"enrichment"} (default: "EQI").}
+\item{metric}{One of \code{"EQI"} or \code{"enrichment"}; \code{"EQI"}
+is accepted only for legacy-file compatibility.}
 
 \item{output_path}{File path to save the PDF.}
 }
@@ -20,5 +21,7 @@ plot_density_by_ontology(df, metric = "EQI", output_path)
 (Invisibly) the ggplot object; writes the PDF.
 }
 \description{
-Density plot of EQI or enrichment values by method and ontology
+This compatibility utility can display historical EQI columns but EQI is not
+a v0.1.4 evidence measure or ranking score. Canonical v0.1.4 displays use
+evidence profile, recurrence, and deterministic display order.
 }

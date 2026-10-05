@@ -1,8 +1,19 @@
-test_that("species table has taxonomy + tags offline", {
-  old <- getOption("EchoGO.taxonomy_online")
-  options(EchoGO.taxonomy_online = FALSE)
-  on.exit(options(EchoGO.taxonomy_online = old), add = TRUE)
+# This file exercises the bundled cache only. Keep every case offline so a
+# package test never reaches the live g:Profiler species endpoint.
+options(
+  EchoGO.taxonomy_online = FALSE,
+  EchoGO.species_autoupdate = FALSE
+)
 
+local_species_cache <- function() {
+  cache <- tempfile("echogo-species-cache-")
+  dir.create(cache, recursive = TRUE)
+  cache
+}
+
+test_that("species table has taxonomy + tags offline", {
+  cache <- local_species_cache()
+  testthat::local_mocked_bindings(.echogo_cache_dir = function() cache, .package = "EchoGO")
   tbl <- echogo_species_table(refresh = FALSE)
   expect_true(all(c("organism","name","ncbi","superkingdom","kingdom","phylum",
                     "class","order","family","genus","tags") %in% names(tbl)))
@@ -10,6 +21,8 @@ test_that("species table has taxonomy + tags offline", {
 })
 
 test_that("echogo_resolve returns valid organism IDs only", {
+  cache <- local_species_cache()
+  testthat::local_mocked_bindings(.echogo_cache_dir = function() cache, .package = "EchoGO")
   ids <- echogo_resolve("tag:AnimalModels OR order:Perciformes")
   tbl <- echogo_species_table(refresh = FALSE)
   expect_type(ids, "character")
@@ -19,6 +32,8 @@ test_that("echogo_resolve returns valid organism IDs only", {
 })
 
 test_that("tag-only selection returns the tagged subset", {
+  cache <- local_species_cache()
+  testthat::local_mocked_bindings(.echogo_cache_dir = function() cache, .package = "EchoGO")
   tbl <- echogo_species_table(refresh = FALSE)
   expected <- tbl$organism[
     vapply(tbl$tags, function(x) "AnimalModels" %in% x, logical(1))

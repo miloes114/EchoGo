@@ -3,26 +3,45 @@
 #' Convenience wrapper that:
 #'   - detects standard scaffold inputs inside \code{input_dir}
 #'   - calls \code{run_echogo_pipeline()} with the right files
-#'   - uses config.yml (if present) to set species/orgdb, otherwise defaults.
+#'   - uses config.yml (if present) for explicit context and optional RRvGO
+#'     semantic-reference declarations.
 #'
 #' Expected files inside \code{input_dir}:
 #'   - *_GOseq.enriched.tsv         (required)
 #'   - *_eggNOG_for_EchoGO.tsv or Trinotate.* (required)
 #'   - dge_*.csv                    (required)
 #'   - allcounts_table.txt          (required)
-#'   - config.yml                   (optional: species, orgdb, report_title)
+#'   - config.yml                   (recommended: contexts, target declaration,
+#'                                    and optional RRvGO configuration)
 #'
 #' @param input_dir Path to the scaffold input/ folder for one contrast.
 #' @param outdir Base output directory (EchoGO will create its standard layout here).
-#' @param strict_only,run_evaluation,verbose Passed to \code{run_echogo_pipeline()}.
+#' @param strict_only Deprecated compatibility alias passed to \code{run_echogo_pipeline()}.
+#' @param run_exploratory_default_domain,target_context,context_metadata Passed to \code{run_echogo_pipeline()}.
+#' @param species Researcher-selected g:Profiler organism contexts. If omitted,
+#'   they must be present in config.yml.
+#' @param run_rrvgo Enable optional RRvGO semantic reduction.
+#' @param semantic_reference_orgdb Preferred RRvGO semantic-reference OrgDb.
+#' @param semantic_reference_role Declared `target_reference` or `proxy` role.
+#' @param orgdb Deprecated compatibility alias for `semantic_reference_orgdb`.
+#' @param run_evaluation Run scoreless evaluation/diagnostic summaries.
+#' @param verbose Print progress messages.
 #' @return Invisible list returned by \code{run_echogo_pipeline()}.
 #' @export
 echogo_run_reference_rnaseq <- function(
     input_dir,
     outdir,
-    strict_only    = FALSE,
+    strict_only    = NULL,
+    run_exploratory_default_domain = FALSE,
+    target_context = NULL,
+    context_metadata = NULL,
     run_evaluation = TRUE,
-    verbose        = TRUE
+    verbose        = TRUE,
+    species = NULL,
+    run_rrvgo = FALSE,
+    semantic_reference_orgdb = NULL,
+    semantic_reference_role = NULL,
+    orgdb = NULL
 ) {
   input_dir <- normalizePath(input_dir, winslash = "/", mustWork = TRUE)
   files     <- list.files(input_dir, full.names = TRUE)
@@ -60,21 +79,42 @@ echogo_run_reference_rnaseq <- function(
   # Optional config.yml for species/orgdb overrides
   config_file <- grep("config\\.yml$", files, value = TRUE)
   species_cfg <- NULL
-  orgdb_cfg   <- NULL
+  semantic_orgdb_cfg <- NULL
+  semantic_role_cfg <- NULL
+  target_cfg <- NULL
+  run_rrvgo_cfg <- NULL
   if (length(config_file) == 1L && requireNamespace("yaml", quietly = TRUE)) {
     cfg <- try(yaml::read_yaml(config_file), silent = TRUE)
     if (!inherits(cfg, "try-error")) {
       if (!is.null(cfg$species)) species_cfg <- unlist(cfg$species)
-      if (!is.null(cfg$orgdb))   orgdb_cfg   <- cfg$orgdb
+      if (!is.null(cfg$semantic_reference_orgdb)) semantic_orgdb_cfg <- cfg$semantic_reference_orgdb
+      if (!is.null(cfg$semantic_reference_role)) semantic_role_cfg <- cfg$semantic_reference_role
+      if (!is.null(cfg$target_context)) target_cfg <- cfg$target_context
+      if (!is.null(cfg$run_rrvgo)) run_rrvgo_cfg <- cfg$run_rrvgo
+      if (is.null(semantic_orgdb_cfg) && !is.null(cfg$orgdb)) orgdb <- cfg$orgdb
     }
   }
 
-  # ---- Decide species / orgdb (config.yml > options > defaults) ------------
-  species <- species_cfg %||%
-    getOption("EchoGO.default_species",
-              c("hsapiens","mmusculus","drerio"))
-  orgdb   <- orgdb_cfg %||%
-    getOption("EchoGO.default_orgdb", "org.Dr.eg.db")
+  species <- species %||% species_cfg
+  if (is.null(species) || !length(species)) {
+    stop(
+      "echogo_run_reference_rnaseq() requires researcher-selected species in ",
+      "config.yml or species = c(...).",
+      call. = FALSE
+    )
+  }
+  if ((missing(target_context) || is.null(target_context)) && !is.null(target_cfg)) {
+    target_context <- target_cfg
+  }
+  if (is.null(target_context)) {
+    stop(
+      "Declare target_context as a queried context or NA_character_/NO_TARGET.",
+      call. = FALSE
+    )
+  }
+  semantic_reference_orgdb <- semantic_reference_orgdb %||% semantic_orgdb_cfg
+  semantic_reference_role <- semantic_reference_role %||% semantic_role_cfg
+  if (!is.null(run_rrvgo_cfg)) run_rrvgo <- isTRUE(run_rrvgo_cfg)
 
   # ---- Run the main EchoGO pipeline ----------------------------------------
   outdir <- normalizePath(outdir, winslash = "/", mustWork = FALSE)
@@ -89,6 +129,12 @@ echogo_run_reference_rnaseq <- function(
     orgdb             = orgdb,
     outdir            = outdir,
     strict_only       = strict_only,
+    run_exploratory_default_domain = run_exploratory_default_domain,
+    target_context = target_context,
+    context_metadata = context_metadata,
+    run_rrvgo         = run_rrvgo,
+    semantic_reference_orgdb = semantic_reference_orgdb,
+    semantic_reference_role = semantic_reference_role,
     run_evaluation    = run_evaluation,
     verbose           = verbose
   )

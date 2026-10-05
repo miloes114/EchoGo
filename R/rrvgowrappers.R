@@ -20,20 +20,76 @@
   isTRUE(all(is.na(x)))
 }
 
-#' Run RRvGO Semantic Clustering on Consensus Terms (multi-OrgDb, option-aware)
+# Partition primary evidence into the two Decision 0008 semantic products.
+# This is deliberately a pure evidence-profile partition: it does not alter
+# any source-specific values, vectors, roles, or exact-term membership.
+.echogo_rrvgo_partition_inputs <- function(df_input) {
+  if (!is.data.frame(df_input)) {
+    stop("df_input must be a data frame", call. = FALSE)
+  }
+  required <- c("primary_evidence", "evidence_profile", "ontology")
+  missing <- setdiff(required, names(df_input))
+  if (length(missing)) {
+    stop("RRvGO partition requires columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  ontologies <- c("BP", "MF", "CC")
+  list(
+    target_supported = dplyr::filter(
+      df_input,
+      .data$primary_evidence %in% TRUE,
+      .data$evidence_profile %in% c("TARGET_ONLY", "TARGET_PLUS_CONTEXT"),
+      .data$ontology %in% ontologies
+    ),
+    alternative_context_hypothesis = dplyr::filter(
+      df_input,
+      .data$primary_evidence %in% TRUE,
+      .data$evidence_profile %in% "ALTERNATIVE_CONTEXT",
+      .data$ontology %in% ontologies
+    )
+  )
+}
+
+.echogo_prepare_rrvgo_primary_terms <- function(df_input) {
+  if ("primary_evidence" %in% names(df_input)) {
+    df_input <- dplyr::filter(df_input, .data$primary_evidence %in% TRUE)
+  }
+  if (!"representative_order" %in% names(df_input)) {
+    df_input <- .echogo_add_display_order(df_input)
+  }
+  df_input$.echogo_rrvgo_origin <- if ("evidence_profile" %in% names(df_input)) {
+    as.character(df_input$evidence_profile)
+  } else {
+    "PRIMARY_EVIDENCE"
+  }
+  df_input %>%
+    dplyr::filter(!is.na(.data$term_id), grepl("^GO:\\d{7}$", .data$term_id)) %>%
+    dplyr::mutate(
+      go_term = trimws(.data$term_id),
+      representative_order_source = "non_inferential_representative_order",
+      # RRvGO requires numeric values where larger ranks win. This is not a
+      # p-value, effect size, confidence score, or integrated statistic.
+      rrvgo_numeric_order = -as.numeric(.data$representative_order),
+      origin = .data$.echogo_rrvgo_origin
+    )
+}
+
+#' Run RRvGO semantic clustering on evidence terms
 #'
-#' Applies RRvGO-based semantic similarity reduction to GO terms from either the strict
-#' consensus set or exploratory enrichment set. Produces annotated cluster tables, bubble plots,
-#' heatmaps, scatter plots, treemaps, and wordclouds per ontology.
+#' Applies RRvGO-based semantic similarity reduction to primary custom-background
+#' evidence. Representative selection uses deterministic non-inferential order,
+#' never a p-value or composite score. Produces annotated cluster tables, bubble plots,
+#' heatmaps, scatter plots, treemaps, and wordclouds per ontology. The exported
+#' function name and default output-folder name retain the historical word
+#' `consensus` for API compatibility; they do not denote consensus scoring.
 #'
-#' @param df_input A consensus enrichment data frame filtered for one mode (background-aware or exploratory).
-#' @param label A label to use for the output subfolder (e.g. "true_consensus_with_bg").
-#' @param output_base Directory where output will be saved (default: "similarity_based_consensus").
-#'        Tip: pass a canonical path like file.path(outdir, "rrvgo") from the pipeline.
-#' @param ontologies Vector of GO ontologies to process (default: c("BP", "MF", "CC")).
-#' @param similarity_threshold Similarity cutoff for clustering (default: 0.7).
-#' @param orgdb Character vector of OrgDb package names. If NULL or missing,
-#'   falls back to getOption("EchoGO.default_orgdb", "org.Mm.eg.db").
+#' @param ... Arguments forwarded to the underlying RRvGO analysis:
+#'   `df_input` (evidence data frame for one semantic product), `label` (output
+#'   subfolder label), `output_base` (output directory), `ontologies` (GO
+#'   ontologies to process), `orgdb` (deprecated compatibility alias),
+#'   `similarity_threshold` (semantic-similarity cutoff), `semantic_product`,
+#'   `semantic_reference_role`, and `semantic_reference_orgdb`. The historical
+#'   score-era word `consensus` in argument values and the exported function
+#'   name is retained only for API compatibility.
 #' @export
 run_rrvgo_consensus_analysis <- function(
     df_input,
@@ -41,11 +97,20 @@ run_rrvgo_consensus_analysis <- function(
     output_base = "similarity_based_consensus",
     ontologies = c("BP", "MF", "CC"),
     orgdb = NULL,
-    similarity_threshold = 0.7
+    similarity_threshold = 0.7,
+    semantic_product = "target_supported",
+    semantic_reference_role = NULL,
+    semantic_reference_orgdb = NULL
 ) {
+  semantic_contract <- .echogo_resolve_semantic_reference(
+    semantic_reference_orgdb = semantic_reference_orgdb,
+    orgdb = orgdb,
+    semantic_reference_role = semantic_reference_role,
+    run_rrvgo = TRUE,
+    caller = "run_rrvgo_consensus_analysis()"
+  )
   .echogo_require_rrvgo()
 
-  `%||%` <- function(a, b) if (!is.null(a)) a else b
   .mk <- function(...) { p <- file.path(...); dir.create(p, recursive = TRUE, showWarnings = FALSE); p }
   .mirror_legacy <- function(src_root, legacy_root) {
     if (!nzchar(src_root) || !nzchar(legacy_root) || !dir.exists(src_root)) return(invisible(NULL))
@@ -82,10 +147,7 @@ run_rrvgo_consensus_analysis <- function(
   output_base <- normalizePath(.mk(output_base), winslash = "/", mustWork = FALSE)
   sub_dir     <- .mk(output_base, paste0("rrvgo_", label))
 
-  # --- default from package option (mouse by default)
-  orgdb_pkgs <- orgdb %||% getOption("EchoGO.default_orgdb", "org.Mm.eg.db")
-  orgdb_pkgs <- as.character(orgdb_pkgs)
-  orgdb_pkgs <- orgdb_pkgs[nzchar(orgdb_pkgs)]
+  orgdb_pkgs <- semantic_contract$orgdb
 
   # Require GO.db (fail fast with helpful tip)
   if (!requireNamespace("GO.db", quietly = TRUE)) {
@@ -114,19 +176,29 @@ run_rrvgo_consensus_analysis <- function(
     return(invisible(NULL))
   }
 
-  df_rrvgo <- df_input %>%
-    dplyr::filter(!is.na(term_id), grepl("^GO:\\d{7}$", term_id)) %>%
-    dplyr::mutate(
-      go_term = trimws(term_id),
-      score_source = dplyr::case_when(
-        !is.na(min_pval_goseq) ~ "GOseq",
-        !is.na(min_pval_gprof_bg) ~ "gprof_bg",
-        !is.na(min_pval_gprof_nobg) ~ "gprof_nobg",
-        TRUE ~ "unknown"
-      ),
-      score = -log10(pmin(min_pval_goseq, min_pval_gprof_bg, min_pval_gprof_nobg, na.rm = TRUE)),
-      origin = origin
+  semantic_product <- match.arg(
+    semantic_product,
+    c("target_supported", "alternative_context_hypothesis")
+  )
+  semantic_reference_role <- semantic_contract$role
+
+  df_rrvgo <- .echogo_prepare_rrvgo_primary_terms(df_input)
+  status_rows <- list()
+  record_status <- function(ontology, status, reason = NA_character_, input_term_n = NA_integer_,
+                            valid_term_n = NA_integer_, cluster_file = NA_character_) {
+    status_rows[[paste(semantic_product, ontology, sep = "_")]] <<- .echogo_rrvgo_status_row(
+      semantic_product = semantic_product,
+      ontology = ontology,
+      status = status,
+      reason = reason,
+      input_term_n = input_term_n,
+      valid_term_n = valid_term_n,
+      semantic_reference_orgdb = semantic_contract$orgdb,
+      semantic_reference_role = semantic_reference_role,
+      semantic_method = "Rel",
+      cluster_file = cluster_file
     )
+  }
 
   for (odb in orgdb_pkgs) {
     message("RRvGO with OrgDb = ", odb)
@@ -134,41 +206,72 @@ run_rrvgo_consensus_analysis <- function(
 
     for (ont in ontologies) {
       df_sub <- dplyr::filter(df_rrvgo, ontology == ont)
-      scores <- df_sub$score; names(scores) <- df_sub$go_term
+      scores <- df_sub$rrvgo_numeric_order; names(scores) <- df_sub$go_term
       scores <- scores[!is.na(scores) & is.finite(scores)]
 
       if (length(scores) < 2 || length(unique(scores)) < 2) {
         message("Skipping ", label, " [", odb, "]: ", ont, " - too few valid or unique scores")
+        record_status(ont, "SKIPPED_TOO_FEW_TERMS",
+                      reason = "Fewer than two valid terms or unique representative orders were available.",
+                      input_term_n = nrow(df_sub), valid_term_n = length(scores))
         next
       }
 
+      similarity_error <- NULL
       simMatrix <- tryCatch(
         rrvgo::calculateSimMatrix(names(scores), orgdb = odb, ont = ont, method = "Rel"),
-        error = function(e) { message("Warning: calculateSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
+        error = function(e) { similarity_error <<- e$message; message("Warning: calculateSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
       )
+      if (!is.null(similarity_error)) {
+        record_status(ont, "ERROR_SIMILARITY", reason = similarity_error,
+                      input_term_n = nrow(df_sub), valid_term_n = length(scores))
+        next
+      }
       if (.echogo_invalid_similarity_matrix(simMatrix)) {
         message("Skipping ", label, " [", odb, "]: ", ont, " - similarity matrix too sparse")
+        record_status(ont, "SKIPPED_SPARSE_SIMILARITY",
+                      reason = "The semantic similarity matrix was unavailable or too sparse.",
+                      input_term_n = nrow(df_sub), valid_term_n = length(scores))
         next
       }
 
+      reduction_error <- NULL
       reducedTerms <- tryCatch(
         rrvgo::reduceSimMatrix(simMatrix, scores, threshold = similarity_threshold, orgdb = odb),
-        error = function(e) { message("Warning: reduceSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
+        error = function(e) { reduction_error <<- e$message; message("Warning: reduceSimMatrix [", odb, ":", ont, "]: ", e$message); NULL }
       )
-      if (is.null(reducedTerms)) next
+      if (!is.null(reduction_error)) {
+        record_status(ont, "ERROR_REDUCTION", reason = reduction_error,
+                      input_term_n = nrow(df_sub), valid_term_n = length(scores))
+        next
+      }
+      if (is.null(reducedTerms)) {
+        record_status(ont, "ERROR_REDUCTION", reason = "RRvGO returned no reduced term table.",
+                      input_term_n = nrow(df_sub), valid_term_n = length(scores))
+        next
+      }
 
       reducedTerms <- reducedTerms %>%
         dplyr::mutate(go = trimws(go)) %>%
         dplyr::left_join(
-          df_input %>%
-            dplyr::filter(ontology == ont, grepl("^GO:\\d{7}$", term_id)) %>%
-            dplyr::transmute(go_term = trimws(term_id), origin = origin) %>%
+          df_sub %>%
+            dplyr::transmute(go_term = .data$go_term, origin = .data$.echogo_rrvgo_origin) %>%
             dplyr::distinct(),
           by = c("go" = "go_term")
         ) %>%
-        dplyr::mutate(origin = dplyr::coalesce(origin, "Unmatched"))
+        dplyr::mutate(
+          origin = dplyr::coalesce(origin, "Unmatched"),
+          semantic_method = "Rel",
+          semantic_reference_orgdb = odb,
+          semantic_reference_role = semantic_reference_role,
+          semantic_reference_configuration_source = semantic_contract$source,
+          semantic_product = semantic_product
+        )
 
-      utils::write.csv(reducedTerms, file.path(odb_dir, paste0("rrvgo_", ont, "_clusters.csv")), row.names = FALSE)
+      cluster_path <- file.path(odb_dir, paste0("rrvgo_", ont, "_clusters.csv"))
+      utils::write.csv(reducedTerms, cluster_path, row.names = FALSE)
+      record_status(ont, "GENERATED", input_term_n = nrow(df_sub), valid_term_n = length(scores),
+                    cluster_file = normalizePath(cluster_path, winslash = "/", mustWork = FALSE))
 
       # ---- plotting (unchanged logic; only target dir = odb_dir) ----
       tryCatch({
@@ -180,7 +283,7 @@ run_rrvgo_consensus_analysis <- function(
             ggplot2::geom_point(alpha = 0.7) +
             ggplot2::theme_minimal(base_size = 14) +
             ggplot2::labs(title = paste("RRVGO Semantic Clusters -", ont, "[", label, "] -", odb),
-                          x = "Cluster", y = "-log10(p-value)", color = "Origin")
+                          x = "Cluster", y = "Representative order (non-inferential)", color = "Evidence profile")
         )
         dev.off()
       }, error = function(e) message("Warning: bubble plot [", odb, ":", ont, "]: ", e$message))
@@ -223,6 +326,10 @@ run_rrvgo_consensus_analysis <- function(
         dev.off()
       }, error = function(e) message("Warning: wordcloud [", odb, ":", ont, "]: ", e$message))
     }
+  }
+
+  if (exists(".echogo_upsert_rrvgo_status", mode = "function") && length(status_rows)) {
+    .echogo_upsert_rrvgo_status(status_rows, output_base)
   }
 
   # Optionally mirror canonical output to the legacy directory name.

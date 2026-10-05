@@ -352,6 +352,22 @@ prepare_gprofiler_gene_sets <- function(
     }
     out
   }
+  first_raw_from_columns <- function(columns) {
+    out <- rep(NA_character_, length(all_original))
+    for (column in intersect(columns, names(ann))) {
+      values <- as.character(ann[[column]])
+      usable <- !is.na(ann$.echogo_id) & !is.na(values) & nzchar(values)
+      if (!any(usable)) next
+      ids <- ann$.echogo_id[usable]
+      values <- values[usable]
+      keep <- !duplicated(ids)
+      lookup <- stats::setNames(values[keep], ids[keep])
+      candidate <- unname(lookup[match(all_original, names(lookup))])
+      take <- is.na(out) & !is.na(candidate)
+      out[take] <- candidate[take]
+    }
+    out
+  }
 
   swiss_columns <- unique(c(
     "sprot_Top_BLASTX_hit", "sprot_Top_BLASTP_hit",
@@ -430,6 +446,22 @@ prepare_gprofiler_gene_sets <- function(
     annotation_match = annotation_match,
     stringsAsFactors = FALSE
   )
+  # Preserve richer annotation fields when supplied.  These are descriptive
+  # provenance only: none participates in resolution, enrichment, recurrence,
+  # or a confidence/ranking calculation.
+  optional_provenance <- list(
+    eggnog_seed_ortholog = c("EggNM.seed_ortholog", "seed_ortholog", "seed_ortholog_id"),
+    eggnog_seed_evalue = c("EggNM.seed_evalue", "seed_evalue", "seed_evalue_score"),
+    eggnog_seed_score = c("EggNM.seed_score", "EggNM.seed_ortholog_score", "seed_score"),
+    eggnog_ogs = c("EggNM.OGs", "eggnog_ogs", "eggNOG_OGs", "OGs"),
+    annotation_go_field = c("EggNM.GOs", "GO", "go_terms", "annotation_go_field"),
+    eggnog_mapper_version = c("eggnog_mapper_version", "eggNOG_mapper_version"),
+    go_evidence_filter_policy = c("go_evidence_filter_policy", "GO_evidence_filter_policy")
+  )
+  for (field in names(optional_provenance)) {
+    source_columns <- intersect(optional_provenance[[field]], names(ann))
+    if (length(source_columns)) mapping[[field]] <- first_raw_from_columns(source_columns)
+  }
 
   bg_candidates <- which(mapping$tested & !is.na(mapping$resolved_name))
   fg_candidates <- which(mapping$tested & mapping$significant & !is.na(mapping$resolved_name))
