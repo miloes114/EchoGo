@@ -6,6 +6,7 @@
 
 [![R](https://img.shields.io/badge/R-%E2%89%A54.1-276DC3)](https://www.r-project.org/)
 [![Software license: GPL-3](https://img.shields.io/badge/software-GPL--3-1294A5)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17658714.svg)](https://doi.org/10.5281/zenodo.17658714)
 
 Understand what your experiment supports, how annotation context shapes that interpretation, and which additional functions deserve follow-up.
 
@@ -41,7 +42,7 @@ The main workflow starts with completed differential-expression and target GOseq
 
 ## Install EchoGO v0.1.4
 
-Use the **built `EchoGO_0.1.4.tar.gz` package** attached to the authorized public release when available. The public release identity and software archive DOI are pending; this documentation does not designate the current default GitHub branch as the v0.1.4 release.
+Install the **built `EchoGO_0.1.4.tar.gz` package** attached to the [v0.1.4 GitHub release](https://github.com/miloes114/EchoGo/releases/tag/v0.1.4). The stable software archive has [concept DOI 10.5281/zenodo.17658714](https://doi.org/10.5281/zenodo.17658714); the exact v0.1.4 release has [version DOI 10.5281/zenodo.23158481](https://doi.org/10.5281/zenodo.23158481). The GitHub default branch may contain later development updates.
 
 EchoGO declares R ≥ 4.1; the release candidate was verified with R 4.4.3. Use a compatible Bioconductor release for your R installation. Installing source dependencies may require system build tools: on Windows, use the Rtools version matching your R version. HTML reports require Pandoc, normally supplied by RStudio.
 
@@ -252,11 +253,17 @@ The links above open guide sources on GitHub; use `browseVignettes("EchoGO")` fo
 citation("EchoGO")
 ```
 
-Use [CITATION.cff](CITATION.cff) for the software authors and version. Cite the MethodsX manuscript and validation dataset separately when using their methods or examples. Final manuscript publication identity, v0.1.4 software DOI and revised validation DOI will be added when assigned; no earlier DOI is presented as a new release DOI here.
+Use [CITATION.cff](CITATION.cff) for machine-readable software citation metadata. Cite the MethodsX manuscript and validation dataset separately when using their methods or examples.
+
+For EchoGO v0.1.4, cite:
+
+> Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026). *EchoGO: Traceable Functional Interpretation Across Annotation Contexts* (Version 0.1.4). Zenodo. https://doi.org/10.5281/zenodo.23158481
+
+The concept DOI in the badge identifies the stable software archive; the citation above uses the DOI for this exact release. The revised validation DOI and final manuscript publication identity are pending.
 
 | Publication resource | Availability |
 |:--|:--|
-| Software packages and release notes | [GitHub releases](https://github.com/miloes114/EchoGo/releases); the authorized v0.1.4 release identity and software DOI are pending. |
+| Software packages and release notes | [GitHub releases](https://github.com/miloes114/EchoGo/releases); [stable software archive](https://doi.org/10.5281/zenodo.17658714); [EchoGO v0.1.4 record](https://doi.org/10.5281/zenodo.23158481). |
 | Revised validation compendium | Final archive link and DOI pending; it includes case reports, Figure 2, provenance and reproduction instructions. |
 | MethodsX manuscript | Revised publication identity pending. |
 | Historical validation source | [Zenodo record 21476746](https://zenodo.org/records/21476746), version 1.0.0; an earlier source deposit, not the revised v0.1.4 compendium. |

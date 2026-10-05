@@ -6,11 +6,13 @@ bibentry(
   author  = c(
     person("Camilo", "Escobar-Sierra"),
     person("Felix", "Langschied"),
+    person("Angelina", "Miller"),
     person("Pedro A.", "Inostroza")
   ),
   year      = "2026",
   note      = "Version 0.1.4",
+  doi       = "10.5281/zenodo.23158481",
   url       = "https://github.com/miloes114/EchoGo",
   textVersion =
-    "Escobar-Sierra, C., Langschied, F., & Inostroza, P. A. (2026). EchoGO: Traceable Functional Interpretation Across Annotation Contexts (v0.1.4). https://github.com/miloes114/EchoGo"
+    "Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026). EchoGO: Traceable Functional Interpretation Across Annotation Contexts (Version 0.1.4). Zenodo. https://doi.org/10.5281/zenodo.23158481"
 )
