@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use EchoGO, please cite it as follows."
 title: "EchoGO: Traceable Functional Interpretation Across Annotation Contexts"
 version: "0.1.4"
+doi: "10.5281/zenodo.23158481"
 
 authors:
   - family-names: "Escobar-Sierra"
@@ -21,6 +22,9 @@ authors:
       Goethe University Frankfurt,
       Frankfurt am Main, Germany
 
+  - family-names: "Miller"
+    given-names: "Angelina"
+
   - family-names: "Inostroza"
     given-names: "Pedro A."
     email: "pedro.inostroza@rwth-aachen.de"
@@ -33,6 +37,14 @@ authors:
 
 repository-code: "https://github.com/miloes114/EchoGo"
 
+identifiers:
+  - description: "Stable concept DOI for the EchoGO software archive."
+    type: doi
+    value: "10.5281/zenodo.17658714"
+  - description: "Version DOI for EchoGO v0.1.4."
+    type: doi
+    value: "10.5281/zenodo.23158481"
+
 preferred-citation:
   type: software
   title: "EchoGO: Traceable Functional Interpretation Across Annotation Contexts"
@@ -43,7 +55,14 @@ preferred-citation:
     - family-names: "Langschied"
       given-names: "Felix"
 
+    - family-names: "Miller"
+      given-names: "Angelina"
+
     - family-names: "Inostroza"
       given-names: "Pedro A."
 
   version: "0.1.4"
+  doi: "10.5281/zenodo.23158481"
+  year: 2026
+  publisher:
+    name: "Zenodo"

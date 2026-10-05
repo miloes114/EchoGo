@@ -9,6 +9,8 @@ Authors@R: c(
            role  = c("aut", "cre")),
     person("Felix", "Langschied",
            role  = "aut"),
+    person("Angelina", "Miller",
+           role  = "aut"),
     person("Pedro A.", "Inostroza",
            email = "pedro.inostroza@rwth-aachen.de",
            role  = "aut")
