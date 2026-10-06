@@ -261,7 +261,7 @@ The concept DOI in the badge identifies the stable software archive; the citatio
 | Publication resource | Availability |
 |:--|:--|
 | Software packages and release notes | [GitHub releases](https://github.com/miloes114/EchoGo/releases); [stable software archive](https://doi.org/10.5281/zenodo.17658714); [EchoGO v0.1.4 record](https://doi.org/10.5281/zenodo.23158481). |
-| Revised validation compendium | Final archive link and DOI pending; it includes case reports, Figure 2, provenance and reproduction instructions. |
+| Revised validation compendium | **EchoGO validation and reproducibility compendium v2.0.0**; [version DOI 10.5281/zenodo.23164928](https://doi.org/10.5281/zenodo.23164928); [concept DOI 10.5281/zenodo.21476745](https://doi.org/10.5281/zenodo.21476745). Includes case reports, Figure 2, provenance and reproduction instructions. |
 | MethodsX manuscript | Revised publication identity pending. |
 | Historical validation source | [Zenodo record 21476746](https://zenodo.org/records/21476746), version 1.0.0; an earlier source deposit, not the revised v0.1.4 compendium. |
 
