@@ -42,32 +42,29 @@ The main workflow starts with completed differential-expression and target GOseq
 
 ## Install EchoGO v0.1.4
 
-Install the **built `EchoGO_0.1.4.tar.gz` package** attached to the [v0.1.4 GitHub release](https://github.com/miloes114/EchoGo/releases/tag/v0.1.4). The stable software archive has [concept DOI 10.5281/zenodo.17658714](https://doi.org/10.5281/zenodo.17658714); the exact v0.1.4 release has [version DOI 10.5281/zenodo.23158481](https://doi.org/10.5281/zenodo.23158481). The GitHub default branch may contain later development updates.
-
-EchoGO declares R ≥ 4.1; the release candidate was verified with R 4.4.3. Use a compatible Bioconductor release for your R installation. Installing source dependencies may require system build tools: on Windows, use the Rtools version matching your R version. HTML reports require Pandoc, normally supplied by RStudio.
-
-In a fresh RStudio session:
+The simplest route is to install the tagged release directly from GitHub in R. EchoGO requires R ≥ 4.1; v0.1.4 was verified with R 4.4.3. Installing source dependencies may require system build tools, and HTML reports require Pandoc (normally supplied by RStudio).
 
 ```r
-install.packages(c("remotes", "BiocManager", "rmarkdown", "knitr",
-                   "htmlwidgets", "DT", "visNetwork", "svglite", "cli"))
-BiocManager::install("org.Dr.eg.db", ask = FALSE, update = FALSE)
+install.packages(c("remotes", "BiocManager"))
 
-archive <- file.choose()  # Select the built EchoGO_0.1.4.tar.gz
-remotes::install_local(
-  archive, build = FALSE, dependencies = NA, upgrade = "never",
-  repos = BiocManager::repositories()
+remotes::install_github(
+  "miloes114/EchoGo@v0.1.4",
+  dependencies = TRUE,
+  upgrade = "never"
 )
 
 library(EchoGO)
 packageVersion("EchoGO")
-find.package("EchoGO")
 browseVignettes("EchoGO")
 ```
 
-Dependency installation needs internet access; the subsequent demonstration does not need live g:Profiler requests. `org.Dr.eg.db` is the zebrafish semantic reference used by the full demo, not a universal requirement for every study.
+The full offline demonstration uses the zebrafish semantic reference `org.Dr.eg.db`. Install it if you want to run that example:
 
-> **Choose the package, not the evidence archive.** A GitHub “Source code (zip)” snapshot and the validation-bundle ZIP are not the built R package. The built tarball includes rendered vignettes. If the reference-based guide is missing, check the installed version and library path above, then restart R and install the intended built package.
+```r
+BiocManager::install("org.Dr.eg.db", ask = FALSE, update = FALSE)
+```
+
+For an exact archived copy, the stable software archive has [concept DOI 10.5281/zenodo.17658714](https://doi.org/10.5281/zenodo.17658714), the v0.1.4 archive has [version DOI 10.5281/zenodo.23158481](https://doi.org/10.5281/zenodo.23158481), and the built `EchoGO_0.1.4.tar.gz` package remains available from the [v0.1.4 GitHub release](https://github.com/miloes114/EchoGo/releases/tag/v0.1.4). The default GitHub branch may contain later development updates, so use the tagged command above when reproducing v0.1.4.
 
 ## Try the full offline demonstration
 
@@ -227,7 +224,7 @@ The manuscript pairs a reference-rich zebrafish exposure contrast (**ZEB**) with
 
 Target GOseq terms equal Target only plus Target + context. Hypotheses are additional context-derived terms, **not a measure of superior performance**. The cases demonstrate biological interpretation under different annotation conditions, not a benchmark with known truth labels.
 
-The revised validation compendium preserves **historical source enrichment** separately from **current v0.1.4 interpretation**, with case reports, submitted vectors, provenance, semantic products and the reproducible Figure 2 evidence landscape. Historical g:Profiler enrichment was reused, not rerun simply to relabel it v0.1.4. The revised validation DOI is pending; its README will be the entry point for reproducibility and audit boundaries.
+The revised **EchoGO validation and reproducibility compendium v2.0.0** preserves **historical source enrichment** separately from **current v0.1.4 interpretation**, with case reports, submitted vectors, provenance, semantic products and the reproducible Figure 2 evidence landscape. Historical g:Profiler enrichment was reused rather than rerun simply to relabel it v0.1.4. The current archived release is [Zenodo DOI 10.5281/zenodo.23164928](https://doi.org/10.5281/zenodo.23164928); the stable compendium concept DOI is [10.5281/zenodo.21476745](https://doi.org/10.5281/zenodo.21476745). The compendium README is the entry point for reproducibility and the historical/current analysis boundary.
 
 ## Scope and limitations
 
@@ -253,7 +250,7 @@ The links above open guide sources on GitHub; use `browseVignettes("EchoGO")` fo
 citation("EchoGO")
 ```
 
-Use [CITATION.cff](CITATION.cff) for machine-readable software citation metadata. Cite the MethodsX manuscript and validation dataset separately when using their methods or examples.
+Use [CITATION.cff](CITATION.cff) for machine-readable software citation metadata. Cite the MethodsX manuscript and validation dataset separately when using their methods or examples. The current validation and reproducibility compendium is archived as [v2.0.0 on Zenodo](https://doi.org/10.5281/zenodo.23164928).
 
 For EchoGO v0.1.4, cite:
 
