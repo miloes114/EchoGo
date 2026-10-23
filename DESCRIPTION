@@ -89,7 +89,7 @@ Suggests:
     treemap,
     withr
 VignetteBuilder: knitr
-URL: https://github.com/miloes114/EchoGo
+URL: https://github.com/miloes114/EchoGo, https://doi.org/10.1016/j.mex.2026.104222
 BugReports: https://github.com/miloes114/EchoGo/issues
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
