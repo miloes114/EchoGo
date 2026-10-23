@@ -7,10 +7,13 @@
 [![R](https://img.shields.io/badge/R-%E2%89%A54.1-276DC3)](https://www.r-project.org/)
 [![Software license: GPL-3](https://img.shields.io/badge/software-GPL--3-1294A5)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17658714.svg)](https://doi.org/10.5281/zenodo.17658714)
+[![Published in MethodsX](https://img.shields.io/badge/MethodsX-2026-147B9E)](https://doi.org/10.1016/j.mex.2026.104222)
 
 Understand what your experiment supports, how annotation context shapes that interpretation, and which additional functions deserve follow-up.
 
 EchoGO is an R framework for **functional interpretation and hypothesis generation after differential-expression analysis**. It keeps the target GOseq analysis central, examines the same transcriptomic response through researcher-selected organism annotation resources, and retains the source of every GO-term result. It does not combine evidence into a new significance statistic.
+
+**Published method:** Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026). EchoGO: Annotation-context-aware functional interpretation of transcriptomic data. *MethodsX*, 104222. [https://doi.org/10.1016/j.mex.2026.104222](https://doi.org/10.1016/j.mex.2026.104222).
 
 **Start here:** [Offline demo](#try-the-full-offline-demonstration) · [Your own experiment](#bring-your-own-experiment) · [Interpretation](#read-the-evidence-not-a-composite-score) · [Validation](#three-complementary-validation-exercises)
 
@@ -250,19 +253,23 @@ The links above open guide sources on GitHub; use `browseVignettes("EchoGO")` fo
 citation("EchoGO")
 ```
 
-Use [CITATION.cff](CITATION.cff) for machine-readable software citation metadata. Cite the MethodsX manuscript and validation dataset separately when using their methods or examples. The current validation and reproducibility compendium is archived as [v2.0.0 on Zenodo](https://doi.org/10.5281/zenodo.23164928).
+Use [CITATION.cff](CITATION.cff) for machine-readable citation metadata. Cite the peer-reviewed MethodsX paper for the method, and cite the specific software release and validation compendium when identifying the reproducible resources used. The current validation and reproducibility compendium is archived as [v2.0.0 on Zenodo](https://doi.org/10.5281/zenodo.23164928).
 
-For EchoGO v0.1.4, cite:
+For the published method, cite:
+
+> Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026). EchoGO: Annotation-context-aware functional interpretation of transcriptomic data. *MethodsX*, 104222. https://doi.org/10.1016/j.mex.2026.104222
+
+For the archived EchoGO v0.1.4 software, cite:
 
 > Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026). *EchoGO: Traceable Functional Interpretation Across Annotation Contexts* (Version 0.1.4). Zenodo. https://doi.org/10.5281/zenodo.23158481
 
-The concept DOI in the badge identifies the stable software archive; the citation above uses the DOI for this exact release. The revised validation DOI and final manuscript publication identity are pending.
+The concept DOI in the Zenodo badge identifies the stable software archive; the software citation above uses the DOI for the exact v0.1.4 release. The published method and validation compendium have their own DOIs, listed here and below.
 
 | Publication resource | Availability |
 |:--|:--|
 | Software packages and release notes | [GitHub releases](https://github.com/miloes114/EchoGo/releases); [stable software archive](https://doi.org/10.5281/zenodo.17658714); [EchoGO v0.1.4 record](https://doi.org/10.5281/zenodo.23158481). |
 | Revised validation compendium | **EchoGO validation and reproducibility compendium v2.0.0**; [version DOI 10.5281/zenodo.23164928](https://doi.org/10.5281/zenodo.23164928); [concept DOI 10.5281/zenodo.21476745](https://doi.org/10.5281/zenodo.21476745). Includes case reports, Figure 2, provenance and reproduction instructions. |
-| MethodsX manuscript | Revised publication identity pending. |
+| Published MethodsX paper | Escobar-Sierra et al. (2026), *EchoGO: Annotation-context-aware functional interpretation of transcriptomic data*, *MethodsX*, 104222. [DOI 10.1016/j.mex.2026.104222](https://doi.org/10.1016/j.mex.2026.104222). |
 | Historical validation source | [Zenodo record 21476746](https://zenodo.org/records/21476746), version 1.0.0; an earlier source deposit, not the revised v0.1.4 compendium. |
 
 Report reproducible problems through the [issue tracker](https://github.com/miloes114/EchoGo/issues). Include the EchoGO/R versions, relevant options, error message and a minimal non-sensitive example. For maintainer contact, see [DESCRIPTION](DESCRIPTION).
