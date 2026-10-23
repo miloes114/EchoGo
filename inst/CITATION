@@ -1,4 +1,22 @@
-citHeader("To cite EchoGO in publications use:")
+citHeader("To cite the EchoGO method, use the journal article below. Cite the Zenodo software release additionally when identifying the exact software version:")
+
+bibentry(
+  bibtype = "Article",
+  title   = "EchoGO: Annotation-context-aware functional interpretation of transcriptomic data",
+  author  = c(
+    person("Camilo", "Escobar-Sierra"),
+    person("Felix", "Langschied"),
+    person("Angelina", "Miller"),
+    person("Pedro A.", "Inostroza")
+  ),
+  year      = "2026",
+  journal   = "MethodsX",
+  pages     = "104222",
+  doi       = "10.1016/j.mex.2026.104222",
+  url       = "https://doi.org/10.1016/j.mex.2026.104222",
+  textVersion =
+    "Escobar-Sierra, C., Langschied, F., Miller, A., & Inostroza, P. A. (2026). EchoGO: Annotation-context-aware functional interpretation of transcriptomic data. MethodsX, 104222. https://doi.org/10.1016/j.mex.2026.104222"
+)
 
 bibentry(
   bibtype = "Misc",
