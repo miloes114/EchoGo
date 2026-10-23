@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use EchoGO, please cite it as follows."
+message: "Cite the published EchoGO method paper; cite the archived software release separately when relevant for reproducibility."
 title: "EchoGO: Traceable Functional Interpretation Across Annotation Contexts"
 version: "0.1.4"
 doi: "10.5281/zenodo.23158481"
@@ -44,25 +44,22 @@ identifiers:
   - description: "Version DOI for EchoGO v0.1.4."
     type: doi
     value: "10.5281/zenodo.23158481"
+  - description: "Published EchoGO method article in MethodsX."
+    type: doi
+    value: "10.1016/j.mex.2026.104222"
 
 preferred-citation:
-  type: software
-  title: "EchoGO: Traceable Functional Interpretation Across Annotation Contexts"
+  type: article
+  title: "EchoGO: Annotation-context-aware functional interpretation of transcriptomic data"
   authors:
     - family-names: "Escobar-Sierra"
       given-names: "Camilo"
-
     - family-names: "Langschied"
       given-names: "Felix"
-
     - family-names: "Miller"
       given-names: "Angelina"
-
     - family-names: "Inostroza"
       given-names: "Pedro A."
-
-  version: "0.1.4"
-  doi: "10.5281/zenodo.23158481"
   year: 2026
-  publisher:
-    name: "Zenodo"
+  journal: "MethodsX"
+  doi: "10.1016/j.mex.2026.104222"
